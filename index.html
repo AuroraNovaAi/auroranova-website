@@ -1,0 +1,1513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AuroraNova - Where Creativity Meets Innovation</title>
+    <meta name="description" content="AuroraNova - European design excellence meets innovative digital solutions. Creative & Branding, Web Development, SEO, Digital Marketing, and AI-Integrated Solutions.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* AuroraNova Brand Colors */
+            --primary-dark: #2B3E62;
+            --primary-purple: #7B5A99;
+            --primary-gold: #C19E6A;
+            --primary-sage: #83AD99;
+            --secondary-blue: #97B3E8;
+            --secondary-lavender: #E1D5F3;
+            --secondary-peach: #FFD391;
+            --secondary-mint: #9ADBBC;
+            --text-primary: #FFFFFF;
+            --text-secondary: #E0E0E0;
+            --text-muted: #B0B0B0;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.6;
+            overflow-x: hidden;
+            background: #000;
+            color: var(--text-primary);
+        }
+
+        /* Performance Optimizations */
+        .video-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            object-fit: cover;
+            filter: brightness(0.7) contrast(1.1);
+            will-change: auto;
+        }
+
+        /* Glassmorphism Navigation */
+        .nav {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 8px;
+            z-index: 1000;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 50px;
+            padding: 12px 20px;
+            opacity: 0;
+            animation: fadeInSlide 1s ease-out 1.5s forwards;
+        }
+
+        .nav a {
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 25px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav a::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-purple), var(--secondary-blue));
+            transition: left 0.3s ease;
+            z-index: -1;
+        }
+
+        .nav a:hover::before {
+            left: 0;
+        }
+
+        .nav a:hover {
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(123, 90, 153, 0.3);
+        }
+
+        /* Hero Section */
+        .hero {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.4), rgba(43, 62, 98, 0.2));
+        }
+
+        .hero-content {
+            max-width: 900px;
+            padding: 0 20px;
+        }
+
+        .hero h1 {
+            font-size: clamp(3rem, 8vw, 6rem);
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--text-primary), var(--secondary-blue), var(--primary-purple));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1.5rem;
+            letter-spacing: -0.02em;
+            opacity: 0;
+            animation: fadeInUp 1.5s ease-out 0.5s forwards;
+        }
+
+        .hero .subtitle {
+            font-size: clamp(1.2rem, 3vw, 2rem);
+            font-weight: 400;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            opacity: 0;
+            animation: fadeInUp 1.5s ease-out 1s forwards;
+        }
+
+        .hero .tagline {
+            font-size: clamp(1rem, 2vw, 1.3rem);
+            font-weight: 300;
+            color: var(--text-muted);
+            margin-bottom: 3rem;
+            max-width: 600px;
+            opacity: 0;
+            animation: fadeInUp 1.5s ease-out 1.5s forwards;
+        }
+
+        /* Service Stars */
+        .constellation {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .service-star {
+            position: absolute;
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+            pointer-events: all;
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            filter: drop-shadow(0 0 20px rgba(151, 179, 232, 0.6));
+        }
+
+        .service-star::before {
+            content: '✦';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 32px;
+            color: var(--secondary-blue);
+            animation: starPulse 3s ease-in-out infinite;
+        }
+
+        .service-star.visible {
+            opacity: 1;
+            animation: starAppear 1s ease-out forwards;
+        }
+
+        .service-star:hover {
+            transform: scale(1.5);
+            filter: drop-shadow(0 0 30px rgba(151, 179, 232, 1));
+        }
+
+        /* Star positions */
+        .star-1 { top: 20%; left: 15%; animation-delay: 2s; }
+        .star-2 { top: 35%; right: 20%; animation-delay: 2.3s; }
+        .star-3 { top: 60%; left: 25%; animation-delay: 2.6s; }
+        .star-4 { top: 45%; right: 15%; animation-delay: 2.9s; }
+        .star-5 { top: 75%; left: 60%; animation-delay: 3.2s; }
+
+        /* Service Info Popups */
+        .service-info {
+            position: absolute;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            color: var(--text-primary);
+            padding: 20px;
+            border-radius: 16px;
+            border: 1px solid var(--glass-border);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1000;
+            min-width: 280px;
+            max-width: 320px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+        }
+
+        .service-info.show {
+            opacity: 1;
+            pointer-events: all;
+            transform: translateY(-10px);
+        }
+
+        .service-info h3 {
+            color: var(--secondary-blue);
+            margin-bottom: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .service-info p {
+            font-size: 0.95rem;
+            line-height: 1.5;
+            color: var(--text-secondary);
+        }
+
+        /* Section Design */
+        .section {
+            min-height: 100vh;
+            padding: 120px 20px;
+            position: relative;
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.8), rgba(43, 62, 98, 0.1));
+            backdrop-filter: blur(10px);
+        }
+
+        .section-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .section h2 {
+            font-size: clamp(2.5rem, 6vw, 4rem);
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary-purple), var(--secondary-blue));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 2rem;
+            opacity: 0;
+            transform: translateY(60px);
+            transition: all 1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .section.visible h2 {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .section p {
+            font-size: clamp(1.1rem, 2vw, 1.4rem);
+            color: var(--text-secondary);
+            margin-bottom: 4rem;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 1s cubic-bezier(0.4, 0, 0.2, 1) 0.2s;
+        }
+
+        .section.visible p {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Photo Gallery - Original Design with Varied Sizes */
+        .photo-gallery {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            margin-top: 40px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .photo-card {
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            transition: all 1.2s ease;
+            opacity: 0;
+            cursor: pointer;
+            will-change: transform, opacity;
+            backface-visibility: hidden;
+        }
+
+        /* Original directional animations with varied sizes */
+        .photo-card:nth-child(1) {
+            width: 280px;
+            height: 220px;
+            transform: translateX(-300px);
+            transition-delay: 0.6s;
+        }
+
+        .photo-card:nth-child(2) {
+            width: 350px;
+            height: 180px;
+            transform: translateY(150px);
+            transition-delay: 1s;
+        }
+
+        .photo-card:nth-child(3) {
+            width: 240px;
+            height: 260px;
+            transform: translateX(300px);
+            transition-delay: 1.4s;
+        }
+
+        /* Different sizes for each section */
+        #story .photo-card:nth-child(1) { width: 300px; height: 200px; }
+        #story .photo-card:nth-child(2) { width: 280px; height: 240px; }
+        #story .photo-card:nth-child(3) { width: 320px; height: 180px; }
+
+        #method .photo-card:nth-child(1) { width: 260px; height: 280px; }
+        #method .photo-card:nth-child(2) { width: 340px; height: 200px; }
+        #method .photo-card:nth-child(3) { width: 290px; height: 220px; }
+
+        #work .photo-card:nth-child(1) { width: 310px; height: 190px; }
+        #work .photo-card:nth-child(2) { width: 270px; height: 250px; }
+        #work .photo-card:nth-child(3) { width: 330px; height: 210px; }
+
+        #contact .photo-card:nth-child(1) { width: 290px; height: 230px; }
+        #contact .photo-card:nth-child(2) { width: 320px; height: 200px; }
+        #contact .photo-card:nth-child(3) { width: 260px; height: 270px; }
+
+        .section.visible .photo-card {
+            opacity: 1;
+            transform: translate(0, 0);
+        }
+
+        .photo-card:hover {
+            transform: scale(1.05) translateY(-10px);
+            box-shadow: 0 20px 40px rgba(135, 206, 235, 0.3);
+        }
+
+        .photo-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: all 0.3s ease;
+        }
+
+        .photo-card:hover img {
+            transform: scale(1.1);
+        }
+
+        .photo-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, rgba(135, 206, 235, 0.2), rgba(0, 0, 0, 0.3));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .photo-card:hover::after {
+            opacity: 1;
+        }
+
+        .photo-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 15px;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+            color: white;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .photo-card:hover .photo-overlay {
+            transform: translateY(0);
+        }
+
+        .photo-overlay h4 {
+            font-size: 1rem;
+            margin-bottom: 5px;
+            color: #87ceeb;
+        }
+
+        .photo-overlay p {
+            font-size: 0.8rem;
+            margin: 0;
+            color: #e0e0e0;
+        }
+
+        /* Blog Section - Enhanced with Photo Gallery Style */
+        .blog-section {
+            background: linear-gradient(135deg, rgba(43, 62, 98, 0.1), rgba(0, 0, 0, 0.9));
+            min-height: 100vh;
+            padding: 120px 20px;
+        }
+
+        .blog-grid {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            margin-top: 40px;
+            flex-wrap: wrap;
+            align-items: flex-start;
+            max-width: 1400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .blog-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 15px;
+            padding: 25px;
+            transition: all 1.2s ease;
+            opacity: 0;
+            cursor: pointer;
+            will-change: transform, opacity;
+            backface-visibility: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Directional animations with varied sizes for blog cards */
+        .blog-card:nth-child(1) {
+            width: 320px;
+            min-height: 280px;
+            transform: translateX(-300px) rotate(-2deg);
+            transition-delay: 0.6s;
+        }
+
+        .blog-card:nth-child(2) {
+            width: 380px;
+            min-height: 240px;
+            transform: translateY(150px) rotate(1deg);
+            transition-delay: 1s;
+        }
+
+        .blog-card:nth-child(3) {
+            width: 300px;
+            min-height: 320px;
+            transform: translateX(300px) rotate(-1deg);
+            transition-delay: 1.4s;
+        }
+
+        .blog-card:nth-child(4) {
+            width: 350px;
+            min-height: 260px;
+            transform: translateY(-150px) rotate(2deg);
+            transition-delay: 1.8s;
+        }
+
+        .blog-section.visible .blog-card {
+            opacity: 1;
+            transform: translate(0, 0) rotate(0deg);
+        }
+
+        .blog-card:hover {
+            transform: scale(1.05) translateY(-15px) rotate(0deg);
+            box-shadow: 0 25px 50px rgba(123, 90, 153, 0.3);
+            z-index: 10;
+        }
+
+        .blog-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, rgba(151, 179, 232, 0.1), rgba(123, 90, 153, 0.1));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .blog-card:hover::after {
+            opacity: 1;
+        }
+
+        .blog-meta {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .blog-category {
+            background: linear-gradient(45deg, var(--primary-purple), var(--secondary-blue));
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .blog-card h3 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 15px;
+            line-height: 1.4;
+        }
+
+        .blog-card p {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .read-more {
+            color: var(--secondary-blue);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .read-more:hover {
+            color: var(--primary-purple);
+            transform: translateX(5px);
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInSlide {
+            from {
+                opacity: 0;
+                transform: translateX(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes starPulse {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 1; }
+        }
+
+        @keyframes starAppear {
+            0% {
+                opacity: 0;
+                transform: scale(0) rotate(180deg);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) rotate(0deg);
+            }
+        }
+
+        /* Mobile Optimizations */
+        @media (max-width: 768px) {
+            .video-background {
+                display: none;
+            }
+
+            .hero {
+                background: linear-gradient(135deg, #001122, #002244, #003366);
+                background-size: 400% 400%;
+                animation: auroraGradient 8s ease-in-out infinite;
+            }
+
+            .nav {
+                top: 10px;
+                right: 10px;
+                padding: 8px 15px;
+                gap: 5px;
+            }
+
+            .nav a {
+                padding: 6px 12px;
+                font-size: 0.8rem;
+            }
+
+            .photo-gallery {
+                flex-direction: column;
+                align-items: center;
+                gap: 20px;
+                margin-top: 30px;
+            }
+            
+            .photo-card:nth-child(1),
+            .photo-card:nth-child(2),
+            .photo-card:nth-child(3) {
+                transform: translateY(100px);
+                transition: all 1.2s ease;
+                transition-delay: 0.4s;
+            }
+            
+            .photo-card:nth-child(2) {
+                transition-delay: 0.8s;
+            }
+            
+            .photo-card:nth-child(3) {
+                transition-delay: 1.2s;
+            }
+            
+            .section.visible .photo-card {
+                transform: translateY(0);
+            }
+
+            /* Mobile specific sizes */
+            #story .photo-card:nth-child(1) { width: 250px; height: 160px; }
+            #story .photo-card:nth-child(2) { width: 230px; height: 190px; }
+            #story .photo-card:nth-child(3) { width: 270px; height: 140px; }
+
+            #method .photo-card:nth-child(1) { width: 210px; height: 230px; }
+            #method .photo-card:nth-child(2) { width: 280px; height: 160px; }
+            #method .photo-card:nth-child(3) { width: 240px; height: 180px; }
+
+            #work .photo-card:nth-child(1) { width: 260px; height: 150px; }
+            #work .photo-card:nth-child(2) { width: 220px; height: 200px; }
+            #work .photo-card:nth-child(3) { width: 280px; height: 170px; }
+
+            #contact .photo-card:nth-child(1) { width: 240px; height: 180px; }
+            #contact .photo-card:nth-child(2) { width: 270px; height: 160px; }
+            #contact .photo-card:nth-child(3) { width: 220px; height: 220px; }
+
+            .blog-grid {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+
+            .service-star {
+                width: 40px;
+                height: 40px;
+            }
+
+            .service-star::before {
+                font-size: 40px;
+            }
+
+            .service-info {
+                min-width: 250px;
+                max-width: 280px;
+                padding: 15px;
+            }
+        }
+
+        @keyframes auroraGradient {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        /* Scroll Indicator */
+        .scroll-indicator {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            animation: fadeInUp 1s ease-out 3s forwards;
+        }
+
+        .scroll-indicator::before {
+            content: '';
+            width: 2px;
+            height: 30px;
+            background: linear-gradient(to bottom, var(--secondary-blue), transparent);
+            display: block;
+            margin: 0 auto 10px;
+            animation: scrollFlow 2s ease-in-out infinite;
+        }
+
+        .scroll-indicator::after {
+            content: 'Scroll to explore';
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            text-align: center;
+            display: block;
+        }
+
+        @keyframes scrollFlow {
+            0% { opacity: 0; }
+            50% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Video Background -->
+    <video class="video-background" autoplay muted loop playsinline>
+        <source src="https://firebasestorage.googleapis.com/v0/b/auroranova-website.firebasestorage.app/o/7214319_Norway_Landscape_1920x1080.mp4?alt=media&token=e339f52d-bfa1-4f34-a097-2b301e267bec" type="video/mp4">
+    </video>
+
+    <!-- Navigation -->
+    <nav class="nav">
+        <a href="#home">Home</a>
+        <a href="#story">Story</a>
+        <a href="#method">Method</a>
+        <a href="#work">Work</a>
+        <a href="#blog">Insights</a>
+        <a href="#contact">Contact</a>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero" id="home">
+        <div class="hero-content">
+            <h1>AuroraNova</h1>
+            <p class="subtitle">Where Creativity Meets Innovation</p>
+            <p class="tagline">Aurora-inspired digital excellence transforming visions into digital reality through European design excellence and cutting-edge technology</p>
+        </div>
+        
+        <!-- Star Constellation Navigation -->
+        <div class="constellation">
+            <div class="service-star star-1 visible" data-service="branding"></div>
+            <div class="service-star star-2 visible" data-service="web"></div>
+            <div class="service-star star-3 visible" data-service="seo"></div>
+            <div class="service-star star-4 visible" data-service="marketing"></div>
+            <div class="service-star star-5 visible" data-service="ai"></div>
+        </div>
+
+        <!-- Service Information Popups -->
+        <div class="service-info" id="branding-info">
+            <h3>Creative & Branding</h3>
+            <p>European design excellence meets strategic brand development. From logos to complete visual identity systems that captivate and inspire.</p>
+        </div>
+
+        <div class="service-info" id="web-info">
+            <h3>Web Development</h3>
+            <p>Cutting-edge websites that captivate and convert. From concept to launch with technical precision and artistic vision.</p>
+        </div>
+
+        <div class="service-info" id="seo-info">
+            <h3>SEO Excellence</h3>
+            <p>Strategic optimization that puts your business at the top of search results and drives sustainable organic growth.</p>
+        </div>
+
+        <div class="service-info" id="marketing-info">
+            <h3>Digital Marketing</h3>
+            <p>Data-driven campaigns that generate qualified leads and build lasting customer relationships across all digital channels.</p>
+        </div>
+
+        <div class="service-info" id="ai-info">
+            <h3>AI-Integrated Solutions</h3>
+            <p>Smart automation and AI-powered tools that enhance creativity and productivity without replacing human innovation.</p>
+        </div>
+
+        <div class="scroll-indicator"></div>
+    </section>
+
+    <!-- Story Section -->
+    <section class="section" id="story">
+        <div class="section-content">
+            <h2>Our Story</h2>
+            <p>From European design excellence to innovative digital solutions, we craft experiences that transcend boundaries and redefine possibilities</p>
+            
+            <div class="photo-gallery">
+                <!-- PHOTO_STORY_01 -->
+                <div class="photo-card" onclick="openPhotoModal('PHOTO_STORY_01')">
+                    <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&h=300&fit=crop&crop=center" alt="Team Collaboration">
+                    <div class="photo-overlay">
+                        <h4>Collaborative Excellence</h4>
+                        <p>Building innovative solutions through seamless teamwork and shared vision</p>
+                    </div>
+                </div>
+                <!-- PHOTO_STORY_02 -->
+                <div class="photo-card" onclick="openPhotoModal('PHOTO_STORY_02')">
+                    <img src="https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=400&h=300&fit=crop&crop=center" alt="Design Process">
+                    <div class="photo-overlay">
+                        <h4>European Design Heritage</h4>
+                        <p>Timeless design principles meet contemporary digital innovation</p>
+                    </div>
+                </div>
+                <!-- PHOTO_STORY_03 -->
+                <div class="photo-card" onclick="openPhotoModal('PHOTO_STORY_03')">
+                    <img src="https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=400&h=300&fit=crop&crop=center" alt="Innovation">
+                    <div class="photo-overlay">
+                        <h4>Innovation at Core</h4>
+                        <p>Where creative vision meets technological excellence</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Method Section -->
+    <section class="section" id="method">
+        <div class="section-content">
+            <h2>The AuroraNova Method</h2>
+            <p>Our unique approach combines strategic thinking, creative excellence, and technical mastery to deliver transformative digital experiences</p>
+            
+            <div class="photo-gallery">
+                <!-- PHOTO_METHOD_01 -->
+                <div class="photo-card" onclick="openPhotoModal('PHOTO_METHOD_01')">
+                    <img src="https://images.unsplash.com/photo-1581291518857-4e27b48ff24e?w=400&h=300&fit=crop&crop=center" alt="Strategy">
+                    <div class="photo-overlay">
+                        <h4>Strategic Foundation</h4>
+                        <p>Every project begins with deep strategic analysis and planning</p>
+                    </div>
+                </div>
+                <!-- PHOTO_METHOD_02 -->
+                <div class="photo-card" onclick="openPhotoModal('PHOTO_METHOD_02')">
+                    <img src="https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400&h=300&fit=crop&crop=center" alt="Creative Design">
+                    <div class="photo-overlay">
+                        <h4>Creative Mastery</h4>
+                        <p>Beautiful, functional design that tells your story</p>
+                    </div>
+                </div>
+                <!-- PHOTO_METHOD_03 -->
+                <div class="photo-card" onclick="openPhotoModal('PHOTO_METHOD_03')">
+                    <img src="https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?w=400&h=300&fit=crop&crop=center" alt="Technical Excellence">
+                    <div class="photo-overlay">
+                        <h4>Technical Excellence</h4>
+                        <p>Cutting-edge development and seamless AI integration</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Work Section -->
+    <section class="section" id="work">
+        <div class="section-content">
+            <h2>Work With Us</h2>
+            <p>Ready to transform your digital presence? Let's create something extraordinary together</p>
+            
+            <div class="photo-gallery">
+                <!-- PHOTO_WORK_01 -->
+                <div class="photo-card" onclick="openPhotoModal('PHOTO_WORK_01')">
+                    <img src="https://images.unsplash.com/photo-1553028826-f4804a6dba3b?w=400&h=300&fit=crop&crop=center" alt="Web Development">
+                    <div class="photo-overlay">
+                        <h4>Web Development</h4>
+                        <p>Modern, responsive websites that drive results</p>
+                    </div>
+                </div>
+                <!-- PHOTO_WORK_02 -->
+                <div class="photo-card" onclick="openPhotoModal('PHOTO_WORK_02')">
+                    <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop&crop=center" alt="Branding">
+                    <div class="photo-overlay">
+                        <h4>Brand Identity</h4>
+                        <p>Distinctive branding that sets you apart</p>
+                    </div>
+                </div>
+                <!-- PHOTO_WORK_03 -->
+                <div class="photo-card" onclick="openPhotoModal('PHOTO_WORK_03')">
+                    <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=300&fit=crop&crop=center" alt="Digital Marketing">
+                    <div class="photo-overlay">
+                        <h4>Digital Growth</h4>
+                        <p>AI-powered solutions for sustainable business growth</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Blog/Vlog Section -->
+    <section class="blog-section" id="blog">
+        <div class="section-content">
+            <h2>Insights & Innovation</h2>
+            <p>Explore our latest thoughts on design, technology, and digital transformation</p>
+            
+            <div class="blog-grid">
+                <!-- BLOG_POST_01 -->
+                <article class="blog-card" onclick="openBlogPost('BLOG_POST_01')">
+                    <div class="blog-meta">
+                        <span class="blog-category">Design Trends</span>
+                        <span>January 25, 2025</span>
+                    </div>
+                    <h3>The Future of Digital Design: Aurora-Inspired Aesthetics</h3>
+                    <p>Discover how natural phenomena like the Northern Lights are inspiring a new wave of digital design that combines organic beauty with technological precision.</p>
+                    <a href="#" onclick="event.stopPropagation(); openBlogPost('BLOG_POST_01')" class="read-more">Read more →</a>
+                </article>
+
+                <!-- BLOG_POST_02 -->
+                <article class="blog-card" onclick="openBlogPost('BLOG_POST_02')">
+                    <div class="blog-meta">
+                        <span class="blog-category">AI Innovation</span>
+                        <span>January 20, 2025</span>
+                    </div>
+                    <h3>AI-Powered Creativity: Enhancing Human Design</h3>
+                    <p>How artificial intelligence is revolutionizing the creative process while preserving the essential human touch that makes design truly meaningful.</p>
+                    <a href="#" onclick="event.stopPropagation(); openBlogPost('BLOG_POST_02')" class="read-more">Read more →</a>
+                </article>
+
+                <!-- BLOG_POST_03 -->
+                <article class="blog-card" onclick="openBlogPost('BLOG_POST_03')">
+                    <div class="blog-meta">
+                        <span class="blog-category">Web Development</span>
+                        <span>January 15, 2025</span>
+                    </div>
+                    <h3>Building Immersive Web Experiences</h3>
+                    <p>The technical and creative considerations behind crafting websites that captivate users and drive meaningful engagement in 2025.</p>
+                    <a href="#" onclick="event.stopPropagation(); openBlogPost('BLOG_POST_03')" class="read-more">Read more →</a>
+                </article>
+
+                <!-- BLOG_POST_04 -->
+                <article class="blog-card" onclick="openBlogPost('BLOG_POST_04')">
+                    <div class="blog-meta">
+                        <span class="blog-category">Brand Strategy</span>
+                        <span>January 10, 2025</span>
+                    </div>
+                    <h3>European Design Philosophy in Digital Branding</h3>
+                    <p>How centuries of European design tradition inform modern digital branding strategies that resonate across cultures and generations.</p>
+                    <a href="#" onclick="event.stopPropagation(); openBlogPost('BLOG_POST_04')" class="read-more">Read more →</a>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="section" id="contact">
+        <div class="section-content">
+            <h2>Let's Create Together</h2>
+            <p>Ready to embark on a journey of digital transformation? We're here to bring your vision to life</p>
+            
+            <div class="photo-gallery">
+                <!-- PHOTO_CONTACT_01 -->
+                <div class="photo-card" onclick="initiateContact('email')">
+                    <img src="https://images.unsplash.com/photo-1423666639041-f56000c27a9a?w=400&h=300&fit=crop&crop=center" alt="Get In Touch">
+                    <div class="photo-overlay">
+                        <h4>Start the Conversation</h4>
+                        <p>inanc.eser@auroranovaai.com</p>
+                    </div>
+                </div>
+                <!-- PHOTO_CONTACT_02 -->
+                <div class="photo-card" onclick="viewLocation()">
+                    <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=400&h=300&fit=crop&crop=center" alt="Location">
+                    <div class="photo-overlay">
+                        <h4>Our Base</h4>
+                        <p>Istanbul, Turkey - Where East meets West</p>
+                    </div>
+                </div>
+                <!-- PHOTO_CONTACT_03 -->
+                <div class="photo-card" onclick="scheduleMeeting()">
+                    <img src="https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=300&fit=crop&crop=center" alt="Let's Meet">
+                    <div class="photo-overlay">
+                        <h4>Let's Collaborate</h4>
+                        <p>Schedule a consultation to discuss your project</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // =================================================================
+        // AURORANOVA CONTENT MANAGEMENT SYSTEM
+        // =================================================================
+        
+        // PHOTO CONTENT DATABASE
+        const photoContent = {
+            PHOTO_STORY_01: {
+                title: "Collaborative Excellence",
+                description: "Building innovative solutions through seamless teamwork and shared vision",
+                fullContent: "At AuroraNova, collaboration isn't just a buzzword—it's the cornerstone of our creative process. Our multidisciplinary team brings together designers, developers, strategists, and innovators who work in perfect harmony to transform your vision into digital reality. We believe that the best solutions emerge when diverse minds come together with a shared purpose.",
+                image: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&h=600&fit=crop"
+            },
+            PHOTO_STORY_02: {
+                title: "European Design Heritage", 
+                description: "Timeless design principles meet contemporary digital innovation",
+                fullContent: "Our design philosophy is deeply rooted in centuries of European aesthetic excellence, from the clean lines of Scandinavian minimalism to the sophisticated elegance of Italian craftsmanship. We blend these timeless principles with cutting-edge digital innovation to create experiences that are both beautiful and functional.",
+                image: "https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=800&h=600&fit=crop"
+            },
+            PHOTO_STORY_03: {
+                title: "Innovation at Core",
+                description: "Where creative vision meets technological excellence", 
+                fullContent: "Innovation drives everything we do at AuroraNova. We're constantly exploring new technologies, design methodologies, and creative approaches to stay ahead of the curve. Our commitment to innovation ensures that your digital presence isn't just current—it's future-ready.",
+                image: "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=800&h=600&fit=crop"
+            },
+            PHOTO_METHOD_01: {
+                title: "Strategic Foundation",
+                description: "Every project begins with deep strategic analysis and planning",
+                fullContent: "Strategy is the foundation upon which all great digital experiences are built. Our strategic process involves comprehensive market research, user analysis, competitor evaluation, and business goal alignment. We don't just create beautiful designs—we create solutions that drive real business results.",
+                image: "https://images.unsplash.com/photo-1581291518857-4e27b48ff24e?w=800&h=600&fit=crop"
+            },
+            PHOTO_METHOD_02: {
+                title: "Creative Mastery",
+                description: "Beautiful, functional design that tells your story",
+                fullContent: "Our creative process balances artistic vision with user-centered design principles. We craft visual narratives that not only capture attention but also guide users toward meaningful interactions. Every color, typography choice, and layout decision is made with intention and purpose.",
+                image: "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=800&h=600&fit=crop"
+            },
+            PHOTO_METHOD_03: {
+                title: "Technical Excellence", 
+                description: "Cutting-edge development and seamless AI integration",
+                fullContent: "Technical excellence is non-negotiable in our development process. We leverage the latest technologies, frameworks, and AI tools to build solutions that are not only visually stunning but also performant, scalable, and secure. Our code is clean, our architecture is robust, and our integrations are seamless.",
+                image: "https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?w=800&h=600&fit=crop"
+            },
+            PHOTO_WORK_01: {
+                title: "Web Development",
+                description: "Modern, responsive websites that drive results",
+                fullContent: "Our web development services encompass everything from simple landing pages to complex web applications. We specialize in creating responsive, fast-loading, and SEO-optimized websites that provide exceptional user experiences across all devices and browsers.",
+                image: "https://images.unsplash.com/photo-1553028826-f4804a6dba3b?w=800&h=600&fit=crop"
+            },
+            PHOTO_WORK_02: {
+                title: "Brand Identity",
+                description: "Distinctive branding that sets you apart", 
+                fullContent: "Brand identity goes beyond just a logo—it's the complete visual and emotional expression of your company's values, personality, and promise. We create comprehensive brand systems that ensure consistency and recognition across all touchpoints.",
+                image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop"
+            },
+            PHOTO_WORK_03: {
+                title: "Digital Growth",
+                description: "AI-powered solutions for sustainable business growth",
+                fullContent: "Our digital growth strategies combine traditional marketing wisdom with cutting-edge AI technologies. We help businesses scale efficiently through data-driven decision making, automated processes, and intelligent optimization techniques.",
+                image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=600&fit=crop"
+            }
+        };
+
+        // BLOG CONTENT DATABASE  
+        const blogContent = {
+            BLOG_POST_01: {
+                category: "Design Trends",
+                date: "January 25, 2025", 
+                title: "The Future of Digital Design: Aurora-Inspired Aesthetics",
+                excerpt: "Discover how natural phenomena like the Northern Lights are inspiring a new wave of digital design that combines organic beauty with technological precision.",
+                content: "The Northern Lights have captivated humanity for millennia, their ethereal dance across the polar skies representing nature's most spectacular light show. Today, forward-thinking designers are drawing inspiration from these celestial phenomena to create digital experiences that feel both otherworldly and deeply human. Aurora-inspired design represents more than just a visual trend—it's a philosophy that embraces fluidity, dynamism, and the seamless blend of natural beauty with technological innovation. This approach to design prioritizes organic movement, gradient transitions, and luminous effects that mirror the aurora's mystical qualities while serving modern usability requirements.",
+                author: "AuroraNova Design Team",
+                readTime: "5 min read",
+                tags: ["Design", "Trends", "Aurora", "Digital Art"]
+            },
+            BLOG_POST_02: {
+                category: "AI Innovation", 
+                date: "January 20, 2025",
+                title: "AI-Powered Creativity: Enhancing Human Design",
+                excerpt: "How artificial intelligence is revolutionizing the creative process while preserving the essential human touch that makes design truly meaningful.",
+                content: "The relationship between artificial intelligence and human creativity is not one of replacement, but of enhancement and collaboration. At AuroraNova, we've witnessed firsthand how AI tools can amplify human creativity, providing designers with new capabilities while preserving the intuition, empathy, and cultural understanding that only humans can bring to the creative process. AI excels at pattern recognition, rapid iteration, and handling repetitive tasks, freeing human designers to focus on strategic thinking, emotional resonance, and innovative problem-solving. This symbiotic relationship is creating a new era of design where technology serves as an intelligent partner rather than a replacement for human creativity.",
+                author: "Tech Innovation Team", 
+                readTime: "7 min read",
+                tags: ["AI", "Creativity", "Innovation", "Design Process"]
+            },
+            BLOG_POST_03: {
+                category: "Web Development",
+                date: "January 15, 2025",
+                title: "Building Immersive Web Experiences", 
+                excerpt: "The technical and creative considerations behind crafting websites that captivate users and drive meaningful engagement in 2025.",
+                content: "Creating immersive web experiences in 2025 requires a delicate balance of cutting-edge technology and user-centered design principles. Modern web browsers now support advanced features like WebGL, WebXR, and sophisticated CSS animations that enable developers to create experiences that were once impossible on the web. However, the key to successful immersive design lies not in using every available technology, but in carefully selecting the right tools to enhance the user's journey. Performance optimization, accessibility considerations, and progressive enhancement ensure that these immersive experiences are inclusive and functional across diverse devices and connection speeds.",
+                author: "Development Team",
+                readTime: "6 min read", 
+                tags: ["Web Development", "UX", "Performance", "Technology"]
+            },
+            BLOG_POST_04: {
+                category: "Brand Strategy",
+                date: "January 10, 2025", 
+                title: "European Design Philosophy in Digital Branding",
+                excerpt: "How centuries of European design tradition inform modern digital branding strategies that resonate across cultures and generations.",
+                content: "European design philosophy has shaped aesthetic sensibilities for centuries, from the mathematical precision of classical architecture to the functional beauty of Bauhaus principles. In the digital age, these time-tested design philosophies provide a foundation for creating brand identities that feel both timeless and contemporary. The European approach to design emphasizes craftsmanship, attention to detail, and the belief that good design should be both beautiful and functional. When applied to digital branding, these principles result in visual identities that possess depth, sophistication, and enduring appeal across diverse global markets.",
+                author: "Brand Strategy Team",
+                readTime: "8 min read",
+                tags: ["Branding", "European Design", "Philosophy", "Strategy"]
+            }
+        };
+
+        // CONTACT INFORMATION
+        const contactInfo = {
+            email: "inanc.eser@auroranovaai.com",
+            location: "Istanbul, Turkey",
+            phone: "+90 XXX XXX XXXX",
+            linkedin: "https://linkedin.com/company/auroranova",
+            calendly: "https://calendly.com/auroranova"
+        };
+
+        // =================================================================
+        // INTERACTION FUNCTIONS
+        // =================================================================
+
+        // Photo Modal Function
+        function openPhotoModal(photoId) {
+            const photo = photoContent[photoId];
+            if (!photo) {
+                console.log(`Photo ${photoId} not found`);
+                return;
+            }
+
+            const modal = document.createElement('div');
+            modal.innerHTML = `
+                <div style="
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.9);
+                    z-index: 10000;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    backdrop-filter: blur(10px);
+                    padding: 20px;
+                " onclick="this.parentElement.remove()">
+                    <div style="
+                        background: var(--glass-bg);
+                        backdrop-filter: blur(20px);
+                        border: 1px solid var(--glass-border);
+                        border-radius: 20px;
+                        padding: 40px;
+                        max-width: 800px;
+                        max-height: 90vh;
+                        overflow-y: auto;
+                        color: white;
+                        text-align: center;
+                    " onclick="event.stopPropagation()">
+                        <img src="${photo.image}" style="
+                            width: 100%;
+                            max-width: 600px;
+                            height: auto;
+                            border-radius: 15px;
+                            margin-bottom: 20px;
+                        ">
+                        <h2 style="color: var(--secondary-blue); margin-bottom: 15px;">${photo.title}</h2>
+                        <p style="margin-bottom: 20px; color: var(--text-secondary); font-size: 1.1rem;">${photo.description}</p>
+                        <p style="color: var(--text-muted); line-height: 1.6; text-align: left;">${photo.fullContent}</p>
+                        <button onclick="this.parentElement.parentElement.parentElement.remove()" style="
+                            background: linear-gradient(45deg, var(--primary-purple), var(--secondary-blue));
+                            color: white;
+                            border: none;
+                            padding: 12px 25px;
+                            border-radius: 25px;
+                            cursor: pointer;
+                            font-weight: 500;
+                            margin-top: 20px;
+                        ">Close</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        // Blog Post Function
+        function openBlogPost(blogId) {
+            const blog = blogContent[blogId];
+            if (!blog) {
+                console.log(`Blog post ${blogId} not found`);
+                return;
+            }
+
+            const modal = document.createElement('div');
+            modal.innerHTML = `
+                <div style="
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.9);
+                    z-index: 10000;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    backdrop-filter: blur(10px);
+                    padding: 20px;
+                " onclick="this.parentElement.remove()">
+                    <div style="
+                        background: var(--glass-bg);
+                        backdrop-filter: blur(20px);
+                        border: 1px solid var(--glass-border);
+                        border-radius: 20px;
+                        padding: 40px;
+                        max-width: 900px;
+                        max-height: 90vh;
+                        overflow-y: auto;
+                        color: white;
+                        text-align: left;
+                    " onclick="event.stopPropagation()">
+                        <div style="margin-bottom: 20px;">
+                            <span style="
+                                background: linear-gradient(45deg, var(--primary-purple), var(--secondary-blue));
+                                color: white;
+                                padding: 6px 15px;
+                                border-radius: 20px;
+                                font-size: 0.9rem;
+                                margin-right: 15px;
+                            ">${blog.category}</span>
+                            <span style="color: var(--text-muted);">${blog.date}</span>
+                            <span style="color: var(--text-muted); margin-left: 15px;">${blog.readTime}</span>
+                        </div>
+                        <h2 style="color: var(--secondary-blue); margin-bottom: 20px; line-height: 1.3;">${blog.title}</h2>
+                        <p style="margin-bottom: 25px; color: var(--text-secondary); font-size: 1.1rem; line-height: 1.6;">${blog.excerpt}</p>
+                        <div style="color: var(--text-primary); line-height: 1.8; margin-bottom: 30px;">${blog.content}</div>
+                        <div style="margin-bottom: 20px;">
+                            <span style="color: var(--text-muted); font-size: 0.9rem;">By ${blog.author}</span>
+                        </div>
+                        <div style="text-align: center;">
+                            <button onclick="this.parentElement.parentElement.parentElement.parentElement.remove()" style="
+                                background: linear-gradient(45deg, var(--primary-purple), var(--secondary-blue));
+                                color: white;
+                                border: none;
+                                padding: 12px 25px;
+                                border-radius: 25px;
+                                cursor: pointer;
+                                font-weight: 500;
+                            ">Close</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        // Contact Functions
+        function initiateContact(type) {
+            if (type === 'email') {
+                window.location.href = `mailto:${contactInfo.email}?subject=AuroraNova Collaboration Inquiry`;
+            }
+        }
+
+        function viewLocation() {
+            const modal = document.createElement('div');
+            modal.innerHTML = `
+                <div style="
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.9);
+                    z-index: 10000;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    backdrop-filter: blur(10px);
+                " onclick="this.parentElement.remove()">
+                    <div style="
+                        background: var(--glass-bg);
+                        backdrop-filter: blur(20px);
+                        border: 1px solid var(--glass-border);
+                        border-radius: 20px;
+                        padding: 40px;
+                        color: white;
+                        text-align: center;
+                        max-width: 500px;
+                    " onclick="event.stopPropagation()">
+                        <h2 style="color: var(--secondary-blue); margin-bottom: 20px;">Our Location</h2>
+                        <p style="margin-bottom: 15px; color: var(--text-secondary); font-size: 1.1rem;">${contactInfo.location}</p>
+                        <p style="color: var(--text-muted); margin-bottom: 25px;">Where European design heritage meets innovative digital solutions</p>
+                        <button onclick="this.parentElement.parentElement.parentElement.remove()" style="
+                            background: linear-gradient(45deg, var(--primary-purple), var(--secondary-blue));
+                            color: white;
+                            border: none;
+                            padding: 12px 25px;
+                            border-radius: 25px;
+                            cursor: pointer;
+                            font-weight: 500;
+                        ">Close</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        function scheduleMeeting() {
+            const modal = document.createElement('div');
+            modal.innerHTML = `
+                <div style="
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.9);
+                    z-index: 10000;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    backdrop-filter: blur(10px);
+                " onclick="this.parentElement.remove()">
+                    <div style="
+                        background: var(--glass-bg);
+                        backdrop-filter: blur(20px);
+                        border: 1px solid var(--glass-border);
+                        border-radius: 20px;
+                        padding: 40px;
+                        color: white;
+                        text-align: center;
+                        max-width: 500px;
+                    " onclick="event.stopPropagation()">
+                        <h2 style="color: var(--secondary-blue); margin-bottom: 20px;">Schedule a Consultation</h2>
+                        <p style="margin-bottom: 20px; color: var(--text-secondary);">Ready to discuss your project? Let's set up a time to talk.</p>
+                        <p style="color: var(--text-muted); margin-bottom: 25px; font-size: 0.9rem;">
+                            Email us at: <br>
+                            <a href="mailto:${contactInfo.email}" style="color: var(--secondary-blue); text-decoration: none;">${contactInfo.email}</a>
+                        </p>
+                        <button onclick="this.parentElement.parentElement.parentElement.remove()" style="
+                            background: linear-gradient(45deg, var(--primary-purple), var(--secondary-blue));
+                            color: white;
+                            border: none;
+                            padding: 12px 25px;
+                            border-radius: 25px;
+                            cursor: pointer;
+                            font-weight: 500;
+                        ">Close</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        // =================================================================
+        // ANIMATION AND SCROLL SYSTEM
+        // =================================================================
+
+        // Enhanced Scroll Animations - Repeating
+        const observerOptions = {
+            threshold: 0.2,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const sectionObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                } else {
+                    entry.target.classList.remove('visible');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.section, .blog-section').forEach(section => {
+            sectionObserver.observe(section);
+        });
+
+        // Service Star Interactions
+        const stars = document.querySelectorAll('.service-star');
+        const serviceInfos = document.querySelectorAll('.service-info');
+
+        stars.forEach(star => {
+            let activeInfo = null;
+            let hoverTimeout = null;
+
+            star.addEventListener('mouseenter', (e) => {
+                clearTimeout(hoverTimeout);
+                const service = e.target.dataset.service;
+                const info = document.getElementById(service + '-info');
+                
+                if (info) {
+                    const rect = e.target.getBoundingClientRect();
+                    const viewportWidth = window.innerWidth;
+                    const viewportHeight = window.innerHeight;
+                    
+                    let left = rect.left + 40;
+                    let top = rect.top - 10;
+                    
+                    if (left + 320 > viewportWidth) {
+                        left = rect.left - 340;
+                    }
+                    if (top + 150 > viewportHeight) {
+                        top = rect.top - 160;
+                    }
+                    
+                    info.style.left = Math.max(20, left) + 'px';
+                    info.style.top = Math.max(20, top) + 'px';
+                    
+                    info.classList.add('show');
+                    activeInfo = info;
+                }
+            });
+
+            star.addEventListener('mouseleave', () => {
+                hoverTimeout = setTimeout(() => {
+                    if (activeInfo) {
+                        activeInfo.classList.remove('show');
+                        activeInfo = null;
+                    }
+                }, 300);
+            });
+
+            star.addEventListener('click', (e) => {
+                const service = e.target.dataset.service;
+                const serviceName = service.charAt(0).toUpperCase() + service.slice(1);
+                
+                const notification = document.createElement('div');
+                notification.innerHTML = `
+                    <div style="
+                        position: fixed;
+                        top: 50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
+                        background: var(--glass-bg);
+                        backdrop-filter: blur(20px);
+                        border: 1px solid var(--glass-border);
+                        border-radius: 20px;
+                        padding: 30px;
+                        color: white;
+                        text-align: center;
+                        z-index: 10000;
+                        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+                        animation: fadeInScale 0.3s ease-out;
+                    ">
+                        <h3 style="color: var(--secondary-blue); margin-bottom: 15px;">${serviceName} Services</h3>
+                        <p style="margin-bottom: 20px; color: var(--text-secondary);">Our ${serviceName.toLowerCase()} services page is currently under development. We're crafting something extraordinary!</p>
+                        <button onclick="this.parentElement.parentElement.remove()" style="
+                            background: linear-gradient(45deg, var(--primary-purple), var(--secondary-blue));
+                            color: white;
+                            border: none;
+                            padding: 10px 20px;
+                            border-radius: 25px;
+                            cursor: pointer;
+                            font-weight: 500;
+                        ">Got it</button>
+                    </div>
+                `;
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    if (notification.parentElement) {
+                        notification.remove();
+                    }
+                }, 5000);
+            });
+        });
+
+        // Smooth Navigation
+        document.querySelectorAll('.nav a').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetId = link.getAttribute('href');
+                const targetSection = document.querySelector(targetId);
+                
+                if (targetSection) {
+                    targetSection.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Enhanced mouse magnet effect for stars
+        document.addEventListener('mousemove', (e) => {
+            stars.forEach(star => {
+                const rect = star.getBoundingClientRect();
+                const starX = rect.left + rect.width / 2;
+                const starY = rect.top + rect.height / 2;
+                
+                const distance = Math.sqrt(
+                    Math.pow(e.clientX - starX, 2) + Math.pow(e.clientY - starY, 2)
+                );
+                
+                if (distance < 150) {
+                    const intensity = (150 - distance) / 150;
+                    const deltaX = (e.clientX - starX) * intensity * 0.1;
+                    const deltaY = (e.clientY - starY) * intensity * 0.1;
+                    
+                    star.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(${1 + intensity * 0.2})`;
+                } else {
+                    star.style.transform = 'translate(0px, 0px) scale(1)';
+                }
+            });
+        });
+
+        // Video optimization
+        document.addEventListener('DOMContentLoaded', function() {
+            const video = document.querySelector('.video-background');
+            
+            if (video && window.innerWidth > 768) {
+                video.addEventListener('error', () => {
+                    console.log('Video failed to load, using gradient background');
+                    document.querySelector('.hero').style.background = 'linear-gradient(135deg, #001122, #003344, #001122)';
+                });
+            }
+        });
+
+        // Add CSS animation keyframes
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeInScale {
+                from {
+                    opacity: 0;
+                    transform: translate(-50%, -50%) scale(0.8);
+                }
+                to {
+                    opacity: 1;
+                    transform: translate(-50%, -50%) scale(1);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
