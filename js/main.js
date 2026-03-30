@@ -663,5 +663,20 @@
             btn.addEventListener('click', () => setLanguage(btn.getAttribute('data-lang')));
         });
 
+        // Services dropdown: mobile touch support
+        const servicesDropdown = document.querySelector('.services-dropdown');
+        const servicesBtnEl = document.querySelector('.services-btn');
+        if (servicesDropdown && servicesBtnEl) {
+            servicesBtnEl.addEventListener('click', (e) => {
+                if (window.innerWidth <= 768) {
+                    e.stopPropagation();
+                    servicesDropdown.classList.toggle('open');
+                }
+            });
+            document.addEventListener('click', () => {
+                servicesDropdown.classList.remove('open');
+            });
+        }
+
         // Initialize language on page load
         setLanguage(currentLang);
