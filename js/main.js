@@ -663,29 +663,6 @@
             btn.addEventListener('click', () => setLanguage(btn.getAttribute('data-lang')));
         });
 
-        // Hamburger menu
-        const hamburger = document.getElementById('hamburger');
-        const navMenu = document.getElementById('nav-menu');
-        if (hamburger && navMenu) {
-            hamburger.addEventListener('click', (e) => {
-                e.stopPropagation();
-                hamburger.classList.toggle('open');
-                navMenu.classList.toggle('open');
-            });
-            navMenu.querySelectorAll('a').forEach(link => {
-                link.addEventListener('click', () => {
-                    hamburger.classList.remove('open');
-                    navMenu.classList.remove('open');
-                });
-            });
-            document.addEventListener('click', (e) => {
-                if (!navMenu.contains(e.target) && !hamburger.contains(e.target)) {
-                    hamburger.classList.remove('open');
-                    navMenu.classList.remove('open');
-                }
-            });
-        }
-
         // Services dropdown: mobile touch support
         const servicesDropdown = document.querySelector('.services-dropdown');
         const servicesBtnEl = document.querySelector('.services-btn');
@@ -696,10 +673,8 @@
                     servicesDropdown.classList.toggle('open');
                 }
             });
-            document.addEventListener('click', (e) => {
-                if (!servicesDropdown.contains(e.target)) {
-                    servicesDropdown.classList.remove('open');
-                }
+            document.addEventListener('click', () => {
+                servicesDropdown.classList.remove('open');
             });
         }
 
