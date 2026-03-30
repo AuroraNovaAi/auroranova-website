@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AuroraNova Finance</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="fin.css">
+</head>
+<body class="fin-page">
+<div class="fin-app">
+
+  <!-- ══ TOPBAR ══ -->
+  <header class="topbar">
+    <a href="/" class="logo" aria-label="AuroraNova Ana Sayfa">
+      <span class="logo-main"><em>Aurora</em><span>Nova</span></span>
+      <span class="logo-sub">FINANCE</span>
+    </a>
+
+    <nav class="nav" role="navigation" aria-label="Ana menü">
+      <button class="nav-item active" onclick="finGo('dashboard')">Dashboard</button>
+      <button class="nav-item" onclick="finGo('entry')">Veri Girişi</button>
+      <button class="nav-item" onclick="finGo('history')">Geçmiş</button>
+      <button class="nav-item" onclick="finGo('compare')">Karşılaştırma</button>
+      <button class="nav-item" onclick="finGo('companies')">Şirketler</button>
+    </nav>
+
+    <span id="company-pill" class="company-pill" style="display:none"></span>
+
+    <a href="/" class="fin-back-link">← Ana Sayfa</a>
+  </header>
+
+  <!-- ══ MAIN ══ -->
+  <main class="main">
+
+    <!-- ────────────────────────────────────────
+         PAGE: DASHBOARD
+    ──────────────────────────────────────── -->
+    <section id="p-dashboard" class="page active">
+
+      <!-- Empty state (no company selected) -->
+      <div id="dash-empty" class="empty" style="display:none">
+        <div class="empty-icon">📊</div>
+        <h3>Şirket Seçilmedi</h3>
+        <p>Önce bir şirket oluşturun veya mevcut bir şirketi aktif edin.</p>
+        <button class="btn btn-primary" onclick="finGo('companies')">Şirketlere Git</button>
+      </div>
+
+      <!-- Dashboard content -->
+      <div id="dash-main" style="display:none">
+
+        <div class="page-header">
+          <div>
+            <h1 id="dash-title">—</h1>
+            <p id="dash-desc"></p>
+          </div>
+          <div class="ph-right">
+            <label for="company-select" style="font-size:12px;color:var(--fin-text3)">Şirket:</label>
+            <select id="company-select" class="year-sel" onchange="selectCo(this.value)"></select>
+            <label for="dash-year" style="font-size:12px;color:var(--fin-text3)">Yıl:</label>
+            <select id="dash-year" class="year-sel" onchange="renderDash()">
+              <option>2022</option><option>2023</option><option>2024</option>
+              <option selected>2025</option><option>2026</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- KPI row -->
+        <div id="kpi-row" class="g5 mb-5"></div>
+
+        <!-- Charts -->
+        <div class="dash-grid mb-5">
+          <div class="card">
+            <div class="card-title">Aylık Gelir &amp; Gider</div>
+            <div id="dash-bar"></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Kar &amp; Personel Oranları</div>
+            <div id="dash-ratio"></div>
+          </div>
+        </div>
+
+        <!-- Summary table -->
+        <div class="card" style="padding:0;overflow:hidden">
+          <div style="padding:16px 20px 0">
+            <div class="card-title" style="margin-bottom:0">Dönem Özeti</div>
+          </div>
+          <div class="table-wrap" style="border:none;border-radius:0">
+            <table>
+              <thead><tr id="sum-head"></tr></thead>
+              <tbody id="sum-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ────────────────────────────────────────
+         PAGE: VERİ GİRİŞİ
+    ──────────────────────────────────────── -->
+    <section id="p-entry" class="page">
+
+      <div class="page-header">
+        <div>
+          <h1>Veri Girişi</h1>
+          <p>Aylık finansal verileri girin</p>
+        </div>
+        <div class="ph-right">
+          <label for="entry-co" style="font-size:12px;color:var(--fin-text3)">Şirket:</label>
+          <select id="entry-co" class="year-sel" onchange="switchEntryCo(this.value)"></select>
+        </div>
+      </div>
+
+      <!-- No company notice -->
+      <div id="entry-no-co" class="no-co-notice" style="display:none">
+        <span style="font-size:20px">⚠️</span>
+        <div>
+          <strong>Şirket seçilmedi.</strong>
+          Veri girebilmek için önce bir şirket seçin veya oluşturun.
+          <button class="btn btn-sm" style="margin-left:12px" onclick="finGo('companies')">Şirket Ekle</button>
+        </div>
+      </div>
+
+      <div id="entry-wrap" style="display:none">
+
+        <!-- Year + Calendar -->
+        <div class="card mb-5">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+            <div class="card-title" style="margin-bottom:0">Dönem Seçimi</div>
+            <div class="flex-center gap-2">
+              <label for="ey" style="font-size:12px;color:var(--fin-text3)">Yıl:</label>
+              <select id="ey" class="year-sel" onchange="renderCal()">
+                <option>2022</option><option>2023</option><option>2024</option>
+                <option selected>2025</option><option>2026</option>
+              </select>
+              <!-- Hidden month picker used by JS -->
+              <select id="em" style="display:none" onchange="loadForm();renderCal()">
+                <option value="">—</option>
+                <option value="1">Oca</option><option value="2">Şub</option>
+                <option value="3">Mar</option><option value="4">Nis</option>
+                <option value="5">May</option><option value="6">Haz</option>
+                <option value="7">Tem</option><option value="8">Ağu</option>
+                <option value="9">Eyl</option><option value="10">Eki</option>
+                <option value="11">Kas</option><option value="12">Ara</option>
+              </select>
+            </div>
+          </div>
+          <div id="cal" class="cal"></div>
+          <p style="font-size:11px;color:var(--fin-text3);margin-top:4px">Yeşil = kayıtlı veri. Bir ay seçerek formu açın.</p>
+        </div>
+
+        <!-- Entry form -->
+        <div id="entry-form" style="display:none">
+
+          <div class="page-header" style="margin-bottom:16px">
+            <h2 id="form-title" style="font-size:18px;font-weight:700;color:var(--fin-text1)"></h2>
+            <div id="edit-ind"></div>
+          </div>
+
+          <div class="entry-layout">
+
+            <!-- Left: input fields -->
+            <div>
+
+              <!-- Gelirler -->
+              <div class="field-group">
+                <div class="field-group-title">Gelirler</div>
+                <div class="fields-grid">
+                  <div class="form-group">
+                    <label class="form-label" for="f_baslik">Başlık</label>
+                    <input type="number" id="f_baslik" placeholder="0" oninput="liveCalc()">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="f_baza">Baza</label>
+                    <input type="number" id="f_baza" placeholder="0" oninput="liveCalc()">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="f_cekyat">Çekyat</label>
+                    <input type="number" id="f_cekyat" placeholder="0" oninput="liveCalc()">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="f_metal">Metal</label>
+                    <input type="number" id="f_metal" placeholder="0" oninput="liveCalc()">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="f_oturma">Oturma</label>
+                    <input type="number" id="f_oturma" placeholder="0" oninput="liveCalc()">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="f_sandalye">Sandalye</label>
+                    <input type="number" id="f_sandalye" placeholder="0" oninput="liveCalc()">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="f_mobilya">Mobilya</label>
+                    <input type="number" id="f_mobilya" placeholder="0" oninput="liveCalc()">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="f_silte">Silte</label>
+                    <input type="number" id="f_silte" placeholder="0" oninput="liveCalc()">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="f_alis_iade">Alış İade</label>
+                    <input type="number" id="f_alis_iade" placeholder="0" oninput="liveCalc()">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Giderler -->
+              <div class="field-group">
+                <div class="field-group-title">Giderler</div>
+                <div class="fields-grid">
+                  <div class="form-group">
+                    <label class="form-label" for="f_faaliyet">Faaliyet</label>
+                    <input type="number" id="f_faaliyet" placeholder="0" oninput="liveCalc()">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="f_finansman">Finansman</label>
+                    <input type="number" id="f_finansman" placeholder="0" oninput="liveCalc()">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="f_hmm_alim">HMM Alım</label>
+                    <input type="number" id="f_hmm_alim" placeholder="0" oninput="liveCalc()">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="f_satis_iade">Satış İade</label>
+                    <input type="number" id="f_satis_iade" placeholder="0" oninput="liveCalc()">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="f_insaat">İnşaat</label>
+                    <input type="number" id="f_insaat" placeholder="0" oninput="liveCalc()">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="f_personel">Personel</label>
+                    <input type="number" id="f_personel" placeholder="0" oninput="liveCalc()">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="f_vergi">Vergi</label>
+                    <input type="number" id="f_vergi" placeholder="0" oninput="liveCalc()">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="f_hmm_sarf">HMM Sarf</label>
+                    <input type="number" id="f_hmm_sarf" placeholder="0" oninput="liveCalc()">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Maaşlar -->
+              <div class="field-group">
+                <div class="field-group-title">Maaşlar</div>
+                <div class="fields-grid">
+                  <div class="form-group">
+                    <label class="form-label" for="f_dos_maas">Döşeme Maaş</label>
+                    <input type="number" id="f_dos_maas" placeholder="0" oninput="liveCalc()">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="f_mob_maas">Mobilya Maaş</label>
+                    <input type="number" id="f_mob_maas" placeholder="0" oninput="liveCalc()">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="f_slt_maas">Silte Maaş</label>
+                    <input type="number" id="f_slt_maas" placeholder="0" oninput="liveCalc()">
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-actions">
+                <button class="btn btn-primary" onclick="saveEntry()">💾 Kaydet</button>
+                <button class="btn" onclick="clearForm()">Temizle</button>
+                <button id="del-btn" class="btn btn-danger" onclick="delEntry()" style="display:none">🗑 Sil</button>
+              </div>
+
+            </div>
+
+            <!-- Right: live calc panel -->
+            <div>
+              <div class="card" style="position:sticky;top:76px">
+                <div class="card-title">Canlı Hesaplama</div>
+                <div id="live-panel"></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ────────────────────────────────────────
+         PAGE: GEÇMİŞ
+    ──────────────────────────────────────── -->
+    <section id="p-history" class="page">
+
+      <div class="page-header">
+        <div>
+          <h1>Geçmiş</h1>
+          <p>Aylık kayıtlar ve finansal tablo</p>
+        </div>
+      </div>
+
+      <div class="hist-filters">
+        <label for="hist-year">Yıl:</label>
+        <select id="hist-year" class="year-sel" onchange="renderHistory()">
+          <option>2022</option><option>2023</option><option>2024</option>
+          <option selected>2025</option><option>2026</option>
+        </select>
+      </div>
+
+      <div id="hist-card" class="card" style="padding:0;overflow:hidden">
+        <div class="empty"><p>Şirket seçin.</p></div>
+      </div>
+
+    </section>
+
+    <!-- ────────────────────────────────────────
+         PAGE: KARŞILAŞTIRMA
+    ──────────────────────────────────────── -->
+    <section id="p-compare" class="page">
+
+      <div class="page-header">
+        <div>
+          <h1>Dönem Karşılaştırma</h1>
+          <p>İki dönem arasındaki farkı analiz edin</p>
+        </div>
+      </div>
+
+      <div class="compare-layout mb-5">
+
+        <!-- Period 1 -->
+        <div class="period-card">
+          <h3>Dönem 1</h3>
+          <div class="period-row" style="margin-bottom:10px">
+            <span>Başlangıç:</span>
+            <select id="c1ms" class="year-sel">
+              <option value="1">Oca</option><option value="2">Şub</option>
+              <option value="3">Mar</option><option value="4">Nis</option>
+              <option value="5">May</option><option value="6">Haz</option>
+              <option value="7">Tem</option><option value="8">Ağu</option>
+              <option value="9">Eyl</option><option value="10">Eki</option>
+              <option value="11">Kas</option><option value="12">Ara</option>
+            </select>
+            <select id="c1ys" class="year-sel">
+              <option>2022</option><option>2023</option><option>2024</option>
+              <option selected>2025</option><option>2026</option>
+            </select>
+            <span></span>
+          </div>
+          <div class="period-row">
+            <span>Bitiş:</span>
+            <select id="c1me" class="year-sel">
+              <option value="1">Oca</option><option value="2">Şub</option>
+              <option value="3">Mar</option><option value="4">Nis</option>
+              <option value="5">May</option><option value="6">Haz</option>
+              <option value="7">Tem</option><option value="8">Ağu</option>
+              <option value="9">Eyl</option><option value="10">Eki</option>
+              <option value="11">Kas</option><option value="12">Ara</option>
+            </select>
+            <select id="c1ye" class="year-sel">
+              <option>2022</option><option>2023</option><option>2024</option>
+              <option selected>2025</option><option>2026</option>
+            </select>
+            <span></span>
+          </div>
+        </div>
+
+        <!-- Period 2 -->
+        <div class="period-card">
+          <h3>Dönem 2</h3>
+          <div class="period-row" style="margin-bottom:10px">
+            <span>Başlangıç:</span>
+            <select id="c2ms" class="year-sel">
+              <option value="1">Oca</option><option value="2">Şub</option>
+              <option value="3">Mar</option><option value="4">Nis</option>
+              <option value="5">May</option><option value="6">Haz</option>
+              <option value="7">Tem</option><option value="8">Ağu</option>
+              <option value="9">Eyl</option><option value="10">Eki</option>
+              <option value="11">Kas</option><option value="12">Ara</option>
+            </select>
+            <select id="c2ys" class="year-sel">
+              <option>2022</option><option>2023</option><option>2024</option>
+              <option selected>2025</option><option>2026</option>
+            </select>
+            <span></span>
+          </div>
+          <div class="period-row">
+            <span>Bitiş:</span>
+            <select id="c2me" class="year-sel">
+              <option value="1">Oca</option><option value="2">Şub</option>
+              <option value="3">Mar</option><option value="4">Nis</option>
+              <option value="5">May</option><option value="6">Haz</option>
+              <option value="7">Tem</option><option value="8">Ağu</option>
+              <option value="9">Eyl</option><option value="10">Eki</option>
+              <option value="11">Kas</option><option value="12">Ara</option>
+            </select>
+            <select id="c2ye" class="year-sel">
+              <option>2022</option><option>2023</option><option>2024</option>
+              <option selected>2025</option><option>2026</option>
+            </select>
+            <span></span>
+          </div>
+        </div>
+
+      </div>
+
+      <div style="margin-bottom:20px">
+        <button class="btn btn-primary" onclick="runCompare()">Karşılaştır →</button>
+      </div>
+
+      <div id="cmp-result"></div>
+
+    </section>
+
+    <!-- ────────────────────────────────────────
+         PAGE: ŞİRKETLER
+    ──────────────────────────────────────── -->
+    <section id="p-companies" class="page">
+
+      <div class="page-header">
+        <div>
+          <h1>Şirketler</h1>
+          <p>Şirketleri yönetin ve aktif şirketi seçin</p>
+        </div>
+        <div class="ph-right">
+          <button class="btn btn-primary" onclick="toggleAddForm()">+ Yeni Şirket</button>
+        </div>
+      </div>
+
+      <!-- Add company form -->
+      <div id="add-form">
+        <div class="card-title">Yeni Şirket Ekle</div>
+        <div class="fields-grid" style="margin-bottom:14px">
+          <div class="form-group">
+            <label class="form-label" for="nc-name">Şirket Adı *</label>
+            <input type="text" id="nc-name" placeholder="Şirket adı">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="nc-sector">Sektör</label>
+            <input type="text" id="nc-sector" placeholder="Örn: Mobilya">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="nc-contact">İletişim</label>
+            <input type="text" id="nc-contact" placeholder="Telefon veya e-posta">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="nc-curr">Para Birimi</label>
+            <select id="nc-curr" class="year-sel" style="width:100%">
+              <option value="TRY">₺ TRY</option>
+              <option value="USD">$ USD</option>
+              <option value="EUR">€ EUR</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" onclick="saveCo()">Kaydet</button>
+          <button class="btn" onclick="toggleAddForm()">İptal</button>
+        </div>
+      </div>
+
+      <!-- Company list -->
+      <div id="co-list" class="g3"></div>
+
+    </section>
+
+  </main>
+
+  <!-- Toast notification -->
+  <div id="toast" class="toast" role="alert" aria-live="polite"></div>
+
+</div><!-- /.fin-app -->
+<script defer src="fin.js"></script>
+</body>
+</html>

@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AuroraNova HR Tasks</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="hr.css">
+</head>
+<body class="hr-page">
+<div class="hr-app">
+
+  <!-- ============================================================
+       SIDEBAR
+       ============================================================ -->
+  <aside class="sidebar">
+
+    <!-- Logo -->
+    <div class="sidebar-logo">
+      <div class="brand-name">Aurora<span>Nova</span></div>
+      <div class="brand-sub">Tasks</div>
+      <div class="brand-sub"><strong>KKTC</strong> · v1.0</div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="sidebar-nav">
+      <div class="nav-item active" data-page="dashboard" onclick="hrNavigate('dashboard')">
+        <span class="nav-icon">🏠</span> Gösterge Paneli
+      </div>
+      <div class="nav-item" data-page="personnel" onclick="hrNavigate('personnel')">
+        <span class="nav-icon">👥</span> Personel
+      </div>
+      <div class="nav-item" data-page="processes" onclick="hrNavigate('processes')">
+        <span class="nav-icon">📂</span> Süreçler
+      </div>
+      <div class="nav-item" data-page="calendar" onclick="hrNavigate('calendar')">
+        <span class="nav-icon">📅</span> Takvim
+      </div>
+      <div class="nav-item" data-page="templates" onclick="hrNavigate('templates')">
+        <span class="nav-icon">📋</span> Şablonlar
+      </div>
+    </nav>
+
+    <!-- Sidebar footer -->
+    <div class="sidebar-footer">
+      <a href="/" style="display:block;text-align:center;padding:8px 20px;font-size:12px;color:rgba(255,255,255,0.4);text-decoration:none;"
+         onmouseover="this.style.color='rgba(255,255,255,0.8)'"
+         onmouseout="this.style.color='rgba(255,255,255,0.4)'">← Ana Sayfa</a>
+    </div>
+
+  </aside>
+
+  <!-- ============================================================
+       MAIN AREA
+       ============================================================ -->
+  <div class="main">
+
+    <!-- Topbar -->
+    <div class="topbar">
+      <div id="topbar-title" class="topbar-title">Gösterge Paneli</div>
+      <div id="topbar-actions" class="topbar-actions"></div>
+    </div>
+
+    <!-- Content area -->
+    <div class="content-area">
+
+      <!-- ---- DASHBOARD ---- -->
+      <section id="page-dashboard" class="page-section active">
+        <div id="dash-stats" class="dash-stats"></div>
+        <div class="dash-grid">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Son Eklenen Personel</span>
+            </div>
+            <div class="card-body">
+              <ul id="dash-recent-personnel" class="recent-list"></ul>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Yaklaşan Görevler</span>
+            </div>
+            <div class="card-body">
+              <ul id="dash-upcoming" class="recent-list"></ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---- PERSONNEL ---- -->
+      <section id="page-personnel" class="page-section">
+        <div class="filter-bar">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="personnel-search" placeholder="İsim veya pozisyon ara..." oninput="filterPersonnel()">
+          </div>
+          <select id="personnel-nat" onchange="filterPersonnel()" style="width:auto;min-width:130px;">
+            <option value="">Tüm Uyruklar</option>
+            <option value="TC">TC</option>
+            <option value="KKTC">KKTC</option>
+            <option value="Diğer">Diğer</option>
+          </select>
+          <select id="personnel-status" onchange="filterPersonnel()" style="width:auto;min-width:120px;">
+            <option value="">Tüm Durumlar</option>
+            <option value="active">Aktif</option>
+            <option value="passive">Pasif</option>
+            <option value="leave">İzinde</option>
+          </select>
+        </div>
+        <div id="personnel-table-wrap"></div>
+      </section>
+
+      <!-- ---- PROCESSES ---- -->
+      <section id="page-processes" class="page-section">
+        <div class="filter-bar">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="proc-search" placeholder="Personel veya şablon ara..." oninput="filterProcesses()">
+          </div>
+          <select id="proc-type-filter" onchange="filterProcesses()" style="width:auto;min-width:160px;">
+            <option value="">Tüm Türler</option>
+            <option value="calisma-izni">Çalışma İzni</option>
+            <option value="izin-yenileme">İzin Yenileme</option>
+            <option value="kota-basvurusu">Kota Başvurusu</option>
+            <option value="diger">Diğer</option>
+          </select>
+        </div>
+        <div id="processes-wrap"></div>
+      </section>
+
+      <!-- ---- CALENDAR ---- -->
+      <section id="page-calendar" class="page-section">
+        <div class="calendar-wrap">
+          <div class="cal-header">
+            <div class="cal-nav">
+              <button class="btn btn-ghost btn-sm" onclick="calNav(-1)">&#8249;</button>
+              <div id="cal-month-title" class="cal-title"></div>
+              <button class="btn btn-ghost btn-sm" onclick="calNav(1)">&#8250;</button>
+            </div>
+            <div class="cal-filters">
+              <select id="cal-filter-nat" onchange="renderCalendar()" style="width:auto;min-width:130px;">
+                <option value="">Tüm Uyruklar</option>
+                <option value="TC">TC</option>
+                <option value="KKTC">KKTC</option>
+                <option value="Diğer">Diğer</option>
+              </select>
+              <select id="cal-filter-type" onchange="renderCalendar()" style="width:auto;min-width:160px;">
+                <option value="">Tüm Türler</option>
+                <option value="calisma-izni">Çalışma İzni</option>
+                <option value="izin-yenileme">İzin Yenileme</option>
+                <option value="kota-basvurusu">Kota Başvurusu</option>
+                <option value="diger">Diğer</option>
+              </select>
+            </div>
+          </div>
+          <div id="cal-grid-wrap"></div>
+        </div>
+      </section>
+
+      <!-- ---- TEMPLATES ---- -->
+      <section id="page-templates" class="page-section">
+        <div id="templates-wrap"></div>
+      </section>
+
+    </div><!-- /content-area -->
+  </div><!-- /main -->
+
+  <!-- ============================================================
+       MODAL: Add / Edit Person
+       ============================================================ -->
+  <div id="modal-person" class="modal-backdrop">
+    <div class="modal">
+      <div class="modal-header">
+        <span id="modal-person-title" class="modal-title">Personel Ekle</span>
+        <button class="modal-close" onclick="hrCloseModal('modal-person')">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="form-person" onsubmit="savePerson(event)">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Ad Soyad *</label>
+              <input type="text" id="p-name" placeholder="Ahmet Yılmaz" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Pozisyon</label>
+              <input type="text" id="p-position" placeholder="Müdür, Teknisyen...">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Uyruk</label>
+              <select id="p-nationality">
+                <option value="TC">TC</option>
+                <option value="KKTC">KKTC</option>
+                <option value="Diğer">Diğer</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">E-posta</label>
+              <input type="email" id="p-email" placeholder="ornek@sirket.com">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">İşe Başlangıç</label>
+              <input type="date" id="p-startdate">
+            </div>
+            <div class="form-group">
+              <label class="form-label">İzin Bitiş Tarihi</label>
+              <input type="date" id="p-permit">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Durum</label>
+            <select id="p-status">
+              <option value="active">Aktif</option>
+              <option value="passive">Pasif</option>
+              <option value="leave">İzinde</option>
+            </select>
+          </div>
+          <div class="modal-footer" style="padding:0;margin-top:8px;">
+            <button type="button" class="btn btn-secondary" onclick="hrCloseModal('modal-person')">İptal</button>
+            <button type="submit" class="btn btn-primary">Kaydet</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MODAL: Start Process
+       ============================================================ -->
+  <div id="modal-process" class="modal-backdrop">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <span class="modal-title">Süreç Başlat</span>
+        <button class="modal-close" onclick="hrCloseModal('modal-process')">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="form-process" onsubmit="startProcess(event)">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Şablon *</label>
+              <select id="proc-template-select" onchange="previewTemplate()">
+                <option value="">— Şablon seçin —</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Personel *</label>
+              <select id="proc-person-select">
+                <option value="">— Personel seçin —</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Başlangıç Tarihi</label>
+            <input type="date" id="proc-start-date">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Notlar</label>
+            <textarea id="proc-notes" placeholder="Ek notlar..."></textarea>
+          </div>
+          <div id="proc-preview-wrap"></div>
+          <div class="modal-footer" style="padding:0;margin-top:8px;">
+            <button type="button" class="btn btn-secondary" onclick="hrCloseModal('modal-process')">İptal</button>
+            <button type="submit" class="btn btn-primary">Başlat</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MODAL: Template Editor
+       ============================================================ -->
+  <div id="modal-template" class="modal-backdrop">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <span id="modal-template-title" class="modal-title">Yeni Şablon</span>
+        <button class="modal-close" onclick="hrCloseModal('modal-template')">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="form-template" onsubmit="saveTemplate(event)">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Şablon Adı *</label>
+              <input type="text" id="t-name" placeholder="Çalışma İzni Başvurusu" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tür</label>
+              <select id="t-type">
+                <option value="calisma-izni">Çalışma İzni</option>
+                <option value="izin-yenileme">İzin Yenileme</option>
+                <option value="kota-basvurusu">Kota Başvurusu</option>
+                <option value="diger">Diğer</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Açıklama</label>
+            <textarea id="t-desc" placeholder="Şablon hakkında kısa açıklama..."></textarea>
+          </div>
+
+          <div class="form-label mt-3 mb-2" style="display:block">Görevler</div>
+          <div id="task-editor-list" class="task-editor-list"></div>
+
+          <!-- Add new task row -->
+          <div class="add-task-row mt-2">
+            <input type="text" id="new-task-name" placeholder="Yeni görev adı...">
+            <select id="new-task-assignee">
+              <option value="ik">İK</option>
+              <option value="personel">Personel</option>
+              <option value="yonetim">Yönetim</option>
+            </select>
+            <input type="number" id="new-task-days" min="0" placeholder="Gün" style="width:100%">
+            <button type="button" class="btn btn-primary btn-sm" onclick="confirmAddTask()">+ Ekle</button>
+          </div>
+
+          <div class="modal-footer" style="padding:0;margin-top:16px;">
+            <button type="button" class="btn btn-secondary" onclick="hrCloseModal('modal-template')">İptal</button>
+            <button type="submit" class="btn btn-primary">Kaydet</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Script loaded before file upload modal so JS is ready for DOMContentLoaded -->
+  <script src="hr.js"></script>
+
+  <!-- ============================================================
+       MODAL: File Upload
+       (placed after script tag per spec; still inside .hr-app)
+       ============================================================ -->
+  <div id="modal-upload" class="modal-backdrop">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title">Dosya Yükle</span>
+        <button class="modal-close" onclick="hrCloseModal('modal-upload')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="upload-zone" class="upload-zone">
+          <div class="upload-zone-icon">📁</div>
+          <p>Dosyaları buraya sürükleyin veya tıklayın</p>
+          <p class="uz-hint">PDF, Word, Excel, resim ve arşiv dosyaları desteklenir</p>
+        </div>
+        <input type="file" id="file-input" multiple style="display:none" onchange="handleFileSelect(event)">
+        <div id="upload-list" class="upload-list"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost btn-sm" onclick="removeFileFromModal()">Temizle</button>
+        <button class="btn btn-secondary" onclick="hrCloseModal('modal-upload')">İptal</button>
+        <button class="btn btn-primary" onclick="hrCloseModal('modal-upload')">Tamam</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /hr-app -->
+</body>
+</html>
