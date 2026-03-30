@@ -777,7 +777,32 @@ function finDownloadTemplate() {
   XLSX.writeFile(wb, 'AuroraNova_Fin_Sablon.xlsx');
 }
 
+function populateYearSelects() {
+  const currentYear = new Date().getFullYear();
+  const startYear = 2020;
+  const endYear = currentYear + 5;
+  const yearIds = ['dash-year','ey','hist-year','c1ys','c1ye','c2ys','c2ye'];
+  // Default selected years per select
+  const defaults = { 'dash-year': currentYear, 'ey': currentYear, 'hist-year': currentYear,
+    'c1ys': currentYear - 1, 'c1ye': currentYear - 1,
+    'c2ys': currentYear, 'c2ye': currentYear };
+  yearIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const current = el.value || defaults[id] || currentYear;
+    el.innerHTML = '';
+    for (let y = startYear; y <= endYear; y++) {
+      const opt = document.createElement('option');
+      opt.value = y;
+      opt.textContent = y;
+      if (y == current || y == defaults[id]) opt.selected = true;
+      el.appendChild(opt);
+    }
+  });
+}
+
 // ── Initialise ──
+populateYearSelects();
 load();
 updateSelects();
 updateActivePill();

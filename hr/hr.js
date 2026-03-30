@@ -489,8 +489,10 @@ function toggleTask(processId, taskId) {
   const task = proc.tasks.find(t => t.id === taskId);
   if (!task) return;
   task.done = !task.done;
+  task.doneAt = task.done ? new Date().toISOString() : null;
   hrSaveState();
   renderProcesses();
+  renderDashboard();
 }
 
 function filterProcesses() {
@@ -540,13 +542,16 @@ function renderProcesses() {
       const av = color(proc.personName);
       const bodyClass = proc.open ? 'process-body open' : 'process-body';
 
+      const hasOverdue = proc.tasks.some(t => !t.done && t.dueDate && t.dueDate < today());
+      const hasSoon = proc.tasks.some(t => !t.done && t.dueDate && t.dueDate >= today() && t.dueDate <= addDays(today(), 7));
+
       return `<div class="process-card">
         <div class="process-header" onclick="toggleProcessBody('${proc.id}')">
           <div class="ph-left">
             <div class="avatar" style="background:${av}">${ini(proc.personName)}</div>
             <div class="ph-info">
               <div class="ph-title">${proc.personName} — ${proc.templateName}</div>
-              <div class="ph-meta">Başlangıç: ${proc.startDate}</div>
+              <div class="ph-meta">Başlangıç: ${proc.startDate}${hasOverdue ? ' <span style="color:#e8637a;font-size:11px;font-weight:600">● Geciken görev var</span>' : (hasSoon ? ' <span style="color:#e8a24a;font-size:11px">● Yaklaşan görev var</span>' : '')}</div>
             </div>
           </div>
           <div class="ph-right">
@@ -556,19 +561,30 @@ function renderProcesses() {
               </div>
               <span>${done}/${total}</span>
             </div>
+            ${pct === 100 ? '<span class="badge badge-success" style="font-size:11px">✓ Tamamlandı</span>' : ''}
             <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteProcess('${proc.id}')">Sil</button>
           </div>
         </div>
         <div class="${bodyClass}">
           <div class="task-list">` +
           proc.tasks.map(t => {
-            const doneClass = t.done ? 'task-item done' : 'task-item';
+            const todayStr = today();
+            const isOverdue = !t.done && t.dueDate && t.dueDate < todayStr;
+            const isSoon = !t.done && t.dueDate && !isOverdue && t.dueDate <= addDays(todayStr, 7);
+            const doneClass = t.done ? 'task-item done' : (isOverdue ? 'task-item overdue' : (isSoon ? 'task-item soon' : 'task-item'));
             const checkContent = t.done ? '✓' : '';
+            const dueLabel = t.done
+              ? `<span style="color:#2ea06e;font-size:11px">✓ ${t.doneAt ? t.doneAt.slice(0,10) + ' tamamlandı' : 'Tamamlandı'}</span>`
+              : (isOverdue
+                  ? `<span style="color:#e8637a;font-size:11px;font-weight:600">⚠ Gecikmiş — ${t.dueDate}</span>`
+                  : (isSoon
+                      ? `<span style="color:#e8a24a;font-size:11px">⏰ Yaklaşıyor — ${t.dueDate}</span>`
+                      : `<span style="font-size:11px;color:#9da4c8">Teslim: ${t.dueDate || '—'}</span>`));
             return `<div class="${doneClass}">
               <div class="task-check" onclick="toggleTask('${proc.id}','${t.id}')">${checkContent}</div>
               <div class="task-info">
                 <div class="task-name">${t.name}</div>
-                <div class="task-due">Teslim: ${t.dueDate}</div>
+                <div class="task-due">${dueLabel}</div>
               </div>
             </div>`;
           }).join('') +
@@ -637,12 +653,18 @@ function renderCalendar() {
 
     proc.tasks.forEach(task => {
       if (!task.dueDate) return;
+      if (task.done) return;
       const [y, m] = task.dueDate.split('-').map(Number);
       if (y === calYear && m === calMonth + 1) {
         if (!eventMap[task.dueDate]) eventMap[task.dueDate] = [];
+        const todayStr = today();
+        const isOverdue = task.dueDate < todayStr;
+        const isSoon = !isOverdue && task.dueDate <= addDays(todayStr, 7);
         eventMap[task.dueDate].push({
           name: proc.personName + ': ' + task.name,
-          cls: typeClass[proc.templateType] || 'other'
+          cls: isOverdue ? 'overdue' : (isSoon ? 'soon' : (typeClass[proc.templateType] || 'other')),
+          overdue: isOverdue,
+          soon: isSoon
         });
       }
     });
@@ -681,7 +703,7 @@ function renderCalendar() {
     html += `<div class="cal-cell${isToday ? ' today' : ''}">
       <div class="cal-date">${dateContent}</div>` +
       events.map(ev =>
-        `<span class="cal-event ${ev.cls}" title="${ev.name}">${ev.name}</span>`
+        `<span class="cal-event ${ev.cls}" title="${ev.name}">${ev.overdue ? '⚠ ' : (ev.soon ? '⏰ ' : '')}${ev.name}</span>`
       ).join('') +
     `</div>`;
   }
@@ -709,7 +731,26 @@ function renderDashboard() {
   const total   = hrState.personnel.length;
   const active  = hrState.personnel.filter(p => p.status === 'active').length;
   const procs   = hrState.processes.length;
-  const tmpls   = hrState.templates.length;
+
+  const todayStr = today();
+  const in7 = addDays(todayStr, 7);
+
+  // Compute pending tasks across all processes
+  const allPending = [];
+  hrState.processes.forEach(proc => {
+    proc.tasks.filter(t => !t.done && t.dueDate).forEach(t => {
+      allPending.push({ procName: proc.personName, taskName: t.name, dueDate: t.dueDate,
+        overdue: t.dueDate < todayStr,
+        soon: t.dueDate >= todayStr && t.dueDate <= in7 });
+    });
+  });
+  allPending.sort((a, b) => {
+    if (a.overdue && !b.overdue) return -1;
+    if (!a.overdue && b.overdue) return 1;
+    return a.dueDate > b.dueDate ? 1 : -1;
+  });
+  const overdueCount = allPending.filter(t => t.overdue).length;
+  const soonCount = allPending.filter(t => t.soon).length;
 
   const statsEl = document.getElementById('dash-stats');
   if (statsEl) {
@@ -729,10 +770,15 @@ function renderDashboard() {
         <div class="stat-value">${procs}</div>
         <div class="stat-label">Açık Süreç</div>
       </div>
-      <div class="stat-card">
-        <div class="stat-icon">📋</div>
-        <div class="stat-value">${tmpls}</div>
-        <div class="stat-label">Şablon</div>
+      <div class="stat-card ${overdueCount > 0 ? 'stat-card-danger' : ''}">
+        <div class="stat-icon">⚠</div>
+        <div class="stat-value" style="${overdueCount > 0 ? 'color:#e8637a' : ''}">${overdueCount}</div>
+        <div class="stat-label">Geciken Görev</div>
+      </div>
+      <div class="stat-card ${soonCount > 0 ? 'stat-card-warning' : ''}">
+        <div class="stat-icon">⏰</div>
+        <div class="stat-value" style="${soonCount > 0 ? 'color:#e8a24a' : ''}">${soonCount}</div>
+        <div class="stat-label">7 Günde Bitiyor</div>
       </div>`;
   }
 
@@ -759,29 +805,24 @@ function renderDashboard() {
     }
   }
 
-  /* Upcoming tasks */
+  /* Upcoming + Overdue tasks */
   const upcomingEl = document.getElementById('dash-upcoming');
   if (upcomingEl) {
-    const upcoming = [];
-    hrState.processes.forEach(proc => {
-      proc.tasks.filter(t => !t.done).forEach(t => {
-        upcoming.push({ procName: proc.personName, taskName: t.name, dueDate: t.dueDate });
-      });
-    });
-    upcoming.sort((a, b) => a.dueDate > b.dueDate ? 1 : -1);
-    const top5 = upcoming.slice(0, 5);
-    if (!top5.length) {
-      upcomingEl.innerHTML = '<li><span class="text-muted text-sm">Yaklaşan görev yok.</span></li>';
+    const top8 = allPending.slice(0, 8);
+    if (!top8.length) {
+      upcomingEl.innerHTML = '<li><span class="text-muted text-sm">Bekleyen görev yok.</span></li>';
     } else {
-      upcomingEl.innerHTML = top5.map(u =>
-        `<li>
+      upcomingEl.innerHTML = top8.map(u => {
+        const color = u.overdue ? '#e8637a' : (u.soon ? '#e8a24a' : '#9da4c8');
+        const icon = u.overdue ? '⚠' : (u.soon ? '⏰' : '📅');
+        return `<li>
           <div>
             <div class="rl-name">${u.taskName}</div>
             <div class="rl-meta">${u.procName}</div>
           </div>
-          <span class="text-sm text-muted">${u.dueDate}</span>
-        </li>`
-      ).join('');
+          <span style="font-size:11px;color:${color};font-weight:${u.overdue?'600':'400'};white-space:nowrap">${icon} ${u.dueDate}</span>
+        </li>`;
+      }).join('');
     }
   }
 }

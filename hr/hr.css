@@ -1419,3 +1419,19 @@ body.hr-page {
 .hr-app .xl-preview-wrap td { padding: 8px 10px; border-bottom: 1px solid var(--hr-border); color: var(--hr-text); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
 .hr-app .xl-preview-wrap tr:last-child td { border-bottom: none; }
 .hr-app .xl-preview-wrap tr:hover td { background: #f7f8fd; }
+
+/* ── Task overdue / soon status ── */
+.hr-app .task-item.overdue { background: rgba(232,99,122,0.05); border-radius: 6px; padding: 2px 6px; }
+.hr-app .task-item.overdue .task-name { color: var(--hr-danger); }
+.hr-app .task-item.overdue .task-check { border-color: var(--hr-danger); }
+.hr-app .task-item.soon .task-name { color: var(--hr-warning); }
+.hr-app .task-item.soon .task-check { border-color: var(--hr-warning); }
+
+/* ── Calendar event overdue / soon ── */
+.hr-app .cal-event.overdue { background: rgba(232,99,122,0.18); color: #c0445e; font-weight: 600; }
+.hr-app .cal-event.soon    { background: rgba(232,162,74,0.18);  color: #c47c1a; }
+.hr-app .cal-event.other   { background: rgba(91,127,232,0.13);  color: #4a6fd6; }
+
+/* ── Dashboard stat card variants ── */
+.hr-app .stat-card-danger { box-shadow: 0 0 0 1px rgba(232,99,122,0.25); }
+.hr-app .stat-card-warning { box-shadow: 0 0 0 1px rgba(232,162,74,0.25); }
