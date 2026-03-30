@@ -1011,20 +1011,29 @@
         .services-menu {
             display: none;
             position: absolute;
-            top: calc(100% + 8px);
+            top: 100%;
             right: 0;
+            padding-top: 10px;
+            background: transparent;
+            min-width: 210px;
+            z-index: 1000;
+        }
+
+        .services-menu-inner {
             background: var(--glass-bg);
             backdrop-filter: blur(20px);
             border: 1px solid var(--glass-border);
             border-radius: 20px;
             padding: 8px;
-            min-width: 210px;
-            z-index: 1000;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
         }
 
         .services-dropdown:hover .services-menu,
         .services-dropdown:focus-within .services-menu {
+            display: block;
+        }
+
+        .services-menu-inner {
             display: flex;
             flex-direction: column;
         }
