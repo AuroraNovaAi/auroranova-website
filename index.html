@@ -74,25 +74,32 @@
 
     <!-- Navigation -->
     <nav class="nav">
-        <a href="#home" data-i18n="home">Home</a>
-        <a href="#story" data-i18n="story">Story</a>
-        <a href="#method" data-i18n="method">Method</a>
-        <a href="#work" data-i18n="work">Work</a>
-        <a href="#blog" data-i18n="insights">Insights</a>
-        <a href="#contact" data-i18n="contact">Contact</a>
-        <div class="services-dropdown">
-            <button class="services-btn" data-i18n="services">Services</button>
-            <div class="services-menu">
-                <a href="#" onclick="event.preventDefault(); contactService('branding')" data-i18n-service="branding">Creative & Branding</a>
-                <a href="#" onclick="event.preventDefault(); contactService('web')" data-i18n-service="web">Web Development</a>
-                <a href="#" onclick="event.preventDefault(); contactService('seo')" data-i18n-service="seo">SEO Excellence</a>
-                <a href="#" onclick="event.preventDefault(); contactService('marketing')" data-i18n-service="marketing">Digital Marketing</a>
-                <a href="#" onclick="event.preventDefault(); contactService('ai')" data-i18n-service="ai">AI Solutions</a>
+        <button class="nav-hamburger" id="navHamburger" aria-label="Menu" aria-expanded="false" aria-controls="navLinks">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+        <div class="nav-links" id="navLinks">
+            <a href="#home" data-i18n="home">Home</a>
+            <a href="#story" data-i18n="story">Story</a>
+            <a href="#method" data-i18n="method">Method</a>
+            <a href="#work" data-i18n="work">Work</a>
+            <a href="#blog" data-i18n="insights">Insights</a>
+            <a href="#contact" data-i18n="contact">Contact</a>
+            <div class="services-dropdown">
+                <button class="services-btn" data-i18n="services">Services</button>
+                <div class="services-menu">
+                    <a href="#" onclick="event.preventDefault(); contactService('branding')" data-i18n-service="branding">Creative & Branding</a>
+                    <a href="#" onclick="event.preventDefault(); contactService('web')" data-i18n-service="web">Web Development</a>
+                    <a href="#" onclick="event.preventDefault(); contactService('seo')" data-i18n-service="seo">SEO Excellence</a>
+                    <a href="#" onclick="event.preventDefault(); contactService('marketing')" data-i18n-service="marketing">Digital Marketing</a>
+                    <a href="#" onclick="event.preventDefault(); contactService('ai')" data-i18n-service="ai">AI Solutions</a>
+                </div>
             </div>
-        </div>
-        <div class="lang-switcher">
-            <button class="lang-btn" data-lang="tr">TR</button>
-            <button class="lang-btn" data-lang="en">EN</button>
+            <div class="lang-switcher">
+                <button class="lang-btn" data-lang="tr">TR</button>
+                <button class="lang-btn" data-lang="en">EN</button>
+            </div>
         </div>
     </nav>
 
@@ -229,7 +236,7 @@
                 </div>
                 <!-- PHOTO_WORK_02 -->
                 <div class="photo-card" onclick="openPhotoModal('PHOTO_WORK_02')">
-                    <img src="https://images.unsplash.com/photo-1634942537034-2531766767d1?w=400&h=300&fit=crop&crop=center" alt="Branding" loading="lazy" width="400" height="300">
+                    <img src="assets/yapay-zeka-0704.jpg" alt="Social Media Branding" loading="lazy" width="400" height="300">
                     <div class="photo-overlay">
                         <h4>Brand Identity</h4>
                         <p>Distinctive branding that sets you apart</p>

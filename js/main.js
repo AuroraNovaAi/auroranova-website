@@ -50,7 +50,7 @@
                 title: "Brand Identity",
                 description: "Distinctive branding that sets you apart",
                 fullContent: "Brand identity goes beyond just a logo—it's the complete visual and emotional expression of your company's values, personality, and promise. We create comprehensive brand systems that ensure consistency and recognition across all touchpoints.",
-                image: "https://images.unsplash.com/photo-1634942537034-2531766767d1?w=800&h=600&fit=crop"
+                image: "assets/yapay-zeka-0704.jpg"
             },
             PHOTO_WORK_03: {
                 title: "Digital Growth",
@@ -645,7 +645,7 @@
                     PHOTO_METHOD_02: { title: "Creative Mastery", description: "Beautiful, functional design that tells your story", fullContent: "Our creative process balances artistic vision with user-centered design principles. We craft visual narratives that not only capture attention but also guide users toward meaningful interactions. Every color, typography choice, and layout decision is made with intention and purpose.", image: "https://images.unsplash.com/photo-1626785774573-4b799315345d?w=800&h=600&fit=crop" },
                     PHOTO_METHOD_03: { title: "Technical Excellence", description: "Cutting-edge development and seamless AI integration", fullContent: "Technical excellence is non-negotiable in our development process. We leverage the latest technologies, frameworks, and AI tools to build solutions that are not only visually stunning but also performant, scalable, and secure. Our code is clean, our architecture is robust, and our integrations are seamless.", image: "https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?w=800&h=600&fit=crop" },
                     PHOTO_WORK_01: { title: "Web Development", description: "Modern, responsive websites that drive results", fullContent: "Our web development services encompass everything from simple landing pages to complex web applications. We specialize in creating responsive, fast-loading, and SEO-optimized websites that provide exceptional user experiences across all devices and browsers.", image: "https://images.unsplash.com/photo-1547658719-da2b51169166?w=800&h=600&fit=crop" },
-                    PHOTO_WORK_02: { title: "Brand Identity", description: "Distinctive branding that sets you apart", fullContent: "Brand identity goes beyond just a logo—it's the complete visual and emotional expression of your company's values, personality, and promise. We create comprehensive brand systems that ensure consistency and recognition across all touchpoints.", image: "https://images.unsplash.com/photo-1634942537034-2531766767d1?w=800&h=600&fit=crop" },
+                    PHOTO_WORK_02: { title: "Brand Identity", description: "Distinctive branding that sets you apart", fullContent: "Brand identity goes beyond just a logo—it's the complete visual and emotional expression of your company's values, personality, and promise. We create comprehensive brand systems that ensure consistency and recognition across all touchpoints.", image: "assets/yapay-zeka-0704.jpg" },
                     PHOTO_WORK_03: { title: "Digital Growth", description: "AI-powered solutions for sustainable business growth", fullContent: "Our digital growth strategies combine traditional marketing wisdom with cutting-edge AI technologies. We help businesses scale efficiently through data-driven decision making, automated processes, and intelligent optimization techniques.", image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop" }
                 });
                 Object.assign(blogContent, {
@@ -677,6 +677,85 @@
                 servicesDropdown.classList.remove('open');
             });
         }
+
+        // Hamburger menu
+        const hamburger = document.getElementById('navHamburger');
+        const navLinks = document.getElementById('navLinks');
+        if (hamburger && navLinks) {
+            hamburger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isOpen = navLinks.classList.toggle('open');
+                hamburger.classList.toggle('open', isOpen);
+                hamburger.setAttribute('aria-expanded', isOpen);
+            });
+
+            // Nav linkine tıklayınca menüyü kapat
+            navLinks.querySelectorAll('a[href^="#"]').forEach(link => {
+                link.addEventListener('click', () => {
+                    navLinks.classList.remove('open');
+                    hamburger.classList.remove('open');
+                    hamburger.setAttribute('aria-expanded', 'false');
+                });
+            });
+
+            // Dışarı tıklayınca kapat
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.nav')) {
+                    navLinks.classList.remove('open');
+                    hamburger.classList.remove('open');
+                    hamburger.setAttribute('aria-expanded', 'false');
+                }
+            });
+        }
+
+        // Service stars: touch desteği (mobilde hover yok)
+        stars.forEach(star => {
+            star.addEventListener('touchstart', (e) => {
+                if (window.innerWidth > 768) return;
+                e.preventDefault();
+                const service = star.dataset.service;
+                const info = document.getElementById(service + '-info');
+                if (!info) return;
+
+                // Diğer açık info'ları kapat
+                serviceInfos.forEach(si => si.classList.remove('show'));
+                stars.forEach(s => s.classList.remove('touch-active'));
+
+                info.classList.add('show');
+                star.classList.add('touch-active');
+
+                // 3 saniye sonra kapat
+                setTimeout(() => {
+                    info.classList.remove('show');
+                    star.classList.remove('touch-active');
+                }, 3000);
+            }, { passive: false });
+        });
+
+        // Modallarda mobile padding düzeltmesi
+        function applyMobileModalFix(container) {
+            if (window.innerWidth <= 768) {
+                const inner = container.querySelector('[onclick="event.stopPropagation()"]');
+                if (inner) {
+                    inner.style.padding = '20px';
+                    inner.style.maxWidth = '92vw';
+                    inner.style.width = '92vw';
+                    inner.style.borderRadius = '16px';
+                }
+            }
+        }
+
+        // MutationObserver ile dinamik modal'lara mobile fix uygula
+        const modalObserver = new MutationObserver((mutations) => {
+            mutations.forEach(m => {
+                m.addedNodes.forEach(node => {
+                    if (node.nodeType === 1) {
+                        applyMobileModalFix(node);
+                    }
+                });
+            });
+        });
+        modalObserver.observe(document.body, { childList: true });
 
         // Initialize language on page load
         setLanguage(currentLang);

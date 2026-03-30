@@ -366,7 +366,7 @@ const photoContentTR = {
         title: "Marka Kimliği",
         description: "Sizi farklı kılan özgün markalama",
         fullContent: "Marka kimliği bir logodan çok daha fazlasıdır; şirketinizin değerlerinin, kişiliğinin ve vaadinin eksiksiz görsel ve duygusal ifadesidir. Tüm temas noktalarında tutarlılık ve tanınırlık sağlayan kapsamlı marka sistemleri oluşturuyoruz.",
-        image: "https://images.unsplash.com/photo-1634942537034-2531766767d1?w=800&h=600&fit=crop"
+        image: "assets/yapay-zeka-0704.jpg"
     },
     PHOTO_WORK_03: {
         title: "Dijital Büyüme",

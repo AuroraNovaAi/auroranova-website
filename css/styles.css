@@ -721,6 +721,55 @@
         }
 
         /* ============================================
+           HAMBURGER MENU (max 768px)
+        ============================================ */
+
+        /* Hamburger toggle button — sadece mobilde görünür */
+        .nav-hamburger {
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+            width: 44px;
+            height: 44px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 10px;
+            flex-shrink: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .nav-hamburger span {
+            display: block;
+            width: 22px;
+            height: 2px;
+            background: var(--text-primary);
+            border-radius: 2px;
+            transition: all 0.3s ease;
+            transform-origin: center;
+        }
+
+        /* Açık hâlde X animasyonu */
+        .nav-hamburger.open span:nth-child(1) {
+            transform: translateY(7px) rotate(45deg);
+        }
+        .nav-hamburger.open span:nth-child(2) {
+            opacity: 0;
+            transform: scaleX(0);
+        }
+        .nav-hamburger.open span:nth-child(3) {
+            transform: translateY(-7px) rotate(-45deg);
+        }
+
+        /* Nav link grubu — masaüstünde görünmez kutu, mobilde dropdown panel */
+        .nav-links {
+            display: contents;
+        }
+
+        /* ============================================
            MOBILE (max 768px)
         ============================================ */
         @media (max-width: 768px) {
@@ -737,35 +786,95 @@
                 min-height: -webkit-fill-available;
             }
 
-            /* Nav: hamburger benzeri yatay scroll yerine wrap */
-            .nav {
-                top: 8px;
-                right: 8px;
-                left: 8px;
-                border-radius: 16px;
-                padding: 8px 12px;
-                gap: 4px;
-                flex-wrap: wrap;
-                justify-content: center;
+            /* Hero içeriği: nav yüksekliği kadar aşağı iter */
+            .hero-content {
+                margin-top: 70px;
             }
 
-            .nav a,
-            .services-btn {
-                padding: 5px 10px;
-                font-size: 0.75rem;
+            /* Nav: hamburger düzeni */
+            .nav {
+                top: 10px;
+                right: 10px;
+                left: 10px;
+                border-radius: 16px;
+                padding: 6px 12px 6px 16px;
+                gap: 0;
+                flex-wrap: nowrap;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            /* Hamburger butonu göster */
+            .nav-hamburger {
+                display: flex;
+            }
+
+            /* Link grubu: kapalıyken gizli */
+            .nav-links {
+                display: none;
+                position: absolute;
+                top: calc(100% + 8px);
+                left: 0;
+                right: 0;
+                background: rgba(10, 10, 20, 0.97);
+                backdrop-filter: blur(20px);
+                border: 1px solid var(--glass-border);
+                border-radius: 16px;
+                padding: 12px;
+                flex-direction: column;
+                gap: 4px;
+                z-index: 999;
+            }
+
+            /* Açık hâlde göster */
+            .nav-links.open {
+                display: flex;
+            }
+
+            /* Nav linkleri: tam genişlik, yeterli touch target */
+            .nav-links > a,
+            .nav-links .services-dropdown {
+                width: 100%;
+            }
+
+            .nav-links > a {
+                display: block;
+                padding: 12px 16px;
+                font-size: 0.95rem;
+                border-radius: 10px;
+                min-height: 44px;
+                display: flex;
+                align-items: center;
+            }
+
+            .nav-links .services-btn {
+                width: 100%;
+                text-align: left;
+                padding: 12px 16px;
+                font-size: 0.95rem;
+                border-radius: 10px;
+                min-height: 44px;
             }
 
             .lang-switcher {
-                margin-left: 4px;
-                padding-left: 8px;
+                margin-left: 0;
+                padding-left: 0;
+                border-left: none;
+                border-top: 1px solid var(--glass-border);
+                padding-top: 10px;
+                margin-top: 6px;
+                justify-content: flex-start;
+                gap: 8px;
             }
 
             .lang-btn {
-                font-size: 0.7rem;
-                padding: 4px 8px;
+                font-size: 0.85rem;
+                padding: 8px 16px;
+                min-height: 44px;
+                min-width: 44px;
             }
 
-            /* Services dropdown: touch için click ile aç/kapat */
+            /* Services dropdown: mobilde tam genişlik */
             .services-dropdown:hover .services-menu {
                 display: none;
             }
@@ -776,10 +885,22 @@
             }
 
             .services-menu {
-                right: auto;
-                left: 50%;
-                transform: translateX(-50%);
-                min-width: 180px;
+                position: static;
+                transform: none;
+                min-width: unset;
+                width: 100%;
+                margin-top: 4px;
+                border-radius: 10px;
+                box-shadow: none;
+                border-top: 1px solid var(--glass-border);
+            }
+
+            .services-menu a {
+                padding: 10px 16px;
+                font-size: 0.9rem;
+                min-height: 44px;
+                display: flex;
+                align-items: center;
             }
 
             /* Sections */
@@ -826,6 +947,12 @@
                 transform: translateY(0) !important;
             }
 
+            /* Photo overlay: mobilde her zaman görünür */
+            .photo-overlay {
+                transform: translateY(0);
+                background: linear-gradient(transparent 30%, rgba(0, 0, 0, 0.75));
+            }
+
             /* Blog grid */
             .blog-grid {
                 flex-direction: column;
@@ -861,17 +988,45 @@
                 opacity: 1;
             }
 
+            /* Blog card p: section-content > p animasyonunu ezme */
+            .blog-card p {
+                opacity: 1 !important;
+                transform: none !important;
+                transition: none !important;
+                margin-bottom: 15px;
+            }
+
             /* Service stars: daha büyük touch target */
             .service-star {
                 width: 44px;
                 height: 44px;
             }
 
+            /* Service stars touch desteği */
+            .service-star.touch-active {
+                transform: scale(1.5);
+                filter: drop-shadow(0 0 30px rgba(151, 179, 232, 1));
+            }
+
             .service-info {
-                min-width: 240px;
-                max-width: 80vw;
-                padding: 14px;
-                font-size: 0.9rem;
+                position: fixed;
+                left: 50% !important;
+                top: 50% !important;
+                transform: translate(-50%, -50%) !important;
+                min-width: 260px;
+                max-width: 85vw;
+                padding: 20px;
+                font-size: 0.95rem;
+                z-index: 2000;
+            }
+
+            .service-info.show {
+                transform: translate(-50%, -50%) !important;
+            }
+
+            /* Modal içerikleri: mobilde padding azalt */
+            .mobile-modal-inner {
+                padding: 20px !important;
             }
         }
 
@@ -879,15 +1034,8 @@
            KÜÇÜK TELEFON (max 480px)
         ============================================ */
         @media (max-width: 480px) {
-            .nav {
-                gap: 1px;
-                padding: 6px 10px;
-            }
-
-            .nav a,
-            .services-btn {
-                padding: 4px 8px;
-                font-size: 0.7rem;
+            .hero-content {
+                margin-top: 80px;
             }
 
             .hero h1 {
@@ -898,7 +1046,8 @@
             .photo-card:nth-child(2),
             .photo-card:nth-child(3) {
                 width: 95vw !important;
-                height: 180px !important;
+                height: auto !important;
+                aspect-ratio: 16/9;
             }
 
             .blog-card,
@@ -919,6 +1068,14 @@
             .blog-card:nth-child(15),
             .blog-card:nth-child(16) {
                 width: 95vw !important;
+            }
+
+            .blog-card h3 {
+                font-size: 1.1rem;
+            }
+
+            .section {
+                padding: 70px 12px;
             }
         }
 
@@ -1097,14 +1254,4 @@
             color: white;
         }
 
-        @media (max-width: 768px) {
-            .lang-switcher {
-                margin-left: 4px;
-                padding-left: 8px;
-            }
-
-            .lang-btn {
-                font-size: 0.7rem;
-                padding: 4px 8px;
-            }
-        }
+        /* lang-switcher mobile overrides artık ana @media (max-width: 768px) bloğunda */
