@@ -744,7 +744,7 @@
                 left: 8px;
                 border-radius: 16px;
                 padding: 8px 12px;
-                gap: 2px;
+                gap: 4px;
                 flex-wrap: wrap;
                 justify-content: center;
             }
@@ -787,8 +787,12 @@
                 padding: 0 16px;
             }
 
+            .section {
+                padding: 80px 16px;
+            }
+
             .section-content h2 {
-                font-size: clamp(1.6rem, 6vw, 2.2rem);
+                font-size: 1.8rem;
             }
 
             .section-content > p {
@@ -806,8 +810,10 @@
             .photo-card:nth-child(1),
             .photo-card:nth-child(2),
             .photo-card:nth-child(3) {
-                width: 90vw !important;
-                height: 200px !important;
+                width: calc(100% - 32px) !important;
+                height: auto !important;
+                aspect-ratio: 16/9;
+                margin: 0 16px;
                 transform: translateY(60px) !important;
                 transition: all 1s ease;
                 transition-delay: 0.3s;
