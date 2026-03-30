@@ -1314,3 +1314,108 @@ body.hr-page {
     padding: 0 16px;
   }
 }
+
+/* ════════════════════════════════════════════
+   EXCEL IMPORT MODAL  (hr-specific)
+   ════════════════════════════════════════════ */
+.hr-app .xl-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(44,48,80,0.5);
+  backdrop-filter: blur(6px);
+  z-index: 500;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.hr-app .xl-modal-overlay.open { display: flex; }
+.hr-app .xl-modal {
+  background: var(--hr-surface);
+  border: 1px solid var(--hr-border);
+  border-radius: var(--hr-radius);
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(44,48,80,0.25);
+}
+.hr-app .xl-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 0;
+  margin-bottom: 4px;
+}
+.hr-app .xl-modal-head h2 {
+  font-family: 'Syne', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--hr-text);
+}
+.hr-app .xl-modal-head button {
+  background: var(--hr-surface2);
+  border: 1px solid var(--hr-border);
+  color: var(--hr-text2);
+  font-size: 18px;
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.hr-app .xl-modal-head button:hover { background: var(--hr-surface3); color: var(--hr-text); }
+.hr-app .xl-modal-body { padding: 16px 24px 20px; }
+.hr-app .xl-modal-body p { font-size: 13px; color: var(--hr-text2); margin-bottom: 14px; line-height: 1.6; }
+.hr-app .xl-drop-zone {
+  border: 2px dashed var(--hr-border2);
+  border-radius: var(--hr-radius);
+  padding: 36px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  background: var(--hr-surface2);
+  margin-bottom: 14px;
+}
+.hr-app .xl-drop-zone:hover, .hr-app .xl-drop-zone.drag-over {
+  border-color: var(--hr-accent);
+  background: rgba(91,127,232,0.05);
+}
+.hr-app .xl-drop-zone-icon { font-size: 32px; margin-bottom: 8px; }
+.hr-app .xl-drop-zone-text { font-size: 14px; font-weight: 500; color: var(--hr-text2); margin-bottom: 4px; }
+.hr-app .xl-drop-zone-sub { font-size: 12px; color: var(--hr-text3); }
+.hr-app .xl-result {
+  background: var(--hr-surface2);
+  border: 1px solid var(--hr-border);
+  border-radius: var(--hr-radius-sm);
+  padding: 12px 14px;
+  font-size: 13px;
+  color: var(--hr-text2);
+  margin-bottom: 14px;
+  line-height: 1.7;
+  display: none;
+}
+.hr-app .xl-result.show { display: block; }
+.hr-app .xl-result.success { border-color: rgba(61,186,130,0.35); background: rgba(61,186,130,0.07); color: #2a9060; }
+.hr-app .xl-result.error   { border-color: rgba(232,99,122,0.35); background: rgba(232,99,122,0.07); color: var(--hr-danger); }
+.hr-app .xl-modal-foot {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  padding: 0 24px 22px;
+  flex-wrap: wrap;
+}
+.hr-app .btn-excel {
+  background: #1d6f42;
+  color: #fff;
+  border: none;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(29,111,66,0.3);
+}
+.hr-app .btn-excel:hover { background: #27864f; box-shadow: 0 4px 14px rgba(29,111,66,0.4); }
+.hr-app .xl-preview-wrap { max-height: 200px; overflow-y: auto; margin-bottom: 12px; border-radius: var(--hr-radius-sm); border: 1px solid var(--hr-border); }
+.hr-app .xl-preview-wrap table { font-size: 11.5px; width: 100%; border-collapse: collapse; }
+.hr-app .xl-preview-wrap th { font-size: 10px; background: var(--hr-surface2); padding: 7px 10px; text-align: left; color: var(--hr-text3); text-transform: uppercase; letter-spacing: .05em; border-bottom: 1px solid var(--hr-border); white-space: nowrap; }
+.hr-app .xl-preview-wrap td { padding: 8px 10px; border-bottom: 1px solid var(--hr-border); color: var(--hr-text); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
+.hr-app .xl-preview-wrap tr:last-child td { border-bottom: none; }
+.hr-app .xl-preview-wrap tr:hover td { background: #f7f8fd; }

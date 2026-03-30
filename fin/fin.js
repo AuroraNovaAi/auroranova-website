@@ -565,6 +565,218 @@ function runCompare() {
     </div>`;
 }
 
+// ══════════════════════════════════════════════════════
+// EXCEL IMPORT / EXPORT
+// ══════════════════════════════════════════════════════
+
+// Sütun başlıkları <-> FIELDS eşlemesi
+const FIN_XL_COLS = [
+  { header: 'Şirket Adı',            key: '_company' },
+  { header: 'Yıl',                   key: '_year'    },
+  { header: 'Ay (1-12)',             key: '_month'   },
+  { header: 'Başlık Satışları',      key: 'baslik'   },
+  { header: 'Baza Satışları',        key: 'baza'     },
+  { header: 'Çekyat Satışları',      key: 'cekyat'   },
+  { header: 'Metal Satışları',       key: 'metal'    },
+  { header: 'Oturma Grubu Satışları',key: 'oturma'   },
+  { header: 'Sandalye Satışları',    key: 'sandalye' },
+  { header: 'Mobilyalar Satışları',  key: 'mobilya'  },
+  { header: 'Şilteler Satışları',    key: 'silte'    },
+  { header: 'Alıştan İadeler',       key: 'alis_iade'},
+  { header: 'Faaliyet Giderleri',    key: 'faaliyet' },
+  { header: 'Finansman Giderleri',   key: 'finansman'},
+  { header: 'Hammadde Satın Alımlar',key: 'hmm_alim' },
+  { header: 'Satıştan İadeler',      key: 'satis_iade'},
+  { header: 'İnşaat Giderleri',      key: 'insaat'   },
+  { header: 'Personel Giderleri',    key: 'personel' },
+  { header: 'Vergi ve Tecil Giderleri', key: 'vergi' },
+  { header: 'Hammadde SARF',         key: 'hmm_sarf' },
+  { header: 'Döşeme Maaş',           key: 'dos_maas' },
+  { header: 'Mobilya Maaş',          key: 'mob_maas' },
+  { header: 'Şilte Maaş',            key: 'slt_maas' },
+];
+
+let _finXlRows = null; // parse edilmiş satırlar, confirm bekleniyor
+
+function finOpenImport() {
+  _finXlRows = null;
+  document.getElementById('fin-drop-zone').classList.remove('drag-over');
+  document.getElementById('fin-import-preview').style.display = 'none';
+  document.getElementById('fin-import-preview').innerHTML = '';
+  const res = document.getElementById('fin-import-result');
+  res.className = 'import-result';
+  res.textContent = '';
+  document.getElementById('fin-import-btn').style.display = 'none';
+  document.getElementById('fin-file-input').value = '';
+  document.getElementById('fin-import-modal').classList.add('open');
+}
+
+function finCloseImport() {
+  document.getElementById('fin-import-modal').classList.remove('open');
+}
+
+function finHandleDrop(e) {
+  e.preventDefault();
+  document.getElementById('fin-drop-zone').classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) finHandleFile(file);
+}
+
+function finHandleFile(file) {
+  if (!file) return;
+  if (!window.XLSX) { finShowImportResult('SheetJS kütüphanesi yüklenemedi. İnternet bağlantınızı kontrol edin.', 'error'); return; }
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+
+      if (!rows.length) { finShowImportResult('Dosyada veri bulunamadı.', 'error'); return; }
+
+      // Başlık eşlemesi: hem tam ad hem küçük/büyük harf toleransı
+      const headerMap = {};
+      FIN_XL_COLS.forEach(c => { headerMap[c.header.toLowerCase()] = c.key; });
+
+      const parsed = [];
+      const errors = [];
+
+      rows.forEach((row, i) => {
+        const r = {};
+        Object.keys(row).forEach(k => {
+          const mapped = headerMap[k.trim().toLowerCase()];
+          if (mapped) r[mapped] = row[k];
+        });
+
+        const coName = String(r._company || '').trim();
+        const year   = parseInt(r._year);
+        const month  = parseInt(r._month);
+
+        if (!coName) { errors.push(`Satır ${i+2}: Şirket adı eksik.`); return; }
+        if (!year || year < 2000 || year > 2100) { errors.push(`Satır ${i+2}: Geçersiz yıl.`); return; }
+        if (!month || month < 1 || month > 12) { errors.push(`Satır ${i+2}: Geçersiz ay (1-12).`); return; }
+
+        const data = {};
+        FIELDS.forEach(f => { data[f] = parseFloat(r[f]) || 0; });
+        parsed.push({ coName, year, month, data });
+      });
+
+      if (!parsed.length) {
+        finShowImportResult('Geçerli satır bulunamadı.\n' + errors.join('\n'), 'error');
+        return;
+      }
+
+      _finXlRows = parsed;
+      finShowPreview(parsed);
+
+      let msg = `${parsed.length} satır hazır.`;
+      if (errors.length) msg += ` (${errors.length} satır atlandı: ${errors[0]}${errors.length > 1 ? ' ...' : ''})`;
+      finShowImportResult(msg, 'success');
+      document.getElementById('fin-import-btn').style.display = 'inline-flex';
+
+    } catch(err) {
+      finShowImportResult('Dosya okunamadı: ' + err.message, 'error');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function finShowPreview(rows) {
+  const wrap = document.getElementById('fin-import-preview');
+  const preview = rows.slice(0, 5);
+  wrap.style.display = 'block';
+  wrap.innerHTML = `<table>
+    <thead><tr>
+      <th>Şirket</th><th>Yıl</th><th>Ay</th>
+      <th>Başlık</th><th>Baza</th><th>Mobilya</th><th>Personel</th><th>Hmd.SARF</th>
+    </tr></thead>
+    <tbody>
+      ${preview.map(r => `<tr>
+        <td>${r.coName}</td><td>${r.year}</td><td>${MO_F[r.month-1]}</td>
+        <td>${fmt(r.data.baslik)}</td><td>${fmt(r.data.baza)}</td>
+        <td>${fmt(r.data.mobilya)}</td><td>${fmt(r.data.personel)}</td>
+        <td>${fmt(r.data.hmm_sarf)}</td>
+      </tr>`).join('')}
+    </tbody>
+  </table>
+  ${rows.length > 5 ? `<div style="padding:6px 12px;font-size:11px;color:var(--fin-text3)">...ve ${rows.length-5} satır daha</div>` : ''}`;
+}
+
+function finConfirmImport() {
+  if (!_finXlRows || !_finXlRows.length) return;
+
+  let newCo = 0, updatedRows = 0, newRows = 0;
+
+  _finXlRows.forEach(({ coName, year, month, data }) => {
+    // Şirketi bul ya da oluştur
+    let coId = Object.keys(finS.companies).find(id => finS.companies[id].name.toLowerCase() === coName.toLowerCase());
+    if (!coId) {
+      coId = 'c' + Date.now() + Math.random().toString(36).slice(2,6);
+      const idx = Object.keys(finS.companies).length % PALETTES.length;
+      const pal = PALETTES[idx];
+      const initials = coName.split(' ').map(w=>w[0]?.toUpperCase()||'').join('').slice(0,2);
+      finS.companies[coId] = { id:coId, name:coName, initials, sector:'', contact:'', currency:'TRY', bg:pal.bg, fg:pal.text, created:Date.now() };
+      newCo++;
+    }
+
+    if (!finS.data[coId]) finS.data[coId] = {};
+    const key = dkey(year, month);
+    const exists = !!finS.data[coId][key];
+    finS.data[coId][key] = data;
+    exists ? updatedRows++ : newRows++;
+  });
+
+  save();
+  updateSelects();
+  updateActivePill();
+  renderCoList();
+
+  finShowImportResult(
+    `✓ İçe aktarım tamamlandı!\n${newCo > 0 ? `• ${newCo} yeni şirket oluşturuldu\n` : ''}• ${newRows} yeni dönem eklendi\n${updatedRows > 0 ? `• ${updatedRows} mevcut dönem güncellendi` : ''}`,
+    'success'
+  );
+  document.getElementById('fin-import-btn').style.display = 'none';
+  _finXlRows = null;
+  toast(`Excel içe aktarımı tamamlandı (${newRows + updatedRows} dönem)`);
+}
+
+function finShowImportResult(msg, type) {
+  const el = document.getElementById('fin-import-result');
+  el.textContent = msg;
+  el.className = `import-result show ${type}`;
+}
+
+function finDownloadTemplate() {
+  if (!window.XLSX) { toast('SheetJS yüklenemedi.', 'error'); return; }
+
+  const headers = FIN_XL_COLS.map(c => c.header);
+  const example = [
+    'Örnek Şirket A.Ş.', 2025, 3,
+    150000, 80000, 60000, 40000, 90000, 30000,
+    50000, 20000, 5000,
+    120000, 15000, 200000, 8000, 10000, 180000, 25000, 300000,
+    45000, 12000, 8000
+  ];
+
+  const ws = XLSX.utils.aoa_to_sheet([headers, example]);
+
+  // Sütun genişlikleri
+  ws['!cols'] = headers.map(() => ({ wch: 22 }));
+
+  // Başlık hücre stili (sadece xlsx destekler)
+  const range = XLSX.utils.decode_range(ws['!ref']);
+  for (let C = range.s.c; C <= range.e.c; C++) {
+    const addr = XLSX.utils.encode_cell({ r: 0, c: C });
+    if (!ws[addr]) continue;
+    ws[addr].s = { font: { bold: true }, fill: { fgColor: { rgb: '6366F1' } }, alignment: { horizontal: 'center' } };
+  }
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Finansal Veri');
+  XLSX.writeFile(wb, 'AuroraNova_Fin_Sablon.xlsx');
+}
+
 // ── Initialise ──
 load();
 updateSelects();

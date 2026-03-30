@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="fin.css">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 </head>
 <body class="fin-page">
 <div class="fin-app">
@@ -25,6 +26,7 @@
       <button class="nav-item" onclick="finGo('history')">Geçmiş</button>
       <button class="nav-item" onclick="finGo('compare')">Karşılaştırma</button>
       <button class="nav-item" onclick="finGo('companies')">Şirketler</button>
+      <button class="nav-item" onclick="finOpenImport()" title="Excel ile veri aktar">⬆ Excel İçe Aktar</button>
     </nav>
 
     <span id="company-pill" class="company-pill" style="display:none"></span>
@@ -466,6 +468,50 @@
 
   <!-- Toast notification -->
   <div id="toast" class="toast" role="alert" aria-live="polite"></div>
+
+  <!-- ══ EXCEL IMPORT MODAL ══ -->
+  <div class="modal-overlay" id="fin-import-modal">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h2>📊 Excel ile Veri İçe Aktar</h2>
+        <button onclick="finCloseImport()">✕</button>
+      </div>
+      <div class="modal-body">
+        <p>
+          Excel dosyanızı sürükleyin veya seçin. Dosyanız aşağıdaki formata uygun olmalıdır.<br>
+          <span style="color:var(--fin-text3);font-size:12px">Mevcut veriler korunur; aynı şirket + dönem varsa üzerine yazılır.</span>
+        </p>
+
+        <!-- Şablon indirme -->
+        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+          <button class="btn btn-green btn-sm" onclick="finDownloadTemplate()">⬇ Şablon İndir (.xlsx)</button>
+          <span style="font-size:12px;color:var(--fin-text3);align-self:center">← Doldurup buraya yükleyin</span>
+        </div>
+
+        <!-- Drop zone -->
+        <div class="drop-zone" id="fin-drop-zone"
+             onclick="document.getElementById('fin-file-input').click()"
+             ondragover="event.preventDefault();this.classList.add('drag-over')"
+             ondragleave="this.classList.remove('drag-over')"
+             ondrop="finHandleDrop(event)">
+          <div class="drop-zone-icon">📂</div>
+          <div class="drop-zone-text">Dosyayı buraya sürükleyin veya tıklayın</div>
+          <div class="drop-zone-sub">.xlsx · .xls · .csv desteklenir</div>
+        </div>
+        <input type="file" id="fin-file-input" accept=".xlsx,.xls,.csv" style="display:none" onchange="finHandleFile(this.files[0])">
+
+        <!-- Önizleme -->
+        <div id="fin-import-preview" class="import-table-wrap" style="display:none"></div>
+
+        <!-- Sonuç -->
+        <div id="fin-import-result" class="import-result"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="finCloseImport()">Kapat</button>
+        <button class="btn btn-primary" id="fin-import-btn" onclick="finConfirmImport()" style="display:none">✓ İçe Aktar</button>
+      </div>
+    </div>
+  </div>
 
 </div><!-- /.fin-app -->
 <script defer src="fin.js"></script>

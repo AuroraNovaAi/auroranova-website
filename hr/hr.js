@@ -869,6 +869,225 @@ function setupUploadZone() {
    INIT
    ============================================================ */
 
+// ══════════════════════════════════════════════════════
+// EXCEL IMPORT / EXPORT  (Personel)
+// ══════════════════════════════════════════════════════
+
+const HR_XL_COLS = [
+  { header: 'Ad Soyad',              key: 'name'       },
+  { header: 'Uyruk',                 key: 'nationality' }, // TC | KKTC | 3. Ülke
+  { header: 'TC/Pasaport No',        key: 'idNo'       },
+  { header: 'Pozisyon',              key: 'position'   },
+  { header: 'Bölüm',                 key: 'department' },
+  { header: 'İşe Başlama Tarihi',    key: 'startDate'  }, // YYYY-AA-GG
+  { header: 'E-posta',               key: 'email'      },
+  { header: 'Telefon',               key: 'phone'      },
+  { header: 'Not',                   key: 'note'       },
+];
+
+let _hrXlRows = null;
+
+function hrOpenXlImport() {
+  _hrXlRows = null;
+  document.getElementById('hr-drop-zone').classList.remove('drag-over');
+  const prev = document.getElementById('hr-xl-preview');
+  prev.style.display = 'none'; prev.innerHTML = '';
+  const res = document.getElementById('hr-xl-result');
+  res.className = 'xl-result'; res.textContent = '';
+  document.getElementById('hr-xl-import-btn').style.display = 'none';
+  document.getElementById('hr-xl-file-input').value = '';
+  document.getElementById('hr-xl-modal').classList.add('open');
+}
+
+function hrCloseXlImport() {
+  document.getElementById('hr-xl-modal').classList.remove('open');
+}
+
+function hrXlHandleDrop(e) {
+  e.preventDefault();
+  document.getElementById('hr-drop-zone').classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) hrXlHandleFile(file);
+}
+
+function hrXlHandleFile(file) {
+  if (!file) return;
+  if (!window.XLSX) { hrXlShowResult('SheetJS kütüphanesi yüklenemedi.', 'error'); return; }
+
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      const wb = XLSX.read(ev.target.result, { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+
+      if (!rows.length) { hrXlShowResult('Dosyada veri bulunamadı.', 'error'); return; }
+
+      const headerMap = {};
+      HR_XL_COLS.forEach(c => { headerMap[c.header.toLowerCase()] = c.key; });
+
+      const parsed = [];
+      const errors = [];
+      const VALID_NAT = ['tc', 'kktc', '3. ülke', '3. ulke', 'üçüncü ülke'];
+
+      rows.forEach((row, i) => {
+        const r = {};
+        Object.keys(row).forEach(k => {
+          const mapped = headerMap[k.trim().toLowerCase()];
+          if (mapped) r[mapped] = String(row[k]).trim();
+        });
+
+        if (!r.name) { errors.push(`Satır ${i+2}: Ad Soyad eksik.`); return; }
+
+        // Uyruk normalize
+        const natRaw = (r.nationality || '').toLowerCase();
+        if (natRaw === 'tc') r.nationality = 'TC';
+        else if (natRaw === 'kktc') r.nationality = 'KKTC';
+        else r.nationality = '3. Ülke';
+
+        // Tarih formatı kontrolü (YYYY-MM-DD)
+        if (r.startDate && !/^\d{4}-\d{2}-\d{2}$/.test(r.startDate)) {
+          // Excel serial date desteği
+          const num = parseFloat(r.startDate);
+          if (!isNaN(num)) {
+            const d = new Date(Math.round((num - 25569) * 86400 * 1000));
+            r.startDate = d.toISOString().slice(0,10);
+          } else {
+            r.startDate = '';
+          }
+        }
+
+        parsed.push(r);
+      });
+
+      if (!parsed.length) {
+        hrXlShowResult('Geçerli satır bulunamadı.\n' + errors.join('\n'), 'error');
+        return;
+      }
+
+      _hrXlRows = parsed;
+      hrXlShowPreview(parsed);
+      let msg = `${parsed.length} personel hazır.`;
+      if (errors.length) msg += ` (${errors.length} satır atlandı)`;
+      hrXlShowResult(msg, 'success');
+      document.getElementById('hr-xl-import-btn').style.display = 'inline-flex';
+
+    } catch(err) {
+      hrXlShowResult('Dosya okunamadı: ' + err.message, 'error');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function hrXlShowPreview(rows) {
+  const wrap = document.getElementById('hr-xl-preview');
+  const preview = rows.slice(0, 6);
+  wrap.style.display = 'block';
+  wrap.innerHTML = `<table>
+    <thead><tr>
+      <th>Ad Soyad</th><th>Uyruk</th><th>TC/Pasaport</th>
+      <th>Pozisyon</th><th>Bölüm</th><th>İşe Başlama</th>
+    </tr></thead>
+    <tbody>
+      ${preview.map(r => `<tr>
+        <td>${r.name}</td>
+        <td>${r.nationality}</td>
+        <td>${r.idNo || '—'}</td>
+        <td>${r.position || '—'}</td>
+        <td>${r.department || '—'}</td>
+        <td>${r.startDate || '—'}</td>
+      </tr>`).join('')}
+    </tbody>
+  </table>
+  ${rows.length > 6 ? `<div style="padding:6px 10px;font-size:11px;color:var(--hr-text3)">...ve ${rows.length-6} kişi daha</div>` : ''}`;
+}
+
+function hrXlConfirmImport() {
+  if (!_hrXlRows || !_hrXlRows.length) return;
+
+  let added = 0, skipped = 0;
+
+  _hrXlRows.forEach(r => {
+    // Aynı TC/Pasaport no varsa atla
+    if (r.idNo) {
+      const exists = hrState.personnel.find(p => p.idNo && p.idNo === r.idNo);
+      if (exists) { skipped++; return; }
+    }
+
+    hrState.personnel.push({
+      id: hrGenId(),
+      name:       r.name,
+      nationality:r.nationality,
+      idNo:       r.idNo       || '',
+      position:   r.position   || '',
+      department: r.department || '',
+      startDate:  r.startDate  || '',
+      email:      r.email      || '',
+      phone:      r.phone      || '',
+      note:       r.note       || '',
+      status:     'active',
+      createdAt:  new Date().toISOString(),
+    });
+    added++;
+  });
+
+  hrSaveState();
+  renderDashboard();
+
+  hrXlShowResult(
+    `✓ İçe aktarım tamamlandı!\n• ${added} yeni personel eklendi${skipped ? `\n• ${skipped} kayıt atlandı (TC/Pasaport no zaten mevcut)` : ''}`,
+    'success'
+  );
+  document.getElementById('hr-xl-import-btn').style.display = 'none';
+  _hrXlRows = null;
+}
+
+function hrXlShowResult(msg, type) {
+  const el = document.getElementById('hr-xl-result');
+  el.textContent = msg;
+  el.className = `xl-result show ${type}`;
+}
+
+function hrDownloadXlTemplate() {
+  if (!window.XLSX) { alert('SheetJS yüklenemedi.'); return; }
+
+  const headers = HR_XL_COLS.map(c => c.header);
+  const examples = [
+    ['Ahmet Yılmaz', 'TC',       '12345678901', 'Operatör',    'Üretim',  '2024-01-15', 'ahmet@firma.com', '+90 532 000 00 01', ''],
+    ['Mehmet Demir', 'KKTC',     'K12345678',   'Teknisyen',   'Bakım',   '2024-03-01', 'mehmet@firma.com','',                  ''],
+    ['Ali Veli',     '3. Ülke',  'P98765432',   'Mühendis',    'Ar-Ge',   '2025-06-01', '',                '',                  'Vize durumu takipte'],
+  ];
+
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...examples]);
+  ws['!cols'] = [
+    {wch:22},{wch:12},{wch:18},{wch:18},{wch:16},
+    {wch:20},{wch:24},{wch:20},{wch:24}
+  ];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Personel');
+
+  // Talimatlar için ikinci sheet
+  const infoData = [
+    ['ALAN', 'AÇIKLAMA', 'ÖRNEK'],
+    ['Ad Soyad', 'Zorunlu', 'Ahmet Yılmaz'],
+    ['Uyruk', 'TC | KKTC | 3. Ülke (büyük/küçük harf fark etmez)', 'TC'],
+    ['TC/Pasaport No', 'Varsa girilmesi önerilir — duplicate kontrolü için', '12345678901'],
+    ['Pozisyon', 'Opsiyonel', 'Operatör'],
+    ['Bölüm', 'Opsiyonel', 'Üretim'],
+    ['İşe Başlama Tarihi', 'YYYY-AA-GG formatında', '2025-01-15'],
+    ['E-posta', 'Opsiyonel', 'ad@firma.com'],
+    ['Telefon', 'Opsiyonel', '+90 532 000 00 01'],
+    ['Not', 'Opsiyonel serbest metin', ''],
+  ];
+  const ws2 = XLSX.utils.aoa_to_sheet(infoData);
+  ws2['!cols'] = [{wch:24},{wch:48},{wch:24}];
+  XLSX.utils.book_append_sheet(wb, ws2, 'Talimatlar');
+
+  XLSX.writeFile(wb, 'AuroraNova_HR_Personel_Sablon.xlsx');
+}
+
+// ── Initialise ──
 hrLoadState();
 renderDashboard();
 

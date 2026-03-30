@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="hr.css">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 </head>
 <body class="hr-page">
 <div class="hr-app">
@@ -40,6 +41,9 @@
       </div>
       <div class="nav-item" data-page="templates" onclick="hrNavigate('templates')">
         <span class="nav-icon">📋</span> Şablonlar
+      </div>
+      <div class="nav-item" onclick="hrOpenXlImport()" title="Excel ile personel aktar" style="margin-top:4px;border-top:1px solid rgba(255,255,255,0.06);padding-top:12px">
+        <span class="nav-icon">📥</span> Excel İçe Aktar
       </div>
     </nav>
 
@@ -353,6 +357,45 @@
         <button class="btn btn-ghost btn-sm" onclick="removeFileFromModal()">Temizle</button>
         <button class="btn btn-secondary" onclick="hrCloseModal('modal-upload')">İptal</button>
         <button class="btn btn-primary" onclick="hrCloseModal('modal-upload')">Tamam</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ EXCEL IMPORT MODAL ══ -->
+  <div class="xl-modal-overlay" id="hr-xl-modal">
+    <div class="xl-modal">
+      <div class="xl-modal-head">
+        <h2>📊 Excel ile Personel İçe Aktar</h2>
+        <button onclick="hrCloseXlImport()">✕</button>
+      </div>
+      <div class="xl-modal-body">
+        <p>
+          Excel dosyanızı sürükleyin veya seçin. Mevcut personeller korunur; aynı isimde kayıt varsa güncellenmez — yeni kayıtlar eklenir.<br>
+          <span style="font-size:12px;color:var(--hr-text3)">TC/Pasaport numarası aynı olan kayıt zaten varsa atlanır.</span>
+        </p>
+
+        <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+          <button class="btn btn-excel btn-sm" onclick="hrDownloadXlTemplate()">⬇ Şablon İndir (.xlsx)</button>
+          <span style="font-size:12px;color:var(--hr-text3);align-self:center">← Doldurup buraya yükleyin</span>
+        </div>
+
+        <div class="xl-drop-zone" id="hr-drop-zone"
+             onclick="document.getElementById('hr-xl-file-input').click()"
+             ondragover="event.preventDefault();this.classList.add('drag-over')"
+             ondragleave="this.classList.remove('drag-over')"
+             ondrop="hrXlHandleDrop(event)">
+          <div class="xl-drop-zone-icon">📂</div>
+          <div class="xl-drop-zone-text">Dosyayı buraya sürükleyin veya tıklayın</div>
+          <div class="xl-drop-zone-sub">.xlsx · .xls · .csv desteklenir</div>
+        </div>
+        <input type="file" id="hr-xl-file-input" accept=".xlsx,.xls,.csv" style="display:none" onchange="hrXlHandleFile(this.files[0])">
+
+        <div id="hr-xl-preview" class="xl-preview-wrap" style="display:none"></div>
+        <div id="hr-xl-result" class="xl-result"></div>
+      </div>
+      <div class="xl-modal-foot">
+        <button class="btn btn-ghost btn-sm" onclick="hrCloseXlImport()">Kapat</button>
+        <button class="btn btn-primary btn-sm" id="hr-xl-import-btn" onclick="hrXlConfirmImport()" style="display:none">✓ İçe Aktar</button>
       </div>
     </div>
   </div>
