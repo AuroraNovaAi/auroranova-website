@@ -9,6 +9,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="fin.css">
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <style>
     #fin-login-screen {
       position: fixed; inset: 0; z-index: 9999;
@@ -118,6 +120,7 @@
     </nav>
 
     <span id="company-pill" class="company-pill" style="display:none"></span>
+    <span id="fin-sync-badge" style="font-size:11px;color:var(--fin-text3);margin-left:8px;min-width:80px;text-align:right"></span>
 
     <a href="/" class="fin-back-link">← Ana Sayfa</a>
   </header>

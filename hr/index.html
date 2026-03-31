@@ -9,6 +9,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="hr.css">
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <style>
     #hr-login-screen {
       position: fixed; inset: 0; z-index: 9999;
@@ -147,7 +149,10 @@
     <!-- Topbar -->
     <div class="topbar">
       <div id="topbar-title" class="topbar-title">Gösterge Paneli</div>
-      <div id="topbar-actions" class="topbar-actions"></div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span id="hr-sync-badge" style="font-size:11px;color:#9da4c8;min-width:100px;text-align:right"></span>
+        <div id="topbar-actions" class="topbar-actions"></div>
+      </div>
     </div>
 
     <!-- Content area -->

@@ -23,13 +23,62 @@ let hrState = {
 
 const HR_STORAGE_KEY = 'ik_data_v1';
 
+// ── Firebase Firestore sync ──
+const HR_FB_CONFIG = {
+  apiKey: "AIzaSyD8fYMMpfVQlykMoKVDBJh0IP2Wc9A9WPY",
+  authDomain: "auroranova-website.firebaseapp.com",
+  projectId: "auroranova-website",
+  storageBucket: "auroranova-website.firebasestorage.app",
+  messagingSenderId: "1033362428789",
+  appId: "1:1033362428789:web:e0b5e773efca7fcc8a793c"
+};
+let _hrDb = null;
+function _hrInitDb() {
+  if (_hrDb) return _hrDb;
+  try {
+    const app = firebase.apps.find(a => a.name === 'hr') ||
+                firebase.initializeApp(HR_FB_CONFIG, 'hr');
+    _hrDb = firebase.firestore(app);
+  } catch(e) { console.warn('HR: Firebase init failed', e); }
+  return _hrDb;
+}
+
+function _hrSyncBadge(msg, color) {
+  const el = document.getElementById('hr-sync-badge');
+  if (el) { el.textContent = msg; el.style.color = color || '#9da4c8'; }
+}
+
+let _hrSaveTimer = null;
+
 /* ---- Persistence ---- */
-function hrLoadState() {
+async function hrLoadState() {
+  // Önce localStorage'dan yükle (anlık görüntü)
   try {
     const raw = localStorage.getItem(HR_STORAGE_KEY);
     if (raw) hrState = JSON.parse(raw);
+  } catch(e) {}
+  // Firestore'dan çek (güncel veri)
+  const db = _hrInitDb();
+  if (!db) return;
+  _hrSyncBadge('Yükleniyor…');
+  try {
+    const doc = await db.collection('hr_data').doc('main').get();
+    if (doc.exists) {
+      const d = doc.data();
+      hrState = {
+        personnel: d.personnel || [],
+        templates: d.templates || [],
+        processes: d.processes || [],
+        nextId:    d.nextId    || 1,
+        _calTab:   d._calTab   || 'tasks'
+      };
+      localStorage.setItem(HR_STORAGE_KEY, JSON.stringify(hrState));
+    }
+    _hrSyncBadge('✓ Senkronize', '#2ea06e');
+    setTimeout(() => _hrSyncBadge(''), 2500);
   } catch(e) {
-    console.warn('HR: could not load state', e);
+    console.warn('HR: Firestore load failed, using local data', e);
+    _hrSyncBadge('⚠ Çevrimdışı mod', '#e8a24a');
   }
 }
 
@@ -227,11 +276,30 @@ function hrDocStartProcess(personId) {
 }
 
 function hrSaveState() {
-  try {
-    localStorage.setItem(HR_STORAGE_KEY, JSON.stringify(hrState));
-  } catch(e) {
-    console.warn('HR: could not save state', e);
-  }
+  // Her zaman localStorage'a yaz
+  try { localStorage.setItem(HR_STORAGE_KEY, JSON.stringify(hrState)); } catch(e) {}
+  // Firestore'a debounce ile yaz (1.5sn)
+  clearTimeout(_hrSaveTimer);
+  _hrSaveTimer = setTimeout(async () => {
+    const db = _hrInitDb();
+    if (!db) return;
+    _hrSyncBadge('Kaydediliyor…');
+    try {
+      await db.collection('hr_data').doc('main').set({
+        personnel: hrState.personnel || [],
+        templates: hrState.templates || [],
+        processes: hrState.processes || [],
+        nextId:    hrState.nextId    || 1,
+        updatedAt: new Date().toISOString()
+      });
+      _hrSyncBadge('✓ Kaydedildi', '#2ea06e');
+      setTimeout(() => _hrSyncBadge(''), 2500);
+    } catch(e) {
+      console.warn('HR: Firestore save failed', e);
+      _hrSyncBadge('⚠ Yerel kayıt', '#e8a24a');
+    }
+  }, 1500);
+  // eski return değeri yoktu, boş bırak
 }
 
 /* ---- ID generator ---- */
@@ -1634,8 +1702,10 @@ function hrDownloadXlTemplate() {
 }
 
 // ── Initialise ──
-hrLoadState();
-renderDashboard();
+(async () => {
+  await hrLoadState();
+  renderDashboard();
+})();
 
 document.addEventListener('DOMContentLoaded', () => {
   setupUploadZone();

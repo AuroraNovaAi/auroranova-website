@@ -15,15 +15,82 @@ const PALETTES = [
 
 let finS = { companies:{}, data:{}, activeCo:null };
 
-function load() {
+// ── Firebase Firestore sync ──
+const FIN_FB_CONFIG = {
+  apiKey: "AIzaSyD8fYMMpfVQlykMoKVDBJh0IP2Wc9A9WPY",
+  authDomain: "auroranova-website.firebaseapp.com",
+  projectId: "auroranova-website",
+  storageBucket: "auroranova-website.firebasestorage.app",
+  messagingSenderId: "1033362428789",
+  appId: "1:1033362428789:web:22837743ca9efd728a793c"
+};
+let _finDb = null;
+function _finInitDb() {
+  if (_finDb) return _finDb;
+  try {
+    const app = firebase.apps.find(a => a.name === 'fin') ||
+                firebase.initializeApp(FIN_FB_CONFIG, 'fin');
+    _finDb = firebase.firestore(app);
+  } catch(e) { console.warn('Fin: Firebase init failed', e); }
+  return _finDb;
+}
+
+function _finSyncBadge(msg, color) {
+  const el = document.getElementById('fin-sync-badge');
+  if (el) { el.textContent = msg; el.style.color = color || 'var(--fin-text3)'; }
+}
+
+let _finSaveTimer = null;
+function save() {
+  // Her zaman localStorage'a yaz (hızlı, offline fallback)
+  try { localStorage.setItem('auroran_v1', JSON.stringify({companies:finS.companies, data:finS.data})); }
+  catch(e) {}
+  // Firestore'a debounce ile yaz (1.5sn)
+  clearTimeout(_finSaveTimer);
+  _finSaveTimer = setTimeout(async () => {
+    const db = _finInitDb();
+    if (!db) return;
+    _finSyncBadge('Kaydediliyor…');
+    try {
+      await db.collection('fin_data').doc('main').set({
+        companies: finS.companies,
+        data: finS.data,
+        updatedAt: new Date().toISOString()
+      });
+      _finSyncBadge('✓ Kaydedildi', '#6ee7b7');
+      setTimeout(() => _finSyncBadge(''), 2500);
+    } catch(e) {
+      console.warn('Fin: Firestore save failed', e);
+      _finSyncBadge('⚠ Yerel kayıt', '#f59e0b');
+    }
+  }, 1500);
+}
+
+async function load() {
+  // Önce localStorage'dan yükle (anlık görüntü)
   try {
     const raw = localStorage.getItem('auroran_v1');
     if (raw) { const p = JSON.parse(raw); finS.companies = p.companies||{}; finS.data = p.data||{}; }
-  } catch(e) { console.warn('Load error',e); }
-}
-function save() {
-  try { localStorage.setItem('auroran_v1', JSON.stringify({companies:finS.companies, data:finS.data})); }
-  catch(e) { console.warn('Save error',e); }
+  } catch(e) {}
+  // Firestore'dan çek (güncel veri)
+  const db = _finInitDb();
+  if (!db) return;
+  _finSyncBadge('Yükleniyor…');
+  try {
+    const doc = await db.collection('fin_data').doc('main').get();
+    if (doc.exists) {
+      const d = doc.data();
+      finS.companies = d.companies || {};
+      finS.data      = d.data      || {};
+      // localStorage'ı da güncelle
+      localStorage.setItem('auroran_v1', JSON.stringify({companies:finS.companies, data:finS.data}));
+    }
+    _finSyncBadge('✓ Senkronize', '#6ee7b7');
+    setTimeout(() => _finSyncBadge(''), 2500);
+  } catch(e) {
+    console.warn('Fin: Firestore load failed, using local data', e);
+    _finSyncBadge('⚠ Çevrimdışı mod', '#f59e0b');
+  }
 }
 
 function fmt(n, dec=0) {
@@ -819,14 +886,16 @@ function populateYearSelects() {
 
 // ── Initialise ──
 populateYearSelects();
-load();
-updateSelects();
-updateActivePill();
-renderCoList();
-if (!Object.keys(finS.companies).length) {
-  finGo('companies');
-} else {
-  finS.activeCo = finS.activeCo || Object.keys(finS.companies)[0];
-  updateSelects(); updateActivePill();
-  renderDash();
-}
+(async () => {
+  await load();
+  updateSelects();
+  updateActivePill();
+  renderCoList();
+  if (!Object.keys(finS.companies).length) {
+    finGo('companies');
+  } else {
+    finS.activeCo = finS.activeCo || Object.keys(finS.companies)[0];
+    updateSelects(); updateActivePill();
+    renderDash();
+  }
+})();
