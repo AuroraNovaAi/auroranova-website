@@ -141,9 +141,22 @@
           <div class="ph-right">
             <label for="company-select" style="font-size:12px;color:var(--fin-text3)">Şirket:</label>
             <select id="company-select" class="year-sel" onchange="selectCo(this.value)"></select>
-            <label for="dash-year" style="font-size:12px;color:var(--fin-text3)">Yıl:</label>
-            <select id="dash-year" class="year-sel" onchange="renderDash()">
+            <label style="font-size:12px;color:var(--fin-text3)">Dönem Başı:</label>
+            <select id="dash-sm" class="year-sel" onchange="renderDash()" style="width:70px">
+              <option value="1">Oca</option><option value="2">Şub</option><option value="3">Mar</option>
+              <option value="4">Nis</option><option value="5">May</option><option value="6">Haz</option>
+              <option value="7">Tem</option><option value="8">Ağu</option><option value="9">Eyl</option>
+              <option value="10">Eki</option><option value="11">Kas</option><option value="12">Ara</option>
             </select>
+            <select id="dash-sy" class="year-sel" onchange="renderDash()"></select>
+            <label style="font-size:12px;color:var(--fin-text3)">Dönem Sonu:</label>
+            <select id="dash-em" class="year-sel" onchange="renderDash()" style="width:70px">
+              <option value="1">Oca</option><option value="2">Şub</option><option value="3">Mar</option>
+              <option value="4">Nis</option><option value="5">May</option><option value="6">Haz</option>
+              <option value="7">Tem</option><option value="8">Ağu</option><option value="9">Eyl</option>
+              <option value="10">Eki</option><option value="11">Kas</option><option value="12" selected>Ara</option>
+            </select>
+            <select id="dash-ey" class="year-sel" onchange="renderDash()"></select>
           </div>
         </div>
 

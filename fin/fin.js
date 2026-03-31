@@ -321,20 +321,30 @@ function renderDash() {
   if (!hasCo) return;
 
   const co = finS.companies[finS.activeCo];
-  const y = document.getElementById('dash-year').value;
+  const sy = +document.getElementById('dash-sy').value;
+  const sm = +document.getElementById('dash-sm').value;
+  const ey = +document.getElementById('dash-ey').value;
+  const em = +document.getElementById('dash-em').value;
   const cr = curr();
   document.getElementById('dash-title').textContent = co.name;
 
   const cData = finS.data[finS.activeCo]||{};
   const months = [];
-  for (let m=1;m<=12;m++) {
-    const k = dkey(y,m);
-    if (cData[k]) months.push({m, raw:cData[k], c:finCalc(cData[k])});
+  for (let y=sy; y<=ey; y++) {
+    const mStart = (y===sy) ? sm : 1;
+    const mEnd   = (y===ey) ? em : 12;
+    for (let m=mStart; m<=mEnd; m++) {
+      const k = dkey(y,m);
+      if (cData[k]) months.push({m, y, raw:cData[k], c:finCalc(cData[k])});
+    }
   }
 
+  const periodLabel = (sy===ey && sm===1 && em===12)
+    ? `${sy}`
+    : `${MO[sm-1]} ${sy} – ${MO[em-1]} ${ey}`;
   document.getElementById('dash-desc').textContent = months.length
-    ? `${y} — ${months.length} aylık veri mevcut`
-    : `${y} — veri yok`;
+    ? `${periodLabel} — ${months.length} aylık veri mevcut`
+    : `${periodLabel} — veri yok`;
 
   if (!months.length) {
     document.getElementById('kpi-row').innerHTML = `<div style="grid-column:1/-1">
@@ -368,10 +378,13 @@ function renderDash() {
       ${k.sub?`<div class="kpi-sub">${k.sub}</div>`:''}
     </div>`).join('');
 
+  const multiYear = sy !== ey;
+  const mLabel = (m,y) => multiYear ? `${MO[m-1]} ${String(y).slice(2)}` : MO[m-1];
+
   const maxV = Math.max(...months.map(({c})=>Math.max(c.M,c.AC)),1);
-  document.getElementById('dash-bar').innerHTML = months.map(({m,c})=>`
+  document.getElementById('dash-bar').innerHTML = months.map(({m,y,c})=>`
     <div class="chart-row">
-      <div class="chart-label">${MO[m-1]}</div>
+      <div class="chart-label">${mLabel(m,y)}</div>
       <div class="chart-bars">
         <div class="chart-track"><div class="chart-fill" style="width:${Math.round(c.M/maxV*100)}%;background:var(--fin-blue)"></div></div>
         <div class="chart-track"><div class="chart-fill" style="width:${Math.round(c.AC/maxV*100)}%;background:var(--fin-amber)"></div></div>
@@ -383,9 +396,9 @@ function renderDash() {
       <span><span style="display:inline-block;width:8px;height:8px;background:var(--fin-amber);border-radius:2px;margin-right:4px;vertical-align:middle"></span>Gider (Sarf)</span>
     </div>`;
 
-  document.getElementById('dash-ratio').innerHTML = months.map(({m,c})=>`
+  document.getElementById('dash-ratio').innerHTML = months.map(({m,y,c})=>`
     <div class="chart-row">
-      <div class="chart-label">${MO[m-1]}</div>
+      <div class="chart-label">${mLabel(m,y)}</div>
       <div class="chart-bars">
         <div class="chart-track"><div class="chart-fill"
           style="width:${Math.min(Math.abs(c.AT_pct),100)}%;background:${c.AT_pct>=0?'var(--fin-green)':'var(--fin-red)'}"></div></div>
@@ -398,7 +411,7 @@ function renderDash() {
 
   document.getElementById('sum-head').innerHTML =
     '<th>Kalem</th>' +
-    months.map(({m})=>`<th style="text-align:right">${MO[m-1]}</th>`).join('') +
+    months.map(({m,y})=>`<th style="text-align:right">${mLabel(m,y)}</th>`).join('') +
     '<th style="text-align:right">Toplam / Ort.</th>';
 
   const rows = [
@@ -784,9 +797,9 @@ function populateYearSelects() {
   const currentYear = new Date().getFullYear();
   const startYear = 2020;
   const endYear = currentYear + 5;
-  const yearIds = ['dash-year','ey','hist-year','c1ys','c1ye','c2ys','c2ye'];
+  const yearIds = ['dash-sy','dash-ey','ey','hist-year','c1ys','c1ye','c2ys','c2ye'];
   // Default selected years per select
-  const defaults = { 'dash-year': currentYear, 'ey': currentYear, 'hist-year': currentYear,
+  const defaults = { 'dash-sy': currentYear, 'dash-ey': currentYear, 'ey': currentYear, 'hist-year': currentYear,
     'c1ys': currentYear - 1, 'c1ye': currentYear - 1,
     'c2ys': currentYear, 'c2ye': currentYear };
   yearIds.forEach(id => {
