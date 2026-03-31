@@ -219,6 +219,11 @@
 
       <!-- ---- CALENDAR ---- -->
       <section id="page-calendar" class="page-section">
+        <div class="doc-cal-tabs" style="display:flex;gap:8px;margin-bottom:18px">
+          <button class="btn btn-primary btn-sm" id="cal-tab-tasks" onclick="hrSwitchCalTab('tasks')">📋 Görev Takvimi</button>
+          <button class="btn btn-secondary btn-sm" id="cal-tab-docs" onclick="hrSwitchCalTab('docs')">📄 İzin &amp; Pasaport Takvimi</button>
+        </div>
+        <div id="cal-tasks-pane">
         <div class="calendar-wrap">
           <div class="cal-header">
             <div class="cal-nav">
@@ -244,6 +249,8 @@
           </div>
           <div id="cal-grid-wrap"></div>
         </div>
+        </div>
+        <div id="cal-docs-pane" style="display:none"></div>
       </section>
 
       <!-- ---- TEMPLATES ---- -->
@@ -295,8 +302,40 @@
               <input type="date" id="p-startdate">
             </div>
             <div class="form-group">
-              <label class="form-label">İzin Bitiş Tarihi</label>
+              <label class="form-label">Çalışma İzni Bitiş Tarihi</label>
               <input type="date" id="p-permit">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Çalışma İzni Belgesi <span style="font-size:11px;color:#9da4c8">(opsiyonel)</span></label>
+            <div class="file-upload-wrap" id="permit-upload-wrap">
+              <input type="file" id="p-permit-file" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="hrHandleFileUpload('permit',this)">
+              <div class="file-upload-zone" onclick="document.getElementById('p-permit-file').click()">
+                <span class="file-upload-icon">📄</span>
+                <span id="permit-file-label">Dosya seç veya sürükle bırak</span>
+              </div>
+              <div id="permit-file-preview" class="file-preview" style="display:none"></div>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Pasaport Geçerlilik Tarihi</label>
+              <input type="date" id="p-passport-expiry">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Pasaport No</label>
+              <input type="text" id="p-passport-no" placeholder="AB1234567">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Pasaport Belgesi <span style="font-size:11px;color:#9da4c8">(opsiyonel)</span></label>
+            <div class="file-upload-wrap" id="passport-upload-wrap">
+              <input type="file" id="p-passport-file" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="hrHandleFileUpload('passport',this)">
+              <div class="file-upload-zone" onclick="document.getElementById('p-passport-file').click()">
+                <span class="file-upload-icon">🛂</span>
+                <span id="passport-file-label">Dosya seç veya sürükle bırak</span>
+              </div>
+              <div id="passport-file-preview" class="file-preview" style="display:none"></div>
             </div>
           </div>
           <div class="form-group">

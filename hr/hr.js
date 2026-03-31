@@ -33,6 +33,199 @@ function hrLoadState() {
   }
 }
 
+function renderDocCalendar() {
+  initCalendar();
+  const pane = document.getElementById('cal-docs-pane');
+  if (!pane) return;
+
+  const monthNames = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran',
+                      'Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+  const todayStr = today();
+
+  // Build event map
+  const eventMap = {};
+  const addDocEvent = (dateStr, label, type, personId) => {
+    if (!dateStr) return;
+    const [y, m] = dateStr.split('-').map(Number);
+    if (y !== calYear || m !== calMonth + 1) return;
+    if (!eventMap[dateStr]) eventMap[dateStr] = [];
+    const isOverdue = dateStr < todayStr;
+    const isSoon = !isOverdue && dateStr <= addDays(todayStr, 30);
+    eventMap[dateStr].push({ label, type, personId, dateStr, isOverdue, isSoon });
+  };
+
+  hrState.personnel.forEach(p => {
+    if (p.status === 'passive') return;
+    if (p.permitExpiry) addDocEvent(p.permitExpiry, p.name + ': Çalışma İzni', 'permit', p.id);
+    if (p.passportExpiry) addDocEvent(p.passportExpiry, p.name + ': Pasaport', 'passport', p.id);
+  });
+
+  // Grid
+  const firstDay   = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  const daysInPrev  = new Date(calYear, calMonth, 0).getDate();
+  const startDay    = (firstDay + 6) % 7;
+
+  let html = `
+    <div class="card" style="margin-bottom:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <button class="btn btn-secondary btn-sm" onclick="docCalNav(-1)">‹</button>
+        <span style="font-weight:700;font-size:15px" id="doc-cal-title">${monthNames[calMonth]} ${calYear}</span>
+        <button class="btn btn-secondary btn-sm" onclick="docCalNav(1)">›</button>
+      </div>
+      <div style="display:flex;gap:14px;font-size:11px;color:#9da4c8;margin-bottom:10px">
+        <span><span style="display:inline-block;width:10px;height:10px;background:#f59e0b;border-radius:2px;margin-right:4px;vertical-align:middle"></span>Çalışma İzni</span>
+        <span><span style="display:inline-block;width:10px;height:10px;background:#8b5cf6;border-radius:2px;margin-right:4px;vertical-align:middle"></span>Pasaport</span>
+      </div>
+      <div class="cal-grid">`;
+
+  ['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'].forEach(d =>
+    html += `<div class="cal-day-header">${d}</div>`);
+
+  for (let i = 0; i < startDay; i++) {
+    html += `<div class="cal-cell other-month"><div class="cal-date">${daysInPrev - startDay + 1 + i}</div></div>`;
+  }
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday = dateStr === todayStr;
+    const events  = eventMap[dateStr] || [];
+    html += `<div class="cal-cell${isToday ? ' today' : ''}">
+      <div class="cal-date">${isToday ? `<span>${d}</span>` : d}</div>` +
+      events.map(ev => {
+        const bg = ev.type === 'permit'
+          ? (ev.isOverdue ? '#ef4444' : (ev.isSoon ? '#f59e0b' : '#f59e0b'))
+          : (ev.isOverdue ? '#ef4444' : (ev.isSoon ? '#a78bfa' : '#8b5cf6'));
+        const icon = ev.isOverdue ? '⚠ ' : (ev.isSoon ? '⏰ ' : '');
+        return `<span class="cal-event cal-event-clickable" style="background:${bg}22;color:${bg};cursor:pointer"
+          onclick="hrDocEventClick('${ev.personId}','${ev.type}')" title="${ev.label}">${icon}${ev.label}</span>`;
+      }).join('') +
+    `</div>`;
+  }
+
+  const totalCells = startDay + daysInMonth;
+  const remainder  = totalCells % 7;
+  if (remainder !== 0) {
+    for (let d = 1; d <= 7 - remainder; d++)
+      html += `<div class="cal-cell other-month"><div class="cal-date">${d}</div></div>`;
+  }
+
+  html += '</div></div>';
+  pane.innerHTML = html;
+}
+
+function docCalNav(dir) {
+  initCalendar();
+  calMonth += dir;
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  if (calMonth < 0)  { calMonth = 11; calYear--; }
+  renderDocCalendar();
+}
+
+function hrDocEventClick(personId, type) {
+  const person = hrState.personnel.find(p => p.id === personId);
+  if (!person) return;
+  const isPermit = type === 'permit';
+  const expiry = isPermit ? person.permitExpiry : person.passportExpiry;
+  const fileObj = isPermit ? person.permitFile : person.passportFile;
+  const label   = isPermit ? 'Çalışma İzni' : 'Pasaport';
+  const color   = isPermit ? '#f59e0b' : '#8b5cf6';
+  const todayStr = today();
+  const isOverdue = expiry && expiry < todayStr;
+  const isSoon = expiry && !isOverdue && expiry <= addDays(todayStr, 30);
+  const statusLabel = isOverdue ? 'Süresi Dolmuş' : (isSoon ? '30 Gün İçinde Bitiyor' : 'Geçerli');
+  const statusColor = isOverdue ? '#ef4444' : (isSoon ? '#f59e0b' : '#22c55e');
+
+  const existing = document.getElementById('hr-doc-event-modal');
+  if (existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'hr-doc-event-modal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.55);padding:16px';
+
+  const templates = hrState.templates.filter(t => t.type === 'calisma-izni' || t.type === 'izin-yenileme');
+  const templateOpts = templates.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+
+  modal.innerHTML = `
+    <div style="background:#fff;border-radius:14px;padding:28px;max-width:420px;width:100%;box-shadow:0 24px 64px rgba(0,0,0,0.18);font-family:'DM Sans',sans-serif">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px">
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:#1e2342">${person.name}</div>
+          <div style="font-size:11px;color:#9da4c8;margin-top:2px">${label} Detayı</div>
+        </div>
+        <button onclick="document.getElementById('hr-doc-event-modal').remove()" style="background:none;border:none;font-size:18px;color:#9da4c8;cursor:pointer;padding:0">×</button>
+      </div>
+
+      <div style="background:#f5f6fb;border-radius:10px;padding:14px 16px;margin-bottom:16px">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+          <span style="font-size:11px;padding:3px 8px;border-radius:6px;background:${color}18;color:${color};font-weight:600">${label}</span>
+          <span style="font-size:11px;padding:3px 8px;border-radius:6px;background:${statusColor}18;color:${statusColor};font-weight:600">${statusLabel}</span>
+        </div>
+        <div style="font-size:13px;color:#1e2342"><strong>Bitiş Tarihi:</strong> ${expiry || '-'}</div>
+        ${isPermit && person.passportNo ? `<div style="font-size:12px;color:#5b6080;margin-top:4px"><strong>Pasaport No:</strong> ${person.passportNo}</div>` : ''}
+      </div>
+
+      ${fileObj ? `
+      <div style="margin-bottom:16px">
+        <div style="font-size:12px;font-weight:600;color:#1e2342;margin-bottom:8px">Yüklü Belge</div>
+        ${fileObj.type && fileObj.type.startsWith('image/')
+          ? `<img src="${fileObj.data}" style="max-width:100%;max-height:120px;border-radius:8px;object-fit:contain;border:1px solid #dde1ee">`
+          : `<a href="${fileObj.data}" download="${fileObj.name}" style="display:inline-flex;align-items:center;gap:6px;font-size:13px;color:#5b7fe8;text-decoration:none;background:#f5f6fb;padding:8px 12px;border-radius:8px;border:1px solid #dde1ee">📄 ${fileObj.name} — İndir</a>`
+        }
+      </div>` : ''}
+
+      ${templates.length ? `
+      <div style="margin-bottom:14px">
+        <div style="font-size:12px;font-weight:600;color:#1e2342;margin-bottom:8px">Süreç Başlat</div>
+        <select id="doc-modal-tmpl" style="width:100%;padding:9px 12px;border:1px solid #dde1ee;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;margin-bottom:8px">
+          <option value="">Şablon seçin...</option>
+          ${templateOpts}
+        </select>
+        <input type="date" id="doc-modal-start" style="width:100%;padding:9px 12px;border:1px solid #dde1ee;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;box-sizing:border-box" placeholder="Başlangıç tarihi">
+        <button onclick="hrDocStartProcess('${personId}')" style="width:100%;margin-top:8px;padding:11px;background:#5b7fe8;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Süreci Başlat</button>
+      </div>` : '<p style="font-size:12px;color:#9da4c8;margin-bottom:14px">Süreç başlatmak için önce Şablonlar bölümünden şablon oluşturun.</p>'}
+
+      <button onclick="document.getElementById('hr-doc-event-modal').remove()" style="width:100%;padding:11px;background:#f5f6fb;color:#5b6080;border:1px solid #dde1ee;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Kapat</button>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+}
+
+function hrDocStartProcess(personId) {
+  const templateId = document.getElementById('doc-modal-tmpl')?.value;
+  const startDate  = document.getElementById('doc-modal-start')?.value;
+  if (!templateId) { alert('Lütfen bir şablon seçin.'); return; }
+  if (!startDate)  { alert('Lütfen başlangıç tarihi girin.'); return; }
+
+  const tmpl   = hrState.templates.find(t => t.id === templateId);
+  const person = hrState.personnel.find(p => p.id === personId);
+  if (!tmpl || !person) return;
+
+  const process = {
+    id: hrGenId(),
+    templateId,
+    templateName: tmpl.name,
+    templateType: tmpl.type,
+    personId,
+    personName: person.name,
+    startDate,
+    notes: '',
+    open: false,
+    tasks: tmpl.tasks.map((t, i) => ({
+      id: 'task_' + i,
+      name: t.name,
+      assignee: t.assignee,
+      dueDate: addDays(startDate, t.days),
+      done: false
+    }))
+  };
+
+  hrState.processes.push(process);
+  hrSaveState();
+  document.getElementById('hr-doc-event-modal')?.remove();
+  hrNavigate('processes');
+}
+
 function hrSaveState() {
   try {
     localStorage.setItem(HR_STORAGE_KEY, JSON.stringify(hrState));
@@ -109,7 +302,7 @@ function hrNavigate(page) {
   if (page === 'dashboard') renderDashboard();
   if (page === 'personnel') renderPersonnel();
   if (page === 'processes') renderProcesses();
-  if (page === 'calendar') { initCalendar(); renderCalendar(); }
+  if (page === 'calendar') { initCalendar(); hrSwitchCalTab(hrState._calTab || 'tasks'); }
   if (page === 'templates') renderTemplates();
 }
 
@@ -123,6 +316,8 @@ function savePerson(e) {
   const id = form.dataset.editId || hrGenId();
   const isEdit = !!form.dataset.editId;
 
+  // Dosya verileri (base64) — mevcut düzenlemede korunur
+  const existingPerson = isEdit ? hrState.personnel.find(p => p.id === id) : null;
   const person = {
     id,
     name: document.getElementById('p-name').value.trim(),
@@ -131,6 +326,10 @@ function savePerson(e) {
     email: document.getElementById('p-email').value.trim(),
     startDate: document.getElementById('p-startdate').value,
     permitExpiry: document.getElementById('p-permit').value,
+    permitFile: window._hrUploadBuffer?.permit ?? existingPerson?.permitFile ?? null,
+    passportExpiry: document.getElementById('p-passport-expiry').value,
+    passportNo: document.getElementById('p-passport-no').value.trim(),
+    passportFile: window._hrUploadBuffer?.passport ?? existingPerson?.passportFile ?? null,
     status: document.getElementById('p-status').value
   };
 
@@ -146,6 +345,9 @@ function savePerson(e) {
   hrCloseModal('modal-person');
   form.reset();
   delete form.dataset.editId;
+  window._hrUploadBuffer = {};
+  hrClearFileUpload('permit');
+  hrClearFileUpload('passport');
   renderPersonnel();
 }
 
@@ -160,7 +362,13 @@ function editPerson(id) {
   document.getElementById('p-email').value = person.email || '';
   document.getElementById('p-startdate').value = person.startDate || '';
   document.getElementById('p-permit').value = person.permitExpiry || '';
+  document.getElementById('p-passport-expiry').value = person.passportExpiry || '';
+  document.getElementById('p-passport-no').value = person.passportNo || '';
   document.getElementById('p-status').value = person.status || 'active';
+  // Dosya preview'ları güncelle
+  window._hrUploadBuffer = {};
+  hrShowExistingFile('permit', person.permitFile);
+  hrShowExistingFile('passport', person.passportFile);
   document.getElementById('modal-person-title').textContent = 'Personel Düzenle';
   hrOpenModal('modal-person');
 }
@@ -174,6 +382,63 @@ function deletePerson(id) {
 
 function filterPersonnel() {
   renderPersonnel();
+}
+
+function hrHandleFileUpload(type, input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) {
+    alert('Dosya boyutu 5MB\'ı geçemez.');
+    input.value = '';
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    if (!window._hrUploadBuffer) window._hrUploadBuffer = {};
+    window._hrUploadBuffer[type] = { name: file.name, data: e.target.result, type: file.type };
+    const labelEl = document.getElementById(type === 'permit' ? 'permit-file-label' : 'passport-file-label');
+    if (labelEl) labelEl.textContent = file.name;
+    hrShowFilePreview(type, { name: file.name, data: e.target.result, type: file.type });
+  };
+  reader.readAsDataURL(file);
+}
+
+function hrShowFilePreview(type, fileObj) {
+  const previewEl = document.getElementById(type + '-file-preview');
+  if (!previewEl || !fileObj) return;
+  const isImg = fileObj.type && fileObj.type.startsWith('image/');
+  previewEl.style.display = 'flex';
+  previewEl.innerHTML = isImg
+    ? `<img src="${fileObj.data}" style="max-height:60px;border-radius:6px;object-fit:cover"> <span style="font-size:12px;color:#5b6080;margin-left:8px;align-self:center">${fileObj.name}</span><button type="button" onclick="hrClearFileUpload('${type}')" style="margin-left:auto;background:none;border:none;color:#e8637a;cursor:pointer;font-size:16px">×</button>`
+    : `<span style="font-size:20px">📄</span> <span style="font-size:12px;color:#5b6080;margin-left:8px;align-self:center">${fileObj.name}</span><button type="button" onclick="hrClearFileUpload('${type}')" style="margin-left:auto;background:none;border:none;color:#e8637a;cursor:pointer;font-size:16px">×</button>`;
+}
+
+function hrShowExistingFile(type, fileObj) {
+  if (!fileObj) return;
+  const labelEl = document.getElementById(type === 'permit' ? 'permit-file-label' : 'passport-file-label');
+  if (labelEl) labelEl.textContent = fileObj.name || 'Mevcut dosya';
+  hrShowFilePreview(type, fileObj);
+}
+
+function hrClearFileUpload(type) {
+  if (window._hrUploadBuffer) delete window._hrUploadBuffer[type];
+  const inputEl = document.getElementById('p-' + type + '-file');
+  if (inputEl) inputEl.value = '';
+  const labelEl = document.getElementById(type === 'permit' ? 'permit-file-label' : 'passport-file-label');
+  if (labelEl) labelEl.textContent = 'Dosya seç veya sürükle bırak';
+  const previewEl = document.getElementById(type + '-file-preview');
+  if (previewEl) { previewEl.style.display = 'none'; previewEl.innerHTML = ''; }
+}
+
+function hrExpiryCell(dateStr) {
+  if (!dateStr) return '-';
+  const todayStr = today();
+  const in30 = addDays(todayStr, 30);
+  const in90 = addDays(todayStr, 90);
+  if (dateStr < todayStr) return `<span style="color:#e8637a;font-weight:600">⚠ ${dateStr}</span>`;
+  if (dateStr <= in30) return `<span style="color:#e8762c;font-weight:600">⏰ ${dateStr}</span>`;
+  if (dateStr <= in90) return `<span style="color:#d4a800;font-weight:600">${dateStr}</span>`;
+  return dateStr;
 }
 
 function avatarColor(name) {
@@ -217,7 +482,7 @@ function renderPersonnelTable(list) {
   let html = `<div class="table-wrap"><table>
     <thead><tr>
       <th>Ad Soyad</th><th>Pozisyon</th><th>Uyruk</th><th>E-posta</th>
-      <th>Başlangıç</th><th>İzin Bitiş</th><th>Durum</th><th></th>
+      <th>Başlangıç</th><th>Ç.İzni Bitiş</th><th>Pasaport Bitiş</th><th>Durum</th><th></th>
     </tr></thead><tbody>`;
 
   list.forEach(p => {
@@ -234,7 +499,8 @@ function renderPersonnelTable(list) {
       <td>${p.nationality || '-'}</td>
       <td>${p.email || '-'}</td>
       <td>${p.startDate || '-'}</td>
-      <td>${p.permitExpiry || '-'}</td>
+      <td>${hrExpiryCell(p.permitExpiry)}</td>
+      <td>${hrExpiryCell(p.passportExpiry)}</td>
       <td><span class="badge ${sBadge}">${sLabel}</span></td>
       <td><div class="td-actions">
         <button class="btn btn-ghost btn-sm" onclick="editPerson('${p.id}')">Düzenle</button>
@@ -663,6 +929,28 @@ function calNav(dir) {
   if (calMonth > 11) { calMonth = 0; calYear++; }
   if (calMonth < 0)  { calMonth = 11; calYear--; }
   renderCalendar();
+}
+
+function hrSwitchCalTab(tab) {
+  hrState._calTab = tab;
+  const tasksPane = document.getElementById('cal-tasks-pane');
+  const docsPane  = document.getElementById('cal-docs-pane');
+  const tabTasks  = document.getElementById('cal-tab-tasks');
+  const tabDocs   = document.getElementById('cal-tab-docs');
+  if (!tasksPane) return;
+  if (tab === 'tasks') {
+    tasksPane.style.display = '';
+    docsPane.style.display  = 'none';
+    tabTasks?.classList.replace('btn-secondary','btn-primary');
+    tabDocs?.classList.replace('btn-primary','btn-secondary');
+    renderCalendar();
+  } else {
+    tasksPane.style.display  = 'none';
+    docsPane.style.display   = '';
+    tabTasks?.classList.replace('btn-primary','btn-secondary');
+    tabDocs?.classList.replace('btn-secondary','btn-primary');
+    renderDocCalendar();
+  }
 }
 
 function renderCalendar() {
