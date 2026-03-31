@@ -613,19 +613,34 @@
 </div><!-- /.fin-app -->
 
 <script>
-// ── Auth (SHA-256, native crypto.subtle) ──
+// ── Auth ──
 const FIN_PW_HASH = '3a35c1515e28957067557f1ea0cbcf651c5bb75dacd31538c8a106ed2102f626';
 const FIN_SESSION_KEY = 'fin_auth_v1';
 
 async function finHashStr(str) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+  try {
+    if (window.crypto && crypto.subtle) {
+      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+    }
+  } catch(e) {}
+  // fallback: simple hash for non-HTTPS environments
+  let h = 0;
+  for (let i = 0; i < str.length; i++) { h = Math.imul(31, h) + str.charCodeAt(i) | 0; }
+  return 'fallback:' + h;
 }
+
+const FIN_PW_FALLBACK = 'fallback:' + (() => {
+  const str = 'Bugra*123'; let h = 0;
+  for (let i = 0; i < str.length; i++) { h = Math.imul(31, h) + str.charCodeAt(i) | 0; }
+  return h;
+})();
 
 async function finCheckPw() {
   const val = document.getElementById('fin-pw-input').value;
   const hash = await finHashStr(val);
-  if (hash === FIN_PW_HASH) {
+  const ok = (hash === FIN_PW_HASH) || (hash.startsWith('fallback:') && hash === FIN_PW_FALLBACK);
+  if (ok) {
     sessionStorage.setItem(FIN_SESSION_KEY, '1');
     finUnlock();
   } else {
