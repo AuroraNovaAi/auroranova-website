@@ -136,6 +136,17 @@
           <svg viewBox="0 0 20 20" fill="none"><path d="M5 3h7l4 4v11a1 1 0 01-1 1H5a1 1 0 01-1-1V4a1 1 0 011-1z" stroke="currentColor" stroke-width="1.5"/><path d="M12 3v4h4" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M7 9h6M7 12h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
         </span> Şablonlar
       </div>
+      <div class="nav-item" data-page="vehicles" onclick="hrNavigate('vehicles')" style="margin-top:4px;border-top:1px solid rgba(255,255,255,0.06);padding-top:12px">
+        <span class="nav-icon">
+          <svg viewBox="0 0 20 20" fill="none"><path d="M3 13V9l2-5h10l2 5v4" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><rect x="1" y="13" width="18" height="4" rx="1.5" stroke="currentColor" stroke-width="1.5"/><circle cx="5.5" cy="17" r="1.5" stroke="currentColor" stroke-width="1.5"/><circle cx="14.5" cy="17" r="1.5" stroke="currentColor" stroke-width="1.5"/></svg>
+        </span> Taşıtlar
+      </div>
+      <div class="nav-item" data-page="vehicles-dashboard" onclick="hrNavigate('vehicles-dashboard')" style="padding-left:28px;font-size:12px">
+        <span class="nav-icon"><svg viewBox="0 0 20 20" fill="none"><rect x="2" y="2" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="11" y="2" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="2" y="11" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="11" y="11" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/></svg></span> Dashboard
+      </div>
+      <div class="nav-item" data-page="vehicles-calendar" onclick="hrNavigate('vehicles-calendar')" style="padding-left:28px;font-size:12px">
+        <span class="nav-icon"><svg viewBox="0 0 20 20" fill="none"><rect x="2" y="4" width="16" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M6 2v4M14 2v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M2 9h16" stroke="currentColor" stroke-width="1.5"/></svg></span> Takvim
+      </div>
       <div class="nav-item" onclick="hrOpenXlImport()" title="Excel ile personel aktar" style="margin-top:4px;border-top:1px solid rgba(255,255,255,0.06);padding-top:12px">
         <span class="nav-icon">
           <svg viewBox="0 0 20 20" fill="none"><path d="M10 3v10M6 9l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 15v1a1 1 0 001 1h12a1 1 0 001-1v-1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
@@ -298,6 +309,94 @@
       <!-- ---- TEMPLATES ---- -->
       <section id="page-templates" class="page-section">
         <div id="templates-wrap"></div>
+      </section>
+
+      <!-- ======================================================
+           TAŞITLAR — Ana Liste
+           ====================================================== -->
+      <section id="page-vehicles" class="page-section">
+        <div class="filter-bar">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="veh-search" placeholder="Plaka veya marka ara..." oninput="vehFilterList()">
+          </div>
+          <select id="veh-filter-status" onchange="vehFilterList()" style="width:auto;min-width:130px">
+            <option value="">Tüm Durum</option>
+            <option value="bosta">Boşta</option>
+            <option value="zimmetli">Zimmetli</option>
+          </select>
+        </div>
+        <div id="veh-list-wrap"></div>
+      </section>
+
+      <!-- ======================================================
+           TAŞITLAR — Dashboard
+           ====================================================== -->
+      <section id="page-vehicles-dashboard" class="page-section">
+        <div id="veh-dash-kpi" class="dash-kpi-row"></div>
+        <div id="veh-dash-alerts" style="margin-bottom:16px"></div>
+        <div class="dash-main-grid">
+          <div class="dash-col-left">
+            <div class="card dash-card">
+              <div class="card-header"><span class="card-title">Araç Sağlık Skoru</span></div>
+              <div class="card-body" id="veh-dash-health"></div>
+            </div>
+            <div class="card dash-card">
+              <div class="card-header"><span class="card-title">Son 6 Ay Harcama</span></div>
+              <div class="card-body" id="veh-dash-chart"></div>
+            </div>
+          </div>
+          <div class="dash-col-right">
+            <div class="card dash-card">
+              <div class="card-header"><span class="card-title">Kritik Tarih Uyarıları</span></div>
+              <div class="card-body" id="veh-dash-expiry"></div>
+            </div>
+            <div class="card dash-card">
+              <div class="card-header"><span class="card-title">Hurdaya Adaylar</span></div>
+              <div class="card-body" id="veh-dash-scrap"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================================================
+           TAŞITLAR — Takvim
+           ====================================================== -->
+      <section id="page-vehicles-calendar" class="page-section">
+        <div class="card" style="overflow:hidden">
+          <div class="card-header" style="flex-wrap:wrap;gap:10px">
+            <div style="display:flex;align-items:center;gap:10px">
+              <button class="btn btn-ghost btn-sm" onclick="vehCalNav(-1)">&#8249;</button>
+              <div id="veh-cal-title" style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;min-width:160px;text-align:center"></div>
+              <button class="btn btn-ghost btn-sm" onclick="vehCalNav(1)">&#8250;</button>
+            </div>
+            <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+              <span style="font-size:12px;color:var(--hr-text3);display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:10px;height:10px;background:#e8637a;border-radius:2px"></span>Evrak Bitiş</span>
+              <span style="font-size:12px;color:var(--hr-text3);display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:10px;height:10px;background:#8b6be8;border-radius:2px"></span>Görev</span>
+            </div>
+          </div>
+          <div id="veh-cal-grid" class="cal-grid-wrap" style="padding:0"></div>
+        </div>
+      </section>
+
+      <!-- ======================================================
+           TAŞITLAR — Araç Detay
+           ====================================================== -->
+      <section id="page-vehicles-detail" class="page-section">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+          <button class="btn btn-ghost btn-sm" onclick="hrNavigate('vehicles')">← Araçlar</button>
+          <span id="veh-detail-plate" style="font-family:'Syne',sans-serif;font-weight:700;font-size:16px;color:var(--hr-text)"></span>
+        </div>
+        <div style="display:flex;gap:4px;margin-bottom:20px;border-bottom:2px solid var(--hr-border);padding-bottom:0" id="veh-detail-tabs">
+          <button class="veh-detail-tab active" data-tab="info"    onclick="vehDetailTab('info')">Genel Bilgiler</button>
+          <button class="veh-detail-tab"        data-tab="docs"    onclick="vehDetailTab('docs')">Evrak Arşivi</button>
+          <button class="veh-detail-tab"        data-tab="service" onclick="vehDetailTab('service')">Servis &amp; Bakım</button>
+          <button class="veh-detail-tab"        data-tab="tasks"   onclick="vehDetailTab('tasks')">Görevler</button>
+        </div>
+        <div id="veh-detail-info"    class="veh-detail-pane active"></div>
+        <div id="veh-detail-docs"    class="veh-detail-pane"></div>
+        <div id="veh-detail-service" class="veh-detail-pane"></div>
+        <div id="veh-detail-tasks"   class="veh-detail-pane"></div>
       </section>
 
     </div><!-- /content-area -->
@@ -561,6 +660,297 @@
       <div class="xl-modal-foot">
         <button class="btn btn-ghost btn-sm" onclick="hrCloseXlImport()">Kapat</button>
         <button class="btn btn-primary btn-sm" id="hr-xl-import-btn" onclick="hrXlConfirmImport()" style="display:none">✓ İçe Aktar</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ============================================================
+       TAŞIT MODALLERİ
+       ============================================================ -->
+
+  <!-- Araç Ekle/Düzenle -->
+  <div id="veh-modal-vehicle" class="modal-backdrop">
+    <div class="modal">
+      <div class="modal-header">
+        <span id="veh-modal-vehicle-title" class="modal-title">Araç Ekle</span>
+        <button class="modal-close" onclick="hrCloseModal('veh-modal-vehicle')">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="veh-form-vehicle" onsubmit="vehSaveVehicle(event)">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Plaka *</label>
+              <input type="text" id="vv-plate" placeholder="11 AA 111" required style="text-transform:uppercase">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Araç Sahibi</label>
+              <input type="text" id="vv-owner" placeholder="Şirket / Kişi adı">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Cinsi</label>
+              <select id="vv-type">
+                <option value="otomobil">Otomobil</option>
+                <option value="suv">SUV / Arazi</option>
+                <option value="minibus">Minibüs</option>
+                <option value="kamyonet">Kamyonet</option>
+                <option value="kamyon">Kamyon</option>
+                <option value="motosiklet">Motosiklet</option>
+                <option value="diger">Diğer</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Marka</label>
+              <input type="text" id="vv-brand" placeholder="Toyota, Ford...">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Model</label>
+              <input type="text" id="vv-model" placeholder="Corolla, Transit...">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Model Yılı</label>
+              <input type="number" id="vv-year" placeholder="2020" min="1980" max="2030">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Şasi No</label>
+              <input type="text" id="vv-chassis" placeholder="WBA...">
+            </div>
+            <div class="form-group">
+              <label class="form-label">GPS</label>
+              <select id="vv-gps">
+                <option value="var">Var</option>
+                <option value="yok">Yok</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Zimmet (Personel)</label>
+            <select id="vv-assignee"><option value="">Boşta</option></select>
+          </div>
+          <hr style="border:none;border-top:1px solid var(--hr-border);margin:12px 0">
+          <div style="font-size:11px;font-weight:600;color:var(--hr-text2);margin-bottom:10px;letter-spacing:0.5px;text-transform:uppercase">Tarih Takibi</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Sigorta Bitiş</label>
+              <input type="date" id="vv-insurance">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Seyrüsefer Bitiş</label>
+              <input type="date" id="vv-seyrusefer">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Muayene Bitiş</label>
+              <input type="date" id="vv-muayene">
+            </div>
+            <div class="form-group">
+              <label class="form-label">GKRY Araç Kullanım İzni</label>
+              <input type="date" id="vv-gkry">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Rum Sigorta Bitiş</label>
+              <input type="date" id="vv-rum-sigorta">
+            </div>
+            <div class="form-group">
+              <label class="form-label">B İzni Bitiş</label>
+              <input type="date" id="vv-b-izni">
+            </div>
+          </div>
+          <div class="modal-footer" style="padding:0;margin-top:8px">
+            <button type="button" class="btn btn-secondary" onclick="hrCloseModal('veh-modal-vehicle')">İptal</button>
+            <button type="submit" class="btn btn-primary">Kaydet</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Servis Kaydı -->
+  <div id="veh-modal-service" class="modal-backdrop">
+    <div class="modal">
+      <div class="modal-header">
+        <span id="veh-modal-service-title" class="modal-title">Servis Kaydı Ekle</span>
+        <button class="modal-close" onclick="hrCloseModal('veh-modal-service')">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="veh-form-service" onsubmit="vehSaveService(event)">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Tarih *</label>
+              <input type="date" id="vs-date" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tür</label>
+              <select id="vs-type">
+                <option value="bakim">Bakım</option>
+                <option value="servis">Servis</option>
+                <option value="ariza">Arıza</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Yapılan İş *</label>
+            <input type="text" id="vs-desc" placeholder="Yağ değişimi, fren kontrolü..." required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Değiştirilen Parçalar</label>
+            <input type="text" id="vs-parts" placeholder="Yağ filtresi, hava filtresi...">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Tutar (₺)</label>
+              <input type="number" id="vs-cost" placeholder="0" min="0" step="0.01">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Servis Yeri</label>
+              <input type="text" id="vs-location" placeholder="ABC Servis">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Km (o anki)</label>
+              <input type="number" id="vs-km" placeholder="85000" min="0">
+            </div>
+            <div class="form-group"></div>
+          </div>
+          <div class="modal-footer" style="padding:0;margin-top:8px">
+            <button type="button" class="btn btn-secondary" onclick="hrCloseModal('veh-modal-service')">İptal</button>
+            <button type="submit" class="btn btn-primary">Kaydet</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ödeme -->
+  <div id="veh-modal-payment" class="modal-backdrop">
+    <div class="modal" style="max-width:420px">
+      <div class="modal-header">
+        <span class="modal-title">Ödeme Ekle</span>
+        <button class="modal-close" onclick="hrCloseModal('veh-modal-payment')">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="veh-form-payment" onsubmit="vehSavePayment(event)">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Tarih *</label>
+              <input type="date" id="vp-date" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tutar (₺) *</label>
+              <input type="number" id="vp-amount" placeholder="0" min="0" step="0.01" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Açıklama *</label>
+            <input type="text" id="vp-desc" placeholder="Sigorta ödemesi..." required>
+          </div>
+          <div class="modal-footer" style="padding:0;margin-top:8px">
+            <button type="button" class="btn btn-secondary" onclick="hrCloseModal('veh-modal-payment')">İptal</button>
+            <button type="submit" class="btn btn-primary">Kaydet</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Görev -->
+  <div id="veh-modal-task" class="modal-backdrop">
+    <div class="modal" style="max-width:420px">
+      <div class="modal-header">
+        <span id="veh-modal-task-title" class="modal-title">Görev Ekle</span>
+        <button class="modal-close" onclick="hrCloseModal('veh-modal-task')">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="veh-form-task" onsubmit="vehSaveTask(event)">
+          <div class="form-group">
+            <label class="form-label">Görev Adı *</label>
+            <input type="text" id="vt-name" placeholder="Yıllık muayene..." required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Son Tarih</label>
+              <input type="date" id="vt-due">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Durum</label>
+              <select id="vt-status">
+                <option value="bekliyor">Bekliyor</option>
+                <option value="devam">Devam Ediyor</option>
+                <option value="tamamlandi">Tamamlandı</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Not</label>
+            <input type="text" id="vt-note" placeholder="Ek açıklama...">
+          </div>
+          <div class="modal-footer" style="padding:0;margin-top:8px">
+            <button type="button" class="btn btn-secondary" onclick="hrCloseModal('veh-modal-task')">İptal</button>
+            <button type="submit" class="btn btn-primary">Kaydet</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Km Güncelle -->
+  <div id="veh-modal-km" class="modal-backdrop">
+    <div class="modal" style="max-width:360px">
+      <div class="modal-header">
+        <span class="modal-title">Km Güncelle</span>
+        <button class="modal-close" onclick="hrCloseModal('veh-modal-km')">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="veh-form-km" onsubmit="vehSaveKm(event)">
+          <div class="form-group">
+            <label class="form-label">Güncel Km *</label>
+            <input type="number" id="vk-km" placeholder="85000" min="0" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tarih</label>
+            <input type="date" id="vk-date">
+          </div>
+          <div class="modal-footer" style="padding:0;margin-top:8px">
+            <button type="button" class="btn btn-secondary" onclick="hrCloseModal('veh-modal-km')">İptal</button>
+            <button type="submit" class="btn btn-primary">Güncelle</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Evrak Yükle -->
+  <div id="veh-modal-doc" class="modal-backdrop">
+    <div class="modal" style="max-width:400px">
+      <div class="modal-header">
+        <span id="veh-modal-doc-title" class="modal-title">Evrak Yükle</span>
+        <button class="modal-close" onclick="hrCloseModal('veh-modal-doc')">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="veh-form-doc" onsubmit="vehSaveDoc(event)">
+          <div class="form-group">
+            <label class="form-label">Evrak Adı *</label>
+            <input type="text" id="vd-name" placeholder="Sigorta Poliçesi..." required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Dosya *</label>
+            <input type="file" id="vd-file" accept=".pdf,.jpg,.jpeg,.png" required style="font-size:13px;padding:8px">
+          </div>
+          <div class="modal-footer" style="padding:0;margin-top:8px">
+            <button type="button" class="btn btn-secondary" onclick="hrCloseModal('veh-modal-doc')">İptal</button>
+            <button type="submit" class="btn btn-primary" id="veh-doc-save-btn">Yükle</button>
+          </div>
+        </form>
       </div>
     </div>
   </div>

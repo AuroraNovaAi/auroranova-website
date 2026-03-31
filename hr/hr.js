@@ -326,7 +326,11 @@ const pageTitles = {
   personnel: 'Personel',
   processes: 'Süreçler',
   calendar: 'Takvim',
-  templates: 'Şablonlar'
+  templates: 'Şablonlar',
+  vehicles: 'Taşıtlar',
+  'vehicles-dashboard': 'Taşıtlar · Dashboard',
+  'vehicles-calendar': 'Taşıtlar · Takvim',
+  'vehicles-detail': 'Taşıt Detayı',
 };
 
 function hrNavigate(page) {
@@ -350,7 +354,11 @@ function hrNavigate(page) {
     personnel: '<button class="btn btn-primary" onclick="hrOpenModal(\'modal-person\')">+ Personel Ekle</button>',
     processes: '<button class="btn btn-primary" onclick="openProcessModal()">+ Süreç Başlat</button>',
     calendar: '',
-    templates: '<button class="btn btn-primary" onclick="openTemplateModal()">+ Yeni Şablon</button>'
+    templates: '<button class="btn btn-primary" onclick="openTemplateModal()">+ Yeni Şablon</button>',
+    vehicles: '<button class="btn btn-primary" onclick="vehOpenAddVehicle()">+ Araç Ekle</button>',
+    'vehicles-dashboard': '',
+    'vehicles-calendar': '',
+    'vehicles-detail': '',
   };
   const actionsEl = document.getElementById('topbar-actions');
   if (actionsEl) actionsEl.innerHTML = actions[page] || '';
@@ -361,6 +369,9 @@ function hrNavigate(page) {
   if (page === 'processes') renderProcesses();
   if (page === 'calendar') { initCalendar(); hrSwitchCalTab(hrState._calTab || 'tasks'); }
   if (page === 'templates') renderTemplates();
+  if (page === 'vehicles') { vehLoadAndRenderList(); }
+  if (page === 'vehicles-dashboard') { vehEnsureLoaded().then(vehRenderDashboard); }
+  if (page === 'vehicles-calendar')  { vehEnsureLoaded().then(vehRenderCalendar); }
 }
 
 /* ============================================================
@@ -1774,6 +1785,849 @@ function _hrXlBoldHeader(ws, colCount) {
   await hrLoadState();
   renderDashboard();
 })();
+
+/* ============================================================
+   TAŞIT YÖNETİMİ
+   Firestore collections: vehicles, vehicle_documents,
+   vehicle_services, vehicle_payments, vehicle_tasks
+   ============================================================ */
+
+let _vehVehicles = [];
+let _vehCurrentVehicleId = null;
+let _vehCalYear = new Date().getFullYear();
+let _vehCalMonth = new Date().getMonth();
+let _vehDocType = 'other';
+let _vehEditServiceId = null;
+
+/* ── Araçlar yüklü değilse yükle ── */
+async function vehEnsureLoaded() {
+  if (!_vehVehicles.length) await vehLoadAndRenderList();
+}
+
+/* ── Firebase Storage (aynı HR app'i kullan) ── */
+function _vehStorage() {
+  try {
+    const app = firebase.apps.find(a => a.name === 'hr');
+    return app ? firebase.storage(app) : null;
+  } catch(e) { return null; }
+}
+
+/* ── Yardımcılar ── */
+function vehFmtDate(dateStr) {
+  if (!dateStr) return '—';
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return dateStr;
+  return `${parts[2]}/${parts[1]}/${parts[0]}`;
+}
+
+function vehExpiryClass(dateStr) {
+  if (!dateStr) return 'empty';
+  const todayMs = new Date().setHours(0,0,0,0);
+  const d = new Date(dateStr).getTime();
+  const diff = Math.floor((d - todayMs) / 86400000);
+  if (diff < 0)  return 'red';
+  if (diff <= 30) return 'yellow';
+  return 'green';
+}
+
+/* ── Araçları yükle ve listele ── */
+async function vehLoadAndRenderList() {
+  const db = _hrInitDb();
+  if (!db) return;
+  _hrSyncBadge('Yükleniyor…');
+  try {
+    const snap = await db.collection('vehicles').orderBy('createdAt', 'desc').get();
+    _vehVehicles = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    _hrSyncBadge('✓ Senkronize', '#2ea06e');
+    setTimeout(() => _hrSyncBadge(''), 2500);
+  } catch(e) {
+    console.error('VEH: load failed', e);
+    _hrSyncBadge('⚠ Yükleme hatası', '#e8637a');
+  }
+  vehRenderList();
+}
+
+function vehFilterList() { vehRenderList(); }
+
+function vehRenderList() {
+  const wrap = document.getElementById('veh-list-wrap');
+  if (!wrap) return;
+  const search = (document.getElementById('veh-search')?.value || '').toLowerCase();
+  const statusF = document.getElementById('veh-filter-status')?.value || '';
+
+  let list = _vehVehicles.filter(v => {
+    if (search && !v.plate?.toLowerCase().includes(search) &&
+        !v.brand?.toLowerCase().includes(search) &&
+        !v.model?.toLowerCase().includes(search)) return false;
+    if (statusF === 'bosta'    && v.assigneeId) return false;
+    if (statusF === 'zimmetli' && !v.assigneeId) return false;
+    return true;
+  });
+
+  if (!list.length) {
+    wrap.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🚗</div><p>Henüz araç eklenmedi.</p></div>';
+    return;
+  }
+  wrap.innerHTML = '<div class="veh-list-grid">' + list.map(vehCardHtml).join('') + '</div>';
+}
+
+function vehCardHtml(v) {
+  const assigneeName = v.assigneeId
+    ? (hrState.personnel.find(p => p.id === v.assigneeId)?.name || v.assigneeName || 'Zimmetli')
+    : 'Boşta';
+  const zimmetBadge = v.assigneeId
+    ? `<span class="badge badge-warning">${assigneeName}</span>`
+    : `<span class="badge badge-success">Boşta</span>`;
+  const gpsBadge = v.gps === 'var'
+    ? `<span class="badge" style="background:#e8f0fe;color:#3557c7">GPS ✓</span>`
+    : `<span class="badge badge-neutral">GPS ✗</span>`;
+
+  const dateFields = [
+    { label: 'Sigorta',      val: v.insurance },
+    { label: 'Seyrüsefer',   val: v.seyrusefer },
+    { label: 'Muayene',      val: v.muayene },
+    { label: 'GKRY İzni',    val: v.gkry },
+    { label: 'Rum Sigorta',  val: v.rumSigorta },
+    { label: 'B İzni',       val: v.bIzni },
+  ];
+  const dateRows = dateFields.map(f => {
+    const cls = vehExpiryClass(f.val);
+    const dot = cls === 'red' ? '🔴' : cls === 'yellow' ? '🟡' : cls === 'green' ? '🟢' : '';
+    return `<div style="display:flex;justify-content:space-between;font-size:12px;padding:2px 0">
+      <span style="color:var(--hr-text3)">${f.label}</span>
+      <span style="font-weight:500;color:${cls==='red'?'var(--hr-danger)':cls==='yellow'?'var(--hr-warning)':cls==='green'?'var(--hr-success)':'var(--hr-text3)'}">${dot} ${f.val ? vehFmtDate(f.val) : '—'}</span>
+    </div>`;
+  }).join('');
+
+  return `<div class="veh-card" onclick="vehOpenDetail('${v.id}')">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px">
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;letter-spacing:1px">${v.plate || '—'}</div>
+        <div style="font-size:12px;color:var(--hr-text2);margin-top:2px">${[v.brand,v.model,v.year].filter(Boolean).join(' · ')}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">${zimmetBadge}${gpsBadge}</div>
+    </div>
+    <div style="margin-bottom:10px">${dateRows}</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid var(--hr-border)">
+      <span style="font-size:12px;color:var(--hr-text3)">${v.type||''} · ${v.owner||''}</span>
+      <div style="display:flex;gap:6px" onclick="event.stopPropagation()">
+        <button class="btn btn-ghost btn-sm" onclick="vehOpenEditVehicle('${v.id}')">Düzenle</button>
+        <button class="btn btn-danger btn-sm" onclick="vehDeleteVehicle('${v.id}')">Sil</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ── Araç Ekle/Düzenle ── */
+function vehOpenAddVehicle() {
+  document.getElementById('veh-form-vehicle').reset();
+  delete document.getElementById('veh-form-vehicle').dataset.editId;
+  document.getElementById('veh-modal-vehicle-title').textContent = 'Araç Ekle';
+  vehPopulateAssigneeDropdown('');
+  hrOpenModal('veh-modal-vehicle');
+}
+
+function vehOpenEditVehicle(id) {
+  const v = _vehVehicles.find(x => x.id === id);
+  if (!v) return;
+  const form = document.getElementById('veh-form-vehicle');
+  form.dataset.editId = id;
+  document.getElementById('veh-modal-vehicle-title').textContent = 'Araç Düzenle';
+  document.getElementById('vv-plate').value       = v.plate || '';
+  document.getElementById('vv-owner').value       = v.owner || '';
+  document.getElementById('vv-type').value        = v.type || 'otomobil';
+  document.getElementById('vv-brand').value       = v.brand || '';
+  document.getElementById('vv-model').value       = v.model || '';
+  document.getElementById('vv-year').value        = v.year || '';
+  document.getElementById('vv-chassis').value     = v.chassis || '';
+  document.getElementById('vv-gps').value         = v.gps || 'yok';
+  document.getElementById('vv-insurance').value   = v.insurance || '';
+  document.getElementById('vv-seyrusefer').value  = v.seyrusefer || '';
+  document.getElementById('vv-muayene').value     = v.muayene || '';
+  document.getElementById('vv-gkry').value        = v.gkry || '';
+  document.getElementById('vv-rum-sigorta').value = v.rumSigorta || '';
+  document.getElementById('vv-b-izni').value      = v.bIzni || '';
+  vehPopulateAssigneeDropdown(v.assigneeId || '');
+  hrOpenModal('veh-modal-vehicle');
+}
+
+function vehPopulateAssigneeDropdown(selectedId) {
+  const sel = document.getElementById('vv-assignee');
+  sel.innerHTML = '<option value="">Boşta</option>';
+  hrState.personnel.filter(p => p.status === 'active').forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.id;
+    opt.textContent = p.name + (p.position ? ` (${p.position})` : '');
+    if (p.id === selectedId) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+async function vehSaveVehicle(e) {
+  e.preventDefault();
+  const form = document.getElementById('veh-form-vehicle');
+  const isEdit = !!form.dataset.editId;
+  const id = isEdit ? form.dataset.editId : ('veh_' + Date.now().toString(36));
+
+  const assigneeId   = document.getElementById('vv-assignee').value;
+  const assigneeName = assigneeId
+    ? (hrState.personnel.find(p => p.id === assigneeId)?.name || '')
+    : '';
+
+  const data = {
+    plate:       document.getElementById('vv-plate').value.trim().toUpperCase(),
+    owner:       document.getElementById('vv-owner').value.trim(),
+    type:        document.getElementById('vv-type').value,
+    brand:       document.getElementById('vv-brand').value.trim(),
+    model:       document.getElementById('vv-model').value.trim(),
+    year:        document.getElementById('vv-year').value,
+    chassis:     document.getElementById('vv-chassis').value.trim(),
+    gps:         document.getElementById('vv-gps').value,
+    assigneeId,
+    assigneeName,
+    insurance:   document.getElementById('vv-insurance').value,
+    seyrusefer:  document.getElementById('vv-seyrusefer').value,
+    muayene:     document.getElementById('vv-muayene').value,
+    gkry:        document.getElementById('vv-gkry').value,
+    rumSigorta:  document.getElementById('vv-rum-sigorta').value,
+    bIzni:       document.getElementById('vv-b-izni').value,
+    updatedAt:   new Date().toISOString(),
+  };
+  if (!isEdit) data.createdAt = new Date().toISOString();
+
+  const db = _hrInitDb();
+  if (!db) { alert('Veritabanı bağlantısı yok.'); return; }
+
+  _hrSyncBadge('Kaydediliyor…');
+  try {
+    await db.collection('vehicles').doc(id).set(data, { merge: true });
+    if (isEdit) {
+      const idx = _vehVehicles.findIndex(x => x.id === id);
+      if (idx !== -1) _vehVehicles[idx] = { id, ...data };
+    } else {
+      _vehVehicles.unshift({ id, ...data });
+    }
+    _hrSyncBadge('✓ Kaydedildi', '#2ea06e');
+    setTimeout(() => _hrSyncBadge(''), 2500);
+    hrCloseModal('veh-modal-vehicle');
+    vehRenderList();
+  } catch(err) {
+    _hrSyncBadge('⚠ Kayıt hatası', '#e8637a');
+    alert('Kayıt hatası: ' + err.message);
+  }
+}
+
+async function vehDeleteVehicle(id) {
+  if (!confirm('Bu aracı silmek istediğinizden emin misiniz?')) return;
+  const db = _hrInitDb();
+  _hrSyncBadge('Siliniyor…');
+  try {
+    await db.collection('vehicles').doc(id).delete();
+    _vehVehicles = _vehVehicles.filter(x => x.id !== id);
+    _hrSyncBadge('✓ Silindi', '#2ea06e');
+    setTimeout(() => _hrSyncBadge(''), 2000);
+    vehRenderList();
+  } catch(err) {
+    _hrSyncBadge('⚠ Hata', '#e8637a');
+    alert('Silme hatası: ' + err.message);
+  }
+}
+
+/* ── Araç Detay ── */
+async function vehOpenDetail(vehicleId) {
+  _vehCurrentVehicleId = vehicleId;
+  const v = _vehVehicles.find(x => x.id === vehicleId);
+  if (!v) return;
+  document.getElementById('veh-detail-plate').textContent = v.plate;
+  document.getElementById('topbar-title').textContent = v.plate + ' · Detay';
+
+  document.querySelectorAll('.hr-app .nav-item').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.hr-app .page-section').forEach(el => el.classList.remove('active'));
+  document.getElementById('page-vehicles-detail').classList.add('active');
+
+  const actionsEl = document.getElementById('topbar-actions');
+  if (actionsEl) actionsEl.innerHTML = '';
+
+  vehDetailTab('info');
+}
+
+function vehDetailTab(tab) {
+  document.querySelectorAll('.veh-detail-tab').forEach(el => {
+    el.classList.toggle('active', el.dataset.tab === tab);
+  });
+  document.querySelectorAll('.veh-detail-pane').forEach(el => el.classList.remove('active'));
+  document.getElementById('veh-detail-' + tab).classList.add('active');
+
+  if (tab === 'info')    vehRenderDetailInfo();
+  else if (tab === 'docs')    vehRenderDetailDocs();
+  else if (tab === 'service') vehRenderDetailService();
+  else if (tab === 'tasks')   vehRenderDetailTasks();
+}
+
+function vehRenderDetailInfo() {
+  const v = _vehVehicles.find(x => x.id === _vehCurrentVehicleId);
+  if (!v) return;
+  const pane = document.getElementById('veh-detail-info');
+  const assigneeName = v.assigneeId
+    ? (hrState.personnel.find(p => p.id === v.assigneeId)?.name || v.assigneeName || 'Zimmetli')
+    : 'Boşta';
+
+  const infoFields = [
+    { label: 'Plaka',       value: v.plate || '—' },
+    { label: 'Araç Sahibi', value: v.owner || '—' },
+    { label: 'Cinsi',       value: v.type  || '—' },
+    { label: 'Marka',       value: v.brand || '—' },
+    { label: 'Model',       value: v.model || '—' },
+    { label: 'Model Yılı',  value: v.year  || '—' },
+    { label: 'Şasi No',     value: v.chassis || '—' },
+    { label: 'GPS',         value: v.gps === 'var' ? '✓ Var' : '✗ Yok' },
+    { label: 'Zimmet',      value: assigneeName },
+  ];
+  const expiryFields = [
+    { label: 'Sigorta Bitiş',            val: v.insurance },
+    { label: 'Seyrüsefer Bitiş',         val: v.seyrusefer },
+    { label: 'Muayene Bitiş',            val: v.muayene },
+    { label: 'GKRY Araç Kullanım İzni',  val: v.gkry },
+    { label: 'Rum Sigorta Bitiş',        val: v.rumSigorta },
+    { label: 'B İzni Bitiş',             val: v.bIzni },
+  ];
+
+  pane.innerHTML = `
+    <div class="veh-section-header">
+      <span class="veh-section-title">Araç Bilgileri</span>
+      <button class="btn btn-ghost btn-sm" onclick="vehOpenEditVehicle('${v.id}')">Düzenle</button>
+    </div>
+    <div class="veh-info-grid">
+      ${infoFields.map(f => `<div class="veh-info-item"><div class="veh-info-label">${f.label}</div><div class="veh-info-value">${f.value}</div></div>`).join('')}
+    </div>
+    <div class="veh-section-header" style="margin-top:20px"><span class="veh-section-title">Tarih Takibi</span></div>
+    <div class="veh-expiry-grid">
+      ${expiryFields.map(f => {
+        const cls = vehExpiryClass(f.val);
+        const color = cls==='red'?'var(--hr-danger)':cls==='yellow'?'var(--hr-warning)':cls==='green'?'var(--hr-success)':'var(--hr-text3)';
+        return `<div class="veh-expiry-item ${cls}">
+          <div class="veh-expiry-label">${f.label}</div>
+          <div class="veh-expiry-date" style="color:${color}">${f.val ? vehFmtDate(f.val) : '—'}</div>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+async function vehRenderDetailDocs() {
+  const pane = document.getElementById('veh-detail-docs');
+  pane.innerHTML = '<p style="color:var(--hr-text3);font-size:13px">Yükleniyor…</p>';
+  const db = _hrInitDb();
+  if (!db) return;
+  try {
+    const snap = await db.collection('vehicle_documents')
+      .where('vehicleId','==',_vehCurrentVehicleId)
+      .orderBy('createdAt','desc').get();
+    const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const kochan = docs.find(d => d.docType === 'kochan');
+    const others = docs.filter(d => d.docType !== 'kochan');
+
+    pane.innerHTML = `
+      <div class="veh-section-header"><span class="veh-section-title">Koçan (Ruhsat)</span></div>
+      ${kochan
+        ? `<div class="veh-doc-list">${vehDocItemHtml(kochan)}</div>`
+        : `<div style="margin-bottom:12px"><button class="btn btn-secondary btn-sm" onclick="vehOpenDocModal('kochan')">📄 Koçan Yükle</button></div>`}
+      <div class="veh-section-header" style="margin-top:20px">
+        <span class="veh-section-title">Diğer Evraklar</span>
+        <button class="btn btn-primary btn-sm" onclick="vehOpenDocModal('other')">+ Evrak Ekle</button>
+      </div>
+      <div class="veh-doc-list">
+        ${others.length ? others.map(d => vehDocItemHtml(d)).join('') : '<p style="color:var(--hr-text3);font-size:13px;padding:8px 0">Henüz evrak yüklenmedi.</p>'}
+      </div>`;
+  } catch(e) {
+    pane.innerHTML = '<p style="color:var(--hr-danger);font-size:13px">Evraklar yüklenemedi.</p>';
+  }
+}
+
+function vehDocItemHtml(doc) {
+  const icon = doc.fileType?.includes('image') ? '🖼' : '📄';
+  return `<div class="veh-doc-item">
+    <span style="font-size:20px;flex-shrink:0">${icon}</span>
+    <span style="flex:1;font-size:13px;font-weight:500">${doc.name}</span>
+    <div style="display:flex;gap:6px;flex-shrink:0">
+      <a href="${doc.url}" target="_blank" class="btn btn-ghost btn-sm">Görüntüle</a>
+      <button class="btn btn-danger btn-sm" onclick="vehDeleteDoc('${doc.id}','${doc.storagePath||''}')">Sil</button>
+    </div>
+  </div>`;
+}
+
+function vehOpenDocModal(type) {
+  _vehDocType = type;
+  document.getElementById('veh-form-doc').reset();
+  document.getElementById('veh-modal-doc-title').textContent = type === 'kochan' ? 'Koçan Yükle' : 'Evrak Yükle';
+  document.getElementById('vd-name').value    = type === 'kochan' ? 'Koçan' : '';
+  document.getElementById('vd-name').readOnly = type === 'kochan';
+  hrOpenModal('veh-modal-doc');
+}
+
+async function vehSaveDoc(e) {
+  e.preventDefault();
+  const name = document.getElementById('vd-name').value.trim();
+  const file = document.getElementById('vd-file').files[0];
+  if (!file) return;
+  const saveBtn = document.getElementById('veh-doc-save-btn');
+  saveBtn.disabled = true; saveBtn.textContent = 'Yükleniyor…';
+  try {
+    const storage = _vehStorage();
+    if (!storage) throw new Error('Storage bağlantısı yok');
+    const folder = _vehDocType === 'kochan' ? 'kochan' : 'documents';
+    const path = `vehicles/${_vehCurrentVehicleId}/${folder}/${Date.now()}_${file.name}`;
+    const ref = storage.ref(path);
+    await ref.put(file);
+    const url = await ref.getDownloadURL();
+    await _hrInitDb().collection('vehicle_documents').add({
+      vehicleId: _vehCurrentVehicleId, docType: _vehDocType,
+      name, url, storagePath: path, fileType: file.type,
+      createdAt: new Date().toISOString(),
+    });
+    hrCloseModal('veh-modal-doc');
+    vehRenderDetailDocs();
+  } catch(err) { alert('Yükleme hatası: ' + err.message); }
+  finally { saveBtn.disabled = false; saveBtn.textContent = 'Yükle'; }
+}
+
+async function vehDeleteDoc(docId, storagePath) {
+  if (!confirm('Bu evrakı silmek istediğinizden emin misiniz?')) return;
+  await _hrInitDb().collection('vehicle_documents').doc(docId).delete();
+  if (storagePath) {
+    try { await _vehStorage()?.ref(storagePath).delete(); } catch(e) {}
+  }
+  vehRenderDetailDocs();
+}
+
+async function vehRenderDetailService() {
+  const pane = document.getElementById('veh-detail-service');
+  pane.innerHTML = '<p style="color:var(--hr-text3);font-size:13px">Yükleniyor…</p>';
+  const db = _hrInitDb();
+  if (!db) return;
+  try {
+    const [sSnap, pSnap] = await Promise.all([
+      db.collection('vehicle_services').where('vehicleId','==',_vehCurrentVehicleId).orderBy('date','desc').get(),
+      db.collection('vehicle_payments').where('vehicleId','==',_vehCurrentVehicleId).orderBy('date','desc').get(),
+    ]);
+    const services = sSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const payments = pSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const v = _vehVehicles.find(x => x.id === _vehCurrentVehicleId);
+    const typeLabel  = { bakim:'Bakım', servis:'Servis', ariza:'Arıza' };
+    const typeBadge  = { bakim:'badge-info', servis:'badge-success', ariza:'badge-danger' };
+
+    pane.innerHTML = `
+      <div class="veh-section-header">
+        <span class="veh-section-title">Km Takibi</span>
+        <button class="btn btn-ghost btn-sm" onclick="vehOpenKmModal()">Km Güncelle</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;background:var(--hr-surface2);border-radius:var(--hr-radius-sm);padding:12px 16px">
+        <span style="font-size:12px;color:var(--hr-text3)">Güncel Km</span>
+        <span style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800">${v?.currentKm ? Number(v.currentKm).toLocaleString('tr-TR') + ' km' : '—'}</span>
+      </div>
+      <div class="veh-section-header">
+        <span class="veh-section-title">Servis & Bakım Kayıtları</span>
+        <button class="btn btn-primary btn-sm" onclick="vehOpenServiceModal()">+ Servis Ekle</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px">
+        ${services.length ? services.map(s => `
+          <div style="background:var(--hr-surface);border:1px solid var(--hr-border);border-radius:var(--hr-radius-sm);padding:12px 16px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+              <div style="display:flex;align-items:center;gap:8px">
+                <span class="badge ${typeBadge[s.type]||'badge-neutral'}">${typeLabel[s.type]||s.type}</span>
+                <span style="font-size:12px;color:var(--hr-text3)">${vehFmtDate(s.date)}</span>
+                ${s.km ? `<span style="font-size:11px;color:var(--hr-text3)">${Number(s.km).toLocaleString('tr-TR')} km</span>` : ''}
+              </div>
+              <div style="display:flex;align-items:center;gap:8px">
+                ${s.cost ? `<span style="font-size:13px;font-weight:600">₺${Number(s.cost).toLocaleString('tr-TR')}</span>` : ''}
+                <button class="btn btn-danger btn-sm" onclick="vehDeleteService('${s.id}')">Sil</button>
+              </div>
+            </div>
+            <div style="font-size:13px;font-weight:500">${s.desc}</div>
+            ${s.parts    ? `<div style="font-size:12px;color:var(--hr-text2);margin-top:4px">Parçalar: ${s.parts}</div>` : ''}
+            ${s.location ? `<div style="font-size:12px;color:var(--hr-text2);margin-top:2px">Servis: ${s.location}</div>` : ''}
+          </div>`).join('')
+          : '<p style="color:var(--hr-text3);font-size:13px;padding:8px 0">Henüz servis kaydı yok.</p>'}
+      </div>
+      <div class="veh-section-header">
+        <span class="veh-section-title">Ödemeler</span>
+        <button class="btn btn-primary btn-sm" onclick="vehOpenPaymentModal()">+ Ödeme Ekle</button>
+      </div>
+      ${payments.length ? `<div class="table-wrap"><table>
+        <thead><tr><th>Tarih</th><th>Açıklama</th><th>Tutar</th><th></th></tr></thead>
+        <tbody>${payments.map(p => `<tr>
+          <td>${vehFmtDate(p.date)}</td><td>${p.desc}</td>
+          <td style="font-weight:600">₺${Number(p.amount).toLocaleString('tr-TR')}</td>
+          <td><button class="btn btn-danger btn-sm" onclick="vehDeletePayment('${p.id}')">Sil</button></td>
+        </tr>`).join('')}</tbody>
+      </table></div>`
+      : '<p style="color:var(--hr-text3);font-size:13px;padding:8px 0">Henüz ödeme kaydı yok.</p>'}`;
+  } catch(e) {
+    pane.innerHTML = '<p style="color:var(--hr-danger);font-size:13px">Servis bilgileri yüklenemedi.</p>';
+  }
+}
+
+function vehOpenServiceModal() {
+  _vehEditServiceId = null;
+  document.getElementById('veh-form-service').reset();
+  document.getElementById('veh-modal-service-title').textContent = 'Servis Kaydı Ekle';
+  document.getElementById('vs-date').value = new Date().toISOString().slice(0,10);
+  hrOpenModal('veh-modal-service');
+}
+
+async function vehSaveService(e) {
+  e.preventDefault();
+  const db = _hrInitDb();
+  const data = {
+    vehicleId: _vehCurrentVehicleId,
+    date:     document.getElementById('vs-date').value,
+    type:     document.getElementById('vs-type').value,
+    desc:     document.getElementById('vs-desc').value.trim(),
+    parts:    document.getElementById('vs-parts').value.trim(),
+    cost:     document.getElementById('vs-cost').value || '',
+    location: document.getElementById('vs-location').value.trim(),
+    km:       document.getElementById('vs-km').value || '',
+    createdAt: new Date().toISOString(),
+  };
+  try {
+    await db.collection('vehicle_services').add(data);
+    if (data.km) {
+      const v = _vehVehicles.find(x => x.id === _vehCurrentVehicleId);
+      if (!v?.currentKm || Number(data.km) > Number(v.currentKm)) {
+        await db.collection('vehicles').doc(_vehCurrentVehicleId).update({ currentKm: data.km });
+        if (v) v.currentKm = data.km;
+      }
+    }
+    hrCloseModal('veh-modal-service');
+    vehRenderDetailService();
+  } catch(err) { alert('Kayıt hatası: ' + err.message); }
+}
+
+async function vehDeleteService(id) {
+  if (!confirm('Servis kaydını silmek istiyor musunuz?')) return;
+  await _hrInitDb().collection('vehicle_services').doc(id).delete();
+  vehRenderDetailService();
+}
+
+function vehOpenPaymentModal() {
+  document.getElementById('veh-form-payment').reset();
+  document.getElementById('vp-date').value = new Date().toISOString().slice(0,10);
+  hrOpenModal('veh-modal-payment');
+}
+
+async function vehSavePayment(e) {
+  e.preventDefault();
+  await _hrInitDb().collection('vehicle_payments').add({
+    vehicleId: _vehCurrentVehicleId,
+    date:   document.getElementById('vp-date').value,
+    amount: document.getElementById('vp-amount').value,
+    desc:   document.getElementById('vp-desc').value.trim(),
+    createdAt: new Date().toISOString(),
+  });
+  hrCloseModal('veh-modal-payment');
+  vehRenderDetailService();
+}
+
+async function vehDeletePayment(id) {
+  if (!confirm('Ödeme kaydını silmek istiyor musunuz?')) return;
+  await _hrInitDb().collection('vehicle_payments').doc(id).delete();
+  vehRenderDetailService();
+}
+
+function vehOpenKmModal() {
+  document.getElementById('veh-form-km').reset();
+  document.getElementById('vk-date').value = new Date().toISOString().slice(0,10);
+  const v = _vehVehicles.find(x => x.id === _vehCurrentVehicleId);
+  if (v?.currentKm) document.getElementById('vk-km').value = v.currentKm;
+  hrOpenModal('veh-modal-km');
+}
+
+async function vehSaveKm(e) {
+  e.preventDefault();
+  const km   = document.getElementById('vk-km').value;
+  const date = document.getElementById('vk-date').value;
+  try {
+    await _hrInitDb().collection('vehicles').doc(_vehCurrentVehicleId).update({ currentKm: km, kmUpdatedAt: date });
+    const v = _vehVehicles.find(x => x.id === _vehCurrentVehicleId);
+    if (v) { v.currentKm = km; v.kmUpdatedAt = date; }
+    hrCloseModal('veh-modal-km');
+    vehRenderDetailService();
+  } catch(err) { alert('Hata: ' + err.message); }
+}
+
+async function vehRenderDetailTasks() {
+  const pane = document.getElementById('veh-detail-tasks');
+  pane.innerHTML = '<p style="color:var(--hr-text3);font-size:13px">Yükleniyor…</p>';
+  const db = _hrInitDb();
+  if (!db) return;
+  try {
+    const snap = await db.collection('vehicle_tasks')
+      .where('vehicleId','==',_vehCurrentVehicleId)
+      .orderBy('createdAt','desc').get();
+    const tasks = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const sLabel = { bekliyor:'Bekliyor', devam:'Devam Ediyor', tamamlandi:'Tamamlandı' };
+    const sBadge = { bekliyor:'badge-warning', devam:'', tamamlandi:'badge-success' };
+    const open = tasks.filter(t => t.status !== 'tamamlandi');
+    const done = tasks.filter(t => t.status === 'tamamlandi');
+
+    pane.innerHTML = `
+      <div class="veh-section-header">
+        <span class="veh-section-title">Açık Görevler</span>
+        <button class="btn btn-primary btn-sm" onclick="vehOpenTaskModal()">+ Görev Ekle</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        ${open.length ? open.map(t => vehTaskHtml(t, sLabel, sBadge)).join('')
+          : '<p style="color:var(--hr-text3);font-size:13px;padding:8px 0">Açık görev yok.</p>'}
+      </div>
+      ${done.length ? `
+        <div class="veh-section-header" style="margin-top:20px"><span class="veh-section-title">Tamamlanan Görevler</span></div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          ${done.map(t => vehTaskHtml(t, sLabel, sBadge)).join('')}
+        </div>` : ''}`;
+  } catch(e) {
+    pane.innerHTML = '<p style="color:var(--hr-danger);font-size:13px">Görevler yüklenemedi.</p>';
+  }
+}
+
+function vehTaskHtml(t, sLabel, sBadge) {
+  return `<div style="display:flex;align-items:center;gap:12px;background:var(--hr-surface);border:1px solid var(--hr-border);border-radius:var(--hr-radius-sm);padding:10px 14px;${t.status==='tamamlandi'?'opacity:0.6':''}">
+    <div style="flex:1">
+      <div style="font-size:13px;font-weight:500;${t.status==='tamamlandi'?'text-decoration:line-through':''}">${t.name}</div>
+      ${t.due ? `<div style="font-size:11px;color:var(--hr-text3);margin-top:2px">Son: ${vehFmtDate(t.due)}</div>` : ''}
+      ${t.note ? `<div style="font-size:12px;color:var(--hr-text2);margin-top:2px">${t.note}</div>` : ''}
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+      <span class="badge ${sBadge[t.status]||'badge-neutral'}" style="${t.status==='devam'?'background:#e8f0fe;color:#3557c7':''}">${sLabel[t.status]||t.status}</span>
+      <select class="btn btn-ghost btn-sm" style="padding:4px 6px;font-size:11px" onchange="vehUpdateTaskStatus('${t.id}',this.value)">
+        <option value="bekliyor" ${t.status==='bekliyor'?'selected':''}>Bekliyor</option>
+        <option value="devam"    ${t.status==='devam'?'selected':''}>Devam</option>
+        <option value="tamamlandi" ${t.status==='tamamlandi'?'selected':''}>Tamamlandı</option>
+      </select>
+      <button class="btn btn-danger btn-sm" onclick="vehDeleteTask('${t.id}')">Sil</button>
+    </div>
+  </div>`;
+}
+
+function vehOpenTaskModal() {
+  document.getElementById('veh-form-task').reset();
+  document.getElementById('veh-modal-task-title').textContent = 'Görev Ekle';
+  hrOpenModal('veh-modal-task');
+}
+
+async function vehSaveTask(e) {
+  e.preventDefault();
+  await _hrInitDb().collection('vehicle_tasks').add({
+    vehicleId: _vehCurrentVehicleId,
+    name:   document.getElementById('vt-name').value.trim(),
+    due:    document.getElementById('vt-due').value,
+    status: document.getElementById('vt-status').value,
+    note:   document.getElementById('vt-note').value.trim(),
+    createdAt: new Date().toISOString(),
+  });
+  hrCloseModal('veh-modal-task');
+  vehRenderDetailTasks();
+}
+
+async function vehUpdateTaskStatus(id, status) {
+  try {
+    await _hrInitDb().collection('vehicle_tasks').doc(id).update({ status });
+    vehRenderDetailTasks();
+  } catch(err) { alert('Güncelleme hatası: ' + err.message); }
+}
+
+async function vehDeleteTask(id) {
+  if (!confirm('Görevi silmek istiyor musunuz?')) return;
+  await _hrInitDb().collection('vehicle_tasks').doc(id).delete();
+  vehRenderDetailTasks();
+}
+
+/* ── Dashboard ── */
+async function vehRenderDashboard() {
+  const total    = _vehVehicles.length;
+  const zimmetli = _vehVehicles.filter(v => v.assigneeId).length;
+  const bosta    = total - zimmetli;
+  let critical   = 0;
+  const todayMs  = new Date().setHours(0,0,0,0);
+  const in30Ms   = todayMs + 30 * 86400000;
+  _vehVehicles.forEach(v => {
+    [v.insurance,v.seyrusefer,v.muayene,v.gkry,v.rumSigorta,v.bIzni].forEach(d => {
+      if (!d) return;
+      if (new Date(d).getTime() <= in30Ms) critical++;
+    });
+  });
+
+  const kpiEl = document.getElementById('veh-dash-kpi');
+  if (kpiEl) kpiEl.innerHTML = `
+    <div class="kpi-card"><div class="kpi-label">Toplam Araç</div><div class="kpi-value">${total}</div></div>
+    <div class="kpi-card"><div class="kpi-label">Zimmetli</div><div class="kpi-value" style="color:var(--hr-warning)">${zimmetli}</div></div>
+    <div class="kpi-card"><div class="kpi-label">Boşta</div><div class="kpi-value" style="color:var(--hr-success)">${bosta}</div></div>
+    <div class="kpi-card"><div class="kpi-label">Kritik Uyarı</div><div class="kpi-value" style="color:var(--hr-danger)">${critical}</div></div>`;
+
+  // Kritik tarih uyarıları
+  const alerts = [];
+  const dateFields = [
+    {key:'insurance',label:'Sigorta'},{key:'seyrusefer',label:'Seyrüsefer'},
+    {key:'muayene',label:'Muayene'},{key:'gkry',label:'GKRY İzni'},
+    {key:'rumSigorta',label:'Rum Sigorta'},{key:'bIzni',label:'B İzni'},
+  ];
+  _vehVehicles.forEach(v => {
+    dateFields.forEach(f => {
+      if (!v[f.key]) return;
+      const ms = new Date(v[f.key]).getTime();
+      if (ms <= in30Ms) alerts.push({ plate: v.plate, label: f.label, date: v[f.key], red: ms < todayMs });
+    });
+  });
+  alerts.sort((a,b) => new Date(a.date) - new Date(b.date));
+  const expiryEl = document.getElementById('veh-dash-expiry');
+  if (expiryEl) expiryEl.innerHTML = alerts.slice(0,8).map(a =>
+    `<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;margin-bottom:6px;${a.red?'background:#fde8ec;border:1px solid #fbd0d7':'background:#fef9e7;border:1px solid #fde8b0'}">
+      <span>${a.red?'🔴':'🟡'}</span>
+      <span style="font-size:13px"><strong>${a.plate}</strong> · ${a.label}: ${vehFmtDate(a.date)}</span>
+    </div>`).join('') || '<p style="color:var(--hr-text3);font-size:13px">Kritik tarih uyarısı yok.</p>';
+
+  // Sağlık skoru
+  const healthEl = document.getElementById('veh-dash-health');
+  if (healthEl) {
+    const scores = _vehVehicles.map(v => {
+      let score = 100;
+      [v.insurance,v.seyrusefer,v.muayene,v.gkry,v.rumSigorta,v.bIzni].forEach(d => {
+        if (!d) { score -= 5; return; }
+        const diff = Math.floor((new Date(d).getTime() - todayMs) / 86400000);
+        if (diff < 0) score -= 20; else if (diff <= 30) score -= 10;
+      });
+      return { plate: v.plate, score: Math.max(0, score) };
+    }).sort((a,b) => a.score - b.score);
+    healthEl.innerHTML = scores.map(s => {
+      const color = s.score>=70?'var(--hr-success)':s.score>=40?'var(--hr-warning)':'var(--hr-danger)';
+      return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <span style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;min-width:80px">${s.plate}</span>
+        <div style="flex:1;background:var(--hr-surface3);border-radius:4px;height:8px;overflow:hidden">
+          <div style="width:${s.score}%;height:100%;border-radius:4px;background:${color}"></div>
+        </div>
+        <span style="font-size:12px;font-weight:600;min-width:36px;text-align:right;color:${color}">${s.score}</span>
+      </div>`;
+    }).join('') || '<p style="color:var(--hr-text3);font-size:13px">Araç yok.</p>';
+  }
+
+  // Hurda adaylar
+  const scrapEl = document.getElementById('veh-dash-scrap');
+  if (scrapEl) {
+    const year = new Date().getFullYear();
+    const cands = _vehVehicles.filter(v => v.year && (year - Number(v.year)) >= 15);
+    scrapEl.innerHTML = cands.length
+      ? cands.map(v => `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--hr-border)">
+          <span style="font-family:'Syne',sans-serif;font-weight:700">${v.plate}</span>
+          <span style="font-size:12px;color:var(--hr-text2)">${v.brand||''} ${v.model||''} · ${v.year}</span>
+          <span class="badge badge-danger">${year - Number(v.year)} yıl</span>
+        </div>`).join('')
+      : '<p style="color:var(--hr-text3);font-size:13px">Hurdaya aday araç yok.</p>';
+  }
+
+  // Harcama grafiği
+  const chartEl = document.getElementById('veh-dash-chart');
+  if (chartEl) {
+    const db = _hrInitDb();
+    if (db) {
+      try {
+        const months = [];
+        const now = new Date();
+        for (let i = 5; i >= 0; i--) {
+          const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+          months.push({ y: d.getFullYear(), m: d.getMonth(), label: d.toLocaleString('tr-TR', { month: 'short' }) });
+        }
+        const snap = await db.collection('vehicle_payments').orderBy('date','desc').limit(300).get();
+        const payments = snap.docs.map(d => d.data());
+        const totals = months.map(mo => ({
+          label: mo.label,
+          sum: payments.filter(p => { const pd = new Date(p.date); return pd.getFullYear()===mo.y && pd.getMonth()===mo.m; })
+                       .reduce((a,p) => a + Number(p.amount||0), 0)
+        }));
+        const maxSum = Math.max(...totals.map(t => t.sum), 1);
+        chartEl.innerHTML = `<div style="overflow-x:auto"><div style="display:flex;align-items:flex-end;gap:6px;height:120px;padding:0 4px">
+          ${totals.map(t => {
+            const h = Math.round((t.sum / maxSum) * 100);
+            return `<div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;min-width:40px">
+              ${t.sum > 0 ? `<span style="font-size:10px;color:var(--hr-text2);font-weight:600">₺${(t.sum/1000).toFixed(1)}k</span>` : '<span style="font-size:10px"></span>'}
+              <div style="width:100%;border-radius:4px 4px 0 0;background:var(--hr-accent);min-height:2px;height:${h}px"></div>
+              <span style="font-size:10px;color:var(--hr-text3)">${t.label}</span>
+            </div>`;
+          }).join('')}
+        </div></div>`;
+      } catch(e) { chartEl.innerHTML = '<p style="color:var(--hr-text3);font-size:13px">Grafik yüklenemedi.</p>'; }
+    }
+  }
+}
+
+/* ── Takvim ── */
+function vehCalNav(dir) {
+  _vehCalMonth += dir;
+  if (_vehCalMonth > 11) { _vehCalMonth = 0; _vehCalYear++; }
+  if (_vehCalMonth < 0)  { _vehCalMonth = 11; _vehCalYear--; }
+  vehRenderCalendar();
+}
+
+async function vehRenderCalendar() {
+  const titleEl = document.getElementById('veh-cal-title');
+  const gridEl  = document.getElementById('veh-cal-grid');
+  if (!titleEl || !gridEl) return;
+
+  const monthNames = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+  titleEl.textContent = `${monthNames[_vehCalMonth]} ${_vehCalYear}`;
+
+  const todayStr = new Date().toISOString().slice(0,10);
+  const lastDay  = new Date(_vehCalYear, _vehCalMonth + 1, 0);
+  let startDow   = new Date(_vehCalYear, _vehCalMonth, 1).getDay();
+  if (startDow === 0) startDow = 7; startDow--;
+
+  const events = {};
+  const dateFields = [
+    {key:'insurance',label:'Sigorta'},{key:'seyrusefer',label:'Seyrüsefer'},
+    {key:'muayene',label:'Muayene'},{key:'gkry',label:'GKRY İzni'},
+    {key:'rumSigorta',label:'Rum Sigorta'},{key:'bIzni',label:'B İzni'},
+  ];
+  _vehVehicles.forEach(v => {
+    dateFields.forEach(f => {
+      if (!v[f.key]) return;
+      if (!events[v[f.key]]) events[v[f.key]] = [];
+      events[v[f.key]].push({ label: `${v.plate}: ${f.label}`, type: 'expiry' });
+    });
+  });
+
+  const db = _hrInitDb();
+  if (db) {
+    try {
+      const m0 = `${_vehCalYear}-${String(_vehCalMonth+1).padStart(2,'0')}-01`;
+      const m1 = `${_vehCalYear}-${String(_vehCalMonth+1).padStart(2,'0')}-${String(lastDay.getDate()).padStart(2,'0')}`;
+      const tSnap = await db.collection('vehicle_tasks').where('due','>=',m0).where('due','<=',m1).get();
+      tSnap.docs.forEach(d => {
+        const t = d.data();
+        if (!t.due) return;
+        if (!events[t.due]) events[t.due] = [];
+        const veh = _vehVehicles.find(x => x.id === t.vehicleId);
+        events[t.due].push({ label: `${veh?.plate||'Araç'}: ${t.name}`, type: 'task' });
+      });
+    } catch(e) {}
+  }
+
+  const dayNames = ['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'];
+  let html = dayNames.map(d => `<div class="cal-day-header">${d}</div>`).join('');
+  for (let i = 0; i < startDow; i++) html += `<div class="cal-day other-month"></div>`;
+
+  for (let d = 1; d <= lastDay.getDate(); d++) {
+    const ds = `${_vehCalYear}-${String(_vehCalMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dayEvents = events[ds] || [];
+    const isToday = ds === todayStr;
+    html += `<div class="cal-day${isToday?' today':''}">
+      <div class="cal-day-num">${d}</div>
+      ${dayEvents.slice(0,3).map(ev => `<div class="cal-event" style="background:${ev.type==='expiry'?'#e8637a':'#8b6be8'};color:#fff;font-size:10px;padding:2px 5px;border-radius:3px;margin-bottom:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis" title="${ev.label}">${ev.label}</div>`).join('')}
+      ${dayEvents.length > 3 ? `<div style="font-size:9px;color:var(--hr-text3)">+${dayEvents.length-3} daha</div>` : ''}
+    </div>`;
+  }
+
+  const rem = (startDow + lastDay.getDate()) % 7;
+  if (rem) for (let i = 0; i < 7 - rem; i++) html += `<div class="cal-day other-month"></div>`;
+
+  gridEl.innerHTML = html;
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   setupUploadZone();

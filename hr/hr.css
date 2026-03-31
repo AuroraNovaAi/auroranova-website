@@ -1671,3 +1671,153 @@ body.hr-page {
   border: 1px solid #dde1ee;
   border-radius: 8px;
 }
+
+/* ============================================================
+   TAŞIT YÖNETİMİ — hr.css ek stilleri
+   ============================================================ */
+
+/* ── Araç kart grid ── */
+.hr-app .veh-list-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 14px;
+}
+.hr-app .veh-card {
+  background: var(--hr-surface);
+  border: 1px solid var(--hr-border);
+  border-radius: var(--hr-radius);
+  padding: 16px 18px;
+  cursor: pointer;
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+.hr-app .veh-card:hover {
+  box-shadow: 0 4px 16px rgba(44,48,80,0.1);
+  transform: translateY(-1px);
+}
+
+/* ── Araç detay sekmeleri ── */
+.hr-app .veh-detail-tab {
+  padding: 9px 16px;
+  background: transparent;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--hr-text3);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: color 0.15s, border-color 0.15s;
+  font-family: 'DM Sans', sans-serif;
+}
+.hr-app .veh-detail-tab:hover { color: var(--hr-text2); }
+.hr-app .veh-detail-tab.active { color: var(--hr-accent); border-bottom-color: var(--hr-accent); }
+.hr-app .veh-detail-pane { display: none; }
+.hr-app .veh-detail-pane.active { display: block; }
+
+/* ── Bilgi grid ── */
+.hr-app .veh-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.hr-app .veh-info-item {
+  background: var(--hr-surface2);
+  border-radius: var(--hr-radius-sm);
+  padding: 10px 14px;
+}
+.hr-app .veh-info-label {
+  font-size: 11px;
+  color: var(--hr-text3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+.hr-app .veh-info-value {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--hr-text);
+}
+
+/* ── Tarih bitiş grid ── */
+.hr-app .veh-expiry-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 10px;
+}
+.hr-app .veh-expiry-item {
+  border: 1px solid var(--hr-border);
+  border-radius: var(--hr-radius-sm);
+  padding: 10px 14px;
+  background: var(--hr-surface);
+}
+.hr-app .veh-expiry-item.red    { border-color: #fbd0d7; background: #fde8ec; }
+.hr-app .veh-expiry-item.yellow { border-color: #fde8b0; background: #fef9e7; }
+.hr-app .veh-expiry-item.green  { border-color: #c5eedb; background: #e8f8f0; }
+.hr-app .veh-expiry-label {
+  font-size: 11px;
+  color: var(--hr-text3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 5px;
+}
+.hr-app .veh-expiry-date {
+  font-size: 15px;
+  font-weight: 700;
+  font-family: 'Syne', sans-serif;
+}
+
+/* ── Section header ── */
+.hr-app .veh-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  margin-top: 20px;
+}
+.hr-app .veh-section-header:first-child { margin-top: 0; }
+.hr-app .veh-section-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--hr-text);
+}
+
+/* ── Evrak listesi ── */
+.hr-app .veh-doc-list { display: flex; flex-direction: column; gap: 8px; }
+.hr-app .veh-doc-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--hr-surface2);
+  border: 1px solid var(--hr-border);
+  border-radius: var(--hr-radius-sm);
+  padding: 10px 14px;
+}
+
+/* ── KPI kartları (taşıt dashboard) ── */
+.hr-app .dash-kpi-row .kpi-card {
+  background: var(--hr-surface);
+  border: 1px solid var(--hr-border);
+  border-radius: var(--hr-radius);
+  padding: 16px 18px;
+}
+.hr-app .kpi-label {
+  font-size: 11px;
+  color: var(--hr-text3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+.hr-app .kpi-value {
+  font-family: 'Syne', sans-serif;
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--hr-text);
+}
+
+/* ── Takvim grid wrapper (araç takvimi için) ── */
+#veh-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
