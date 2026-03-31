@@ -11,6 +11,7 @@
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
   <style>
     #hr-login-screen {
       position: fixed; inset: 0; z-index: 9999;
@@ -217,6 +218,13 @@
                 <button class="btn btn-ghost btn-sm" onclick="hrNavigate('personnel')">Tümü →</button>
               </div>
               <div class="card-body" id="dash-personnel-body"></div>
+            </div>
+            <div class="card dash-card" id="dash-card-vehicles">
+              <div class="card-header">
+                <span class="card-title">Taşıt Uyarıları</span>
+                <button class="btn btn-ghost btn-sm" onclick="hrNavigate('vehicles-dashboard')">Detay →</button>
+              </div>
+              <div class="card-body" id="dash-vehicles-body"><div class="dash-empty">Yükleniyor…</div></div>
             </div>
             <div class="card dash-card" id="dash-card-processes">
               <div class="card-header">

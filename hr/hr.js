@@ -342,7 +342,7 @@ function hrNavigate(page) {
     processes: '<button class="btn btn-primary" onclick="openProcessModal()">+ Süreç Başlat</button>',
     calendar: '',
     templates: '<button class="btn btn-primary" onclick="openTemplateModal()">+ Yeni Şablon</button>',
-    vehicles: '<button class="btn btn-primary" onclick="vehOpenAddVehicle()">+ Araç Ekle</button>',
+    vehicles: '<button class="btn btn-ghost btn-sm" onclick="vehLoadAndRenderList()" title="Yenile">↻</button><button class="btn btn-primary" onclick="vehOpenAddVehicle()">+ Araç Ekle</button>',
     'vehicles-dashboard': '',
     'vehicles-calendar': '',
     'vehicles-detail': '',
@@ -356,7 +356,7 @@ function hrNavigate(page) {
   if (page === 'processes') renderProcesses();
   if (page === 'calendar') { initCalendar(); hrSwitchCalTab(hrState._calTab || 'tasks'); }
   if (page === 'templates') renderTemplates();
-  if (page === 'vehicles') { vehLoadAndRenderList(); }
+  if (page === 'vehicles') { if (_vehVehicles.length) vehRenderList(); else vehLoadAndRenderList(); }
   if (page === 'vehicles-dashboard') { vehEnsureLoaded().then(vehRenderDashboard); }
   if (page === 'vehicles-calendar')  { vehEnsureLoaded().then(vehRenderCalendar); }
 }
@@ -1349,6 +1349,9 @@ function renderDashboard() {
     }
   }
 
+  // ══ TAŞIT UYARILARI (araçlar arka planda yüklenirse güncellenir) ══
+  vehRenderDashboardWidget();
+
   // ══ AKTİF SÜREÇLER ══
   const processesBody = document.getElementById('dash-processes-body');
   if (processesBody) {
@@ -1691,8 +1694,9 @@ function hrDownloadXlTemplate() {
   XLSX.writeFile(wb, 'AuroraNova_HR_Personel_Sablon.xlsx');
 }
 
-function hrExportAll() {
+async function hrExportAll() {
   if (!window.XLSX) { alert('SheetJS yüklenemedi.'); return; }
+  await vehEnsureLoaded();
 
   const wb = XLSX.utils.book_new();
   const date = new Date().toISOString().slice(0,10);
@@ -1754,6 +1758,28 @@ function hrExportAll() {
   _hrXlBoldHeader(wsS, sHeaders.length);
   XLSX.utils.book_append_sheet(wb, wsS, 'Şablonlar');
 
+  // ── Sheet 4: Araçlar ──
+  if (_vehVehicles.length) {
+    const vHeaders = [
+      'Plaka','Sahip','Cins','Marka','Model','Yıl','Şasi No','GPS',
+      'Zimmet','Sigorta Bitiş','Seyrüsefer Bitiş','Muayene Bitiş',
+      'GKRY İzni Bitiş','Rum Sigorta Bitiş','B İzni Bitiş','Güncel Km'
+    ];
+    const vRows = _vehVehicles.map(v => [
+      v.plate||'', v.owner||'', v.type||'', v.brand||'', v.model||'', v.year||'',
+      v.chassis||'', v.gps==='var'?'Var':'Yok',
+      v.assigneeName||'Boşta',
+      v.insurance||'', v.seyrusefer||'', v.muayene||'',
+      v.gkry||'', v.rumSigorta||'', v.bIzni||'',
+      v.currentKm||''
+    ]);
+    const wsV = XLSX.utils.aoa_to_sheet([vHeaders, ...vRows]);
+    wsV['!cols'] = [{wch:12},{wch:18},{wch:12},{wch:12},{wch:12},{wch:6},{wch:20},{wch:5},
+                   {wch:18},{wch:14},{wch:14},{wch:14},{wch:16},{wch:16},{wch:14},{wch:10}];
+    _hrXlBoldHeader(wsV, vHeaders.length);
+    XLSX.utils.book_append_sheet(wb, wsV, 'Araçlar');
+  }
+
   if (!wb.SheetNames.length) { alert('Dışa aktarılacak veri yok.'); return; }
 
   XLSX.writeFile(wb, `AuroraNova_HR_${date}.xlsx`);
@@ -1786,9 +1812,64 @@ let _vehCalMonth = new Date().getMonth();
 let _vehDocType = 'other';
 let _vehEditServiceId = null;
 
-/* ── Araçlar yüklü değilse yükle ── */
+/* ── HR Dashboard taşıt widget'ı ── */
+async function vehRenderDashboardWidget() {
+  const el = document.getElementById('dash-vehicles-body');
+  if (!el) return;
+  await vehEnsureLoaded();
+  if (!_vehVehicles.length) {
+    el.innerHTML = '<div class="dash-empty">Henüz araç eklenmedi</div>';
+    return;
+  }
+  const todayMs = new Date().setHours(0,0,0,0);
+  const in30Ms  = todayMs + 30 * 86400000;
+  const alerts  = [];
+  const fields  = [
+    {key:'insurance',label:'Sigorta'},{key:'seyrusefer',label:'Seyrüsefer'},
+    {key:'muayene',label:'Muayene'},{key:'gkry',label:'GKRY İzni'},
+    {key:'rumSigorta',label:'Rum Sigorta'},{key:'bIzni',label:'B İzni'},
+  ];
+  _vehVehicles.forEach(v => {
+    fields.forEach(f => {
+      if (!v[f.key]) return;
+      const ms = new Date(v[f.key]).getTime();
+      if (ms <= in30Ms) alerts.push({ plate: v.plate, label: f.label, date: v[f.key], expired: ms < todayMs });
+    });
+  });
+  alerts.sort((a,b) => new Date(a.date) - new Date(b.date));
+  if (!alerts.length) {
+    el.innerHTML = '<div class="dash-empty">✅ 30 gün içinde kritik tarih yok</div>';
+    return;
+  }
+  el.innerHTML = alerts.slice(0,5).map(a => `
+    <div class="dash-task-row">
+      <div class="dtr-dot ${a.expired ? 'dtr-red' : 'dtr-amber'}"></div>
+      <div class="dtr-info">
+        <div class="dtr-name">${a.plate}</div>
+        <div class="dtr-meta">${a.label}</div>
+      </div>
+      <div class="dtr-right">
+        <span class="dtr-date ${a.expired ? 'dtr-date-red' : 'dtr-date-amber'}">${a.expired ? '⚠' : '⏰'} ${vehFmtDate(a.date)}</span>
+      </div>
+    </div>`).join('') +
+    (alerts.length > 5 ? `<div class="dash-more" onclick="hrNavigate('vehicles-dashboard')">+${alerts.length - 5} uyarı daha →</div>` : '');
+}
+
+/* ── Araçlar yüklü değilse yükle (liste render etmeden) ── */
 async function vehEnsureLoaded() {
-  if (!_vehVehicles.length) await vehLoadAndRenderList();
+  if (_vehVehicles.length) return;
+  const db = _hrInitDb();
+  if (!db) return;
+  _hrSyncBadge('Yükleniyor…');
+  try {
+    const snap = await db.collection('vehicles').orderBy('createdAt', 'desc').get();
+    _vehVehicles = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    _hrSyncBadge('✓ Senkronize', '#2ea06e');
+    setTimeout(() => _hrSyncBadge(''), 2500);
+  } catch(e) {
+    console.error('VEH: load failed', e);
+    _hrSyncBadge('⚠ Yükleme hatası', '#e8637a');
+  }
 }
 
 /* ── Firebase Storage (aynı HR app'i kullan) ── */
@@ -1998,6 +2079,7 @@ async function vehSaveVehicle(e) {
     setTimeout(() => _hrSyncBadge(''), 2500);
     hrCloseModal('veh-modal-vehicle');
     vehRenderList();
+    vehRenderDashboardWidget();
   } catch(err) {
     _hrSyncBadge('⚠ Kayıt hatası', '#e8637a');
     alert('Kayıt hatası: ' + err.message);
@@ -2014,6 +2096,7 @@ async function vehDeleteVehicle(id) {
     _hrSyncBadge('✓ Silindi', '#2ea06e');
     setTimeout(() => _hrSyncBadge(''), 2000);
     vehRenderList();
+    vehRenderDashboardWidget();
   } catch(err) {
     _hrSyncBadge('⚠ Hata', '#e8637a');
     alert('Silme hatası: ' + err.message);
