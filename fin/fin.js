@@ -86,21 +86,22 @@ function finCalc(d) {
 
   const AN = M-AC;
   const AO = K;
-  const AP = Math.round((K-Q+L)*100)/100;
-  const AQ = AP-AB;
-  const AR = N-O;
-  const AS = AQ-AR;
-  const AT = AS-O;
+  const AP = Math.round((K-Q+L)*100)/100; // Net Satışlar
+  const AQ = AP-AB;                        // Brüt K/Z = Net Satışlar - SMM
+  const AS = AQ-N;                         // Faaliyet K/Z = Brüt K/Z - Faaliyet Giderleri
+  const AT = AS-O;                         // Dönem K/Z = Faaliyet K/Z - Finansman Giderleri
+
+  const AQ_pct = AP ? (AQ/AP)*100 : 0;    // Brüt K/Z oranı (Net Satışlara göre)
+  const AS_pct = AP ? (AS/AP)*100 : 0;    // Faaliyet K/Z oranı
+  const AT_pct = AP ? (AT/AP)*100 : 0;    // Dönem K/Z oranı
 
   const Y = H ? V/H : 0;
   const Z = Mo ? W/Mo : 0;
   const AA = Si ? X/Si : 0;
 
-  const AU = M ? (AS/M)*100 : 0; // Faaliyet K/Z Oranı
-  const AV = M ? (AT/M)*100 : 0; // Net K/Z Oranı
-
-  return {H,K,L,M,AB,AC,AD,AE,AF,AG,AH,AI,AJ,AK,AL,AM,AN,AO,AP,AQ,AR,AS,AT,AU,AV,Y,Z,AA,
-    personel:S2, hmm_sarf:U, finansman:O};
+  return {H,K,L,M,AB,AC,AD,AE,AF,AG,AH,AI,AJ,AK,AL,AM,AN,AO,AP,AQ,AS,AT,
+    AQ_pct, AS_pct, AT_pct, Y,Z,AA,
+    personel:S2, hmm_sarf:U, finansman:O, faaliyet:N};
 }
 
 function toggleAddForm() {
@@ -404,33 +405,35 @@ function renderDash() {
     '<th style="text-align:right">Toplam / Ort.</th>';
 
   const rows = [
-    {l:'Gelirler Toplamı',   fn:c=>c.M,         bold:true},
-    {l:'Net Satışlar',       fn:c=>c.AP,        bold:false},
-    {l:'Giderler (Sarf)',    fn:c=>c.AC,        bold:false},
-    {l:'Dönem Kar/Zarar',    fn:c=>c.AT,        bold:true, signed:true},
-    {l:'Kar Oranı (Sarf)',   fn:c=>c.AF,        bold:false, pct:true},
-    {l:'Faaliyet K/Z',       fn:c=>c.AS,        bold:false, signed:true},
-    {l:'Faaliyet K/Z Oranı', fn:c=>c.AU,        bold:false, pct:true},
-    {l:'Finansman Gid.',     fn:c=>c.finansman, bold:false},
-    {l:'Net K/Z',            fn:c=>c.AT,        bold:true, signed:true},
-    {l:'Net K/Z Oranı',      fn:c=>c.AV,        bold:false, pct:true},
-    {l:'Personel Gid.',      fn:c=>c.personel,  bold:false},
-    {l:'Hammadde SARF',      fn:c=>c.hmm_sarf,  bold:false},
+    {l:'Net Satışlar',         fn:c=>c.AP,        bold:true},
+    {l:'Satılan Malın Maliyeti',fn:c=>c.AB,       bold:false},
+    {l:'Brüt K/Z',             fn:c=>c.AQ,        bold:true,  signed:true},
+    {l:'Brüt K/Z %',           fn:c=>c.AQ_pct,    bold:false, pct:true, signed:true},
+    {l:'Faaliyet Giderleri',   fn:c=>c.faaliyet,  bold:false},
+    {l:'Faaliyet K/Z',         fn:c=>c.AS,        bold:true,  signed:true},
+    {l:'Faaliyet K/Z %',       fn:c=>c.AS_pct,    bold:false, pct:true, signed:true},
+    {l:'Finansman Giderleri',  fn:c=>c.finansman, bold:false},
+    {l:'Dönem K/Z',            fn:c=>c.AT,        bold:true,  signed:true},
+    {l:'Dönem K/Z %',          fn:c=>c.AT_pct,    bold:false, pct:true, signed:true},
   ];
 
   document.getElementById('sum-body').innerHTML = rows.map(row=>{
     const vals = months.map(({c})=>row.fn(c));
     const total = vals.reduce((a,v)=>a+v,0);
     const cells = vals.map(v=>{
+      if (row.pct && row.signed) return `<td class="${v>=0?'pos':'neg'}">${fmtM(v)}</td>`;
       if (row.pct) return `<td class="num">${fmtM(v)}</td>`;
       if (row.signed) return `<td class="${v>=0?'pos':'neg'}">${cr}${fmt(v)}</td>`;
       return `<td class="num">${cr}${fmt(v)}</td>`;
     }).join('');
-    const totCell = row.pct
-      ? `<td class="num" style="font-weight:600">${fmtM(total/months.length)}</td>`
-      : row.signed
-        ? `<td class="${total>=0?'pos':'neg'}" style="font-weight:600">${cr}${fmt(total)}</td>`
-        : `<td class="num" style="font-weight:600">${cr}${fmt(total)}</td>`;
+    const avgTotal = total/months.length;
+    const totCell = (row.pct && row.signed)
+      ? `<td class="${avgTotal>=0?'pos':'neg'}" style="font-weight:600">${fmtM(avgTotal)}</td>`
+      : row.pct
+        ? `<td class="num" style="font-weight:600">${fmtM(avgTotal)}</td>`
+        : row.signed
+          ? `<td class="${total>=0?'pos':'neg'}" style="font-weight:600">${cr}${fmt(total)}</td>`
+          : `<td class="num" style="font-weight:600">${cr}${fmt(total)}</td>`;
     return `<tr><td style="font-weight:${row.bold?600:400}">${row.l}</td>${cells}${totCell}</tr>`;
   }).join('');
 }
@@ -506,7 +509,7 @@ function runCompare() {
   const cr = curr();
 
   function sumP(ys,ms,ye,me) {
-    let a={M:0,AC:0,AD:0,AT:0,AN:0,AP:0,AS:0,AQ:0,personel:0,hmm_sarf:0,AF:0,AH:0,AJ:0,AL:0,n:0};
+    let a={M:0,AC:0,AD:0,AT:0,AN:0,AP:0,AS:0,AQ:0,AB:0,personel:0,hmm_sarf:0,finansman:0,faaliyet:0,AF:0,AH:0,AJ:0,AL:0,n:0};
     for (let y=ys;y<=ye;y++) {
       const mS=(y===ys?ms:1), mE=(y===ye?me:12);
       for (let m=mS;m<=mE;m++) {
@@ -526,19 +529,15 @@ function runCompare() {
   const p2 = sumP(c2ys,c2ms,c2ye,c2me);
 
   const rows = [
-    {l:'Gelirler Toplamı', k:'M'},
-    {l:'Net Satışlar', k:'AP'},
-    {l:'Giderler (Sarf)', k:'AC'},
-    {l:'Giderler (Alım)', k:'AD'},
-    {l:'Kar/Zarar (Sarf)', k:'AN', signed:true},
-    {l:'Dönem Kar/Zarar', k:'AT', signed:true},
-    {l:'Faaliyet K/Z', k:'AS', signed:true},
-    {l:'Personel Giderleri', k:'personel'},
-    {l:'Hammadde SARF', k:'hmm_sarf'},
-    {l:'Ort. Kar Oranı %', k:'AF', pct:true},
-    {l:'Hmm/Gelir %', k:'AH', pct:true},
-    {l:'Pers/Gelir %', k:'AJ', pct:true},
-    {l:'Faal/Gelir %', k:'AL', pct:true},
+    {l:'Net Satışlar',          k:'AP'},
+    {l:'Satılan Malın Maliyeti',k:'AB'},
+    {l:'Brüt K/Z',              k:'AQ', signed:true},
+    {l:'Faaliyet Giderleri',    k:'faaliyet'},
+    {l:'Faaliyet K/Z',          k:'AS', signed:true},
+    {l:'Finansman Giderleri',   k:'finansman'},
+    {l:'Dönem K/Z',             k:'AT', signed:true},
+    {l:'Personel Giderleri',    k:'personel'},
+    {l:'Hammadde SARF',         k:'hmm_sarf'},
   ];
 
   const lbl1 = `${MO[c1ms-1]} ${c1ys}${c1ms!==c1me||c1ys!==c1ye?` – ${MO[c1me-1]} ${c1ye}`:''}`;
