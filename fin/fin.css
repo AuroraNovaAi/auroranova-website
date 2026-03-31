@@ -499,6 +499,21 @@ body.fin-page {
   white-space: nowrap;
 }
 .fin-app tbody tr:last-child td { border-bottom: none; }
+.fin-app th:first-child,
+.fin-app td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: var(--fin-bg);
+  box-shadow: 2px 0 6px rgba(0,0,0,0.4);
+}
+.fin-app thead th:first-child {
+  background: #111118;
+  z-index: 3;
+}
+.fin-app tbody tr:hover td:first-child {
+  background: #14141f;
+}
 .fin-app tbody tr:hover { background: rgba(99,102,241,0.06); }
 .fin-app .num {
   text-align: right;
