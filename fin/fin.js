@@ -42,14 +42,10 @@ function _finSyncBadge(msg, color) {
 
 let _finSaveTimer = null;
 function save() {
-  // Her zaman localStorage'a yaz (hızlı, offline fallback)
-  try { localStorage.setItem('auroran_v1', JSON.stringify({companies:finS.companies, data:finS.data})); }
-  catch(e) {}
-  // Firestore'a debounce ile yaz (1.5sn)
   clearTimeout(_finSaveTimer);
   _finSaveTimer = setTimeout(async () => {
     const db = _finInitDb();
-    if (!db) return;
+    if (!db) { _finSyncBadge('⚠ Bağlantı hatası', '#f87171'); return; }
     _finSyncBadge('Kaydediliyor…');
     try {
       await db.collection('fin_data').doc('main').set({
@@ -60,21 +56,15 @@ function save() {
       _finSyncBadge('✓ Kaydedildi', '#6ee7b7');
       setTimeout(() => _finSyncBadge(''), 2500);
     } catch(e) {
-      console.warn('Fin: Firestore save failed', e);
-      _finSyncBadge('⚠ Yerel kayıt', '#f59e0b');
+      console.error('Fin: Firestore save failed', e);
+      _finSyncBadge('⚠ Kayıt hatası', '#f87171');
     }
   }, 1500);
 }
 
 async function load() {
-  // Önce localStorage'dan yükle (anlık görüntü)
-  try {
-    const raw = localStorage.getItem('auroran_v1');
-    if (raw) { const p = JSON.parse(raw); finS.companies = p.companies||{}; finS.data = p.data||{}; }
-  } catch(e) {}
-  // Firestore'dan çek (güncel veri)
   const db = _finInitDb();
-  if (!db) return;
+  if (!db) { _finSyncBadge('⚠ Bağlantı hatası', '#f87171'); return; }
   _finSyncBadge('Yükleniyor…');
   try {
     const doc = await db.collection('fin_data').doc('main').get();
@@ -82,14 +72,12 @@ async function load() {
       const d = doc.data();
       finS.companies = d.companies || {};
       finS.data      = d.data      || {};
-      // localStorage'ı da güncelle
-      localStorage.setItem('auroran_v1', JSON.stringify({companies:finS.companies, data:finS.data}));
     }
     _finSyncBadge('✓ Senkronize', '#6ee7b7');
     setTimeout(() => _finSyncBadge(''), 2500);
   } catch(e) {
-    console.warn('Fin: Firestore load failed, using local data', e);
-    _finSyncBadge('⚠ Çevrimdışı mod', '#f59e0b');
+    console.error('Fin: Firestore load failed', e);
+    _finSyncBadge('⚠ Yükleme hatası', '#f87171');
   }
 }
 

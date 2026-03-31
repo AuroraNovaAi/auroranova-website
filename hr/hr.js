@@ -52,14 +52,8 @@ let _hrSaveTimer = null;
 
 /* ---- Persistence ---- */
 async function hrLoadState() {
-  // Önce localStorage'dan yükle (anlık görüntü)
-  try {
-    const raw = localStorage.getItem(HR_STORAGE_KEY);
-    if (raw) hrState = JSON.parse(raw);
-  } catch(e) {}
-  // Firestore'dan çek (güncel veri)
   const db = _hrInitDb();
-  if (!db) return;
+  if (!db) { _hrSyncBadge('⚠ Bağlantı hatası', '#e8637a'); return; }
   _hrSyncBadge('Yükleniyor…');
   try {
     const doc = await db.collection('hr_data').doc('main').get();
@@ -72,13 +66,12 @@ async function hrLoadState() {
         nextId:    d.nextId    || 1,
         _calTab:   d._calTab   || 'tasks'
       };
-      localStorage.setItem(HR_STORAGE_KEY, JSON.stringify(hrState));
     }
     _hrSyncBadge('✓ Senkronize', '#2ea06e');
     setTimeout(() => _hrSyncBadge(''), 2500);
   } catch(e) {
-    console.warn('HR: Firestore load failed, using local data', e);
-    _hrSyncBadge('⚠ Çevrimdışı mod', '#e8a24a');
+    console.error('HR: Firestore load failed', e);
+    _hrSyncBadge('⚠ Yükleme hatası', '#e8637a');
   }
 }
 
@@ -276,13 +269,10 @@ function hrDocStartProcess(personId) {
 }
 
 function hrSaveState() {
-  // Her zaman localStorage'a yaz
-  try { localStorage.setItem(HR_STORAGE_KEY, JSON.stringify(hrState)); } catch(e) {}
-  // Firestore'a debounce ile yaz (1.5sn)
   clearTimeout(_hrSaveTimer);
   _hrSaveTimer = setTimeout(async () => {
     const db = _hrInitDb();
-    if (!db) return;
+    if (!db) { _hrSyncBadge('⚠ Bağlantı hatası', '#e8637a'); return; }
     _hrSyncBadge('Kaydediliyor…');
     try {
       await db.collection('hr_data').doc('main').set({
@@ -295,11 +285,10 @@ function hrSaveState() {
       _hrSyncBadge('✓ Kaydedildi', '#2ea06e');
       setTimeout(() => _hrSyncBadge(''), 2500);
     } catch(e) {
-      console.warn('HR: Firestore save failed', e);
-      _hrSyncBadge('⚠ Yerel kayıt', '#e8a24a');
+      console.error('HR: Firestore save failed', e);
+      _hrSyncBadge('⚠ Kayıt hatası', '#e8637a');
     }
   }, 1500);
-  // eski return değeri yoktu, boş bırak
 }
 
 /* ---- ID generator ---- */
