@@ -690,10 +690,9 @@ function renderCalendar() {
 
   const eventMap = {};
   hrState.processes.forEach(proc => {
-    if (natFilter) {
-      const person = hrState.personnel.find(p => p.id === proc.personId);
-      if (!person || person.nationality !== natFilter) return;
-    }
+    const person = hrState.personnel.find(p => p.id === proc.personId);
+    if (!person || person.status === 'passive') return;
+    if (natFilter && person.nationality !== natFilter) return;
     if (typeFilter && proc.templateType !== typeFilter) return;
 
     proc.tasks.forEach(task => {
@@ -850,9 +849,11 @@ function renderDashboard() {
   const todayStr = today();
   const in7 = addDays(todayStr, 7);
 
-  // Compute pending tasks across all processes
+  // Compute pending tasks across all active-personnel processes
   const allPending = [];
   hrState.processes.forEach(proc => {
+    const person = hrState.personnel.find(p => p.id === proc.personId);
+    if (!person || person.status === 'passive') return;
     proc.tasks.filter(t => !t.done && t.dueDate).forEach(t => {
       allPending.push({ procName: proc.personName, taskName: t.name, dueDate: t.dueDate,
         overdue: t.dueDate < todayStr,
