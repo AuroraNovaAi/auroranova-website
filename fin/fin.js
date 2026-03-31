@@ -96,8 +96,11 @@ function finCalc(d) {
   const Z = Mo ? W/Mo : 0;
   const AA = Si ? X/Si : 0;
 
-  return {H,K,L,M,AB,AC,AD,AE,AF,AG,AH,AI,AJ,AK,AL,AM,AN,AO,AP,AQ,AR,AS,AT,Y,Z,AA,
-    personel:S2, hmm_sarf:U};
+  const AU = M ? (AS/M)*100 : 0; // Faaliyet K/Z Oranı
+  const AV = M ? (AT/M)*100 : 0; // Net K/Z Oranı
+
+  return {H,K,L,M,AB,AC,AD,AE,AF,AG,AH,AI,AJ,AK,AL,AM,AN,AO,AP,AQ,AR,AS,AT,AU,AV,Y,Z,AA,
+    personel:S2, hmm_sarf:U, finansman:O};
 }
 
 function toggleAddForm() {
@@ -401,14 +404,18 @@ function renderDash() {
     '<th style="text-align:right">Toplam / Ort.</th>';
 
   const rows = [
-    {l:'Gelirler Toplamı',  fn:c=>c.M,  bold:true},
-    {l:'Net Satışlar',      fn:c=>c.AP, bold:false},
-    {l:'Giderler (Sarf)',   fn:c=>c.AC, bold:false},
-    {l:'Dönem Kar/Zarar',   fn:c=>c.AT, bold:true, signed:true},
-    {l:'Kar Oranı (Sarf)', fn:c=>c.AF, bold:false, pct:true},
-    {l:'Faaliyet K/Z',      fn:c=>c.AS, bold:false, signed:true},
-    {l:'Personel Gid.',     fn:c=>c.personel, bold:false},
-    {l:'Hammadde SARF',     fn:c=>c.hmm_sarf, bold:false},
+    {l:'Gelirler Toplamı',   fn:c=>c.M,         bold:true},
+    {l:'Net Satışlar',       fn:c=>c.AP,        bold:false},
+    {l:'Giderler (Sarf)',    fn:c=>c.AC,        bold:false},
+    {l:'Dönem Kar/Zarar',    fn:c=>c.AT,        bold:true, signed:true},
+    {l:'Kar Oranı (Sarf)',   fn:c=>c.AF,        bold:false, pct:true},
+    {l:'Faaliyet K/Z',       fn:c=>c.AS,        bold:false, signed:true},
+    {l:'Faaliyet K/Z Oranı', fn:c=>c.AU,        bold:false, pct:true},
+    {l:'Finansman Gid.',     fn:c=>c.finansman, bold:false},
+    {l:'Net K/Z',            fn:c=>c.AT,        bold:true, signed:true},
+    {l:'Net K/Z Oranı',      fn:c=>c.AV,        bold:false, pct:true},
+    {l:'Personel Gid.',      fn:c=>c.personel,  bold:false},
+    {l:'Hammadde SARF',      fn:c=>c.hmm_sarf,  bold:false},
   ];
 
   document.getElementById('sum-body').innerHTML = rows.map(row=>{
