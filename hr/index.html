@@ -155,22 +155,42 @@
 
       <!-- ---- DASHBOARD ---- -->
       <section id="page-dashboard" class="page-section active">
-        <div id="dash-stats" class="dash-stats"></div>
-        <div class="dash-grid">
-          <div class="card">
-            <div class="card-header">
-              <span class="card-title">Son Eklenen Personel</span>
+        <!-- KPI Row -->
+        <div id="dash-kpi-row" class="dash-kpi-row"></div>
+        <!-- Main Grid -->
+        <div class="dash-main-grid">
+          <!-- Left Column -->
+          <div class="dash-col-left">
+            <div class="card dash-card" id="dash-card-tasks">
+              <div class="card-header">
+                <span class="card-title">Görev Durumu</span>
+                <span id="dash-tasks-badge" class="badge"></span>
+              </div>
+              <div class="card-body" id="dash-tasks-body"></div>
             </div>
-            <div class="card-body">
-              <ul id="dash-recent-personnel" class="recent-list"></ul>
+            <div class="card dash-card" id="dash-card-docs">
+              <div class="card-header">
+                <span class="card-title">Belge Takibi</span>
+                <span class="badge badge-neutral" style="font-size:10px">İzin &amp; Pasaport</span>
+              </div>
+              <div class="card-body" id="dash-docs-body"></div>
             </div>
           </div>
-          <div class="card">
-            <div class="card-header">
-              <span class="card-title">Yaklaşan Görevler</span>
+          <!-- Right Column -->
+          <div class="dash-col-right">
+            <div class="card dash-card" id="dash-card-personnel">
+              <div class="card-header">
+                <span class="card-title">Personel</span>
+                <button class="btn btn-ghost btn-sm" onclick="hrNavigate('personnel')">Tümü →</button>
+              </div>
+              <div class="card-body" id="dash-personnel-body"></div>
             </div>
-            <div class="card-body">
-              <ul id="dash-upcoming" class="recent-list"></ul>
+            <div class="card dash-card" id="dash-card-processes">
+              <div class="card-header">
+                <span class="card-title">Aktif Süreçler</span>
+                <button class="btn btn-ghost btn-sm" onclick="hrNavigate('processes')">Tümü →</button>
+              </div>
+              <div class="card-body" id="dash-processes-body"></div>
             </div>
           </div>
         </div>

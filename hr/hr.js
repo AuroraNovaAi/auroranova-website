@@ -1130,102 +1130,189 @@ function hrCalConfirmTask(processId, taskId) {
    ============================================================ */
 
 function renderDashboard() {
+  const todayStr = today();
+  const in7  = addDays(todayStr, 7);
+  const in30 = addDays(todayStr, 30);
+
+  // ── Personel istatistikleri ──
   const total   = hrState.personnel.length;
   const active  = hrState.personnel.filter(p => p.status === 'active').length;
-  const procs   = hrState.processes.length;
+  const passive = hrState.personnel.filter(p => p.status === 'passive').length;
+  const onLeave = hrState.personnel.filter(p => p.status === 'leave').length;
 
-  const todayStr = today();
-  const in7 = addDays(todayStr, 7);
-
-  // Compute pending tasks across all active-personnel processes
-  const allPending = [];
-  hrState.processes.forEach(proc => {
+  // ── Süreç istatistikleri ──
+  const activeProcs = hrState.processes.filter(proc => {
     const person = hrState.personnel.find(p => p.id === proc.personId);
-    if (!person || person.status === 'passive') return;
+    return person && person.status !== 'passive';
+  });
+  const completedProcs = activeProcs.filter(p => p.tasks.length && p.tasks.every(t => t.done));
+  const inProgressProcs = activeProcs.filter(p => p.tasks.some(t => t.done) && !p.tasks.every(t => t.done));
+
+  // ── Görev istatistikleri ──
+  const allPending = [];
+  activeProcs.forEach(proc => {
     proc.tasks.filter(t => !t.done && t.dueDate).forEach(t => {
-      allPending.push({ procName: proc.personName, taskName: t.name, dueDate: t.dueDate,
+      allPending.push({
+        procId: proc.id, procName: proc.personName, taskId: t.id,
+        taskName: t.name, dueDate: t.dueDate,
         overdue: t.dueDate < todayStr,
-        soon: t.dueDate >= todayStr && t.dueDate <= in7 });
+        soon: t.dueDate >= todayStr && t.dueDate <= in7
+      });
     });
   });
-  allPending.sort((a, b) => {
-    if (a.overdue && !b.overdue) return -1;
-    if (!a.overdue && b.overdue) return 1;
-    return a.dueDate > b.dueDate ? 1 : -1;
-  });
+  allPending.sort((a,b) => (a.overdue && !b.overdue) ? -1 : (!a.overdue && b.overdue) ? 1 : a.dueDate > b.dueDate ? 1 : -1);
   const overdueCount = allPending.filter(t => t.overdue).length;
-  const soonCount = allPending.filter(t => t.soon).length;
+  const soonCount    = allPending.filter(t => t.soon).length;
 
-  const statsEl = document.getElementById('dash-stats');
-  if (statsEl) {
-    statsEl.innerHTML = `
-      <div class="stat-card">
-        <div class="stat-icon">👥</div>
-        <div class="stat-value">${total}</div>
-        <div class="stat-label">Toplam Personel</div>
+  // ── Belge takibi ──
+  const expDocs = [];
+  hrState.personnel.filter(p => p.status !== 'passive').forEach(p => {
+    if (p.permitExpiry) {
+      const isExp = p.permitExpiry < todayStr;
+      const isSoon = !isExp && p.permitExpiry <= in30;
+      if (isExp || isSoon) expDocs.push({ name: p.name, label: 'Çalışma İzni', expiry: p.permitExpiry, expired: isExp, position: p.position });
+    }
+    if (p.passportExpiry) {
+      const isExp = p.passportExpiry < todayStr;
+      const isSoon = !isExp && p.passportExpiry <= in30;
+      if (isExp || isSoon) expDocs.push({ name: p.name, label: 'Pasaport', expiry: p.passportExpiry, expired: isExp, position: p.position });
+    }
+  });
+  expDocs.sort((a,b) => a.expired === b.expired ? (a.expiry > b.expiry ? 1 : -1) : (a.expired ? -1 : 1));
+
+  // ══ KPI ROW ══
+  const kpiEl = document.getElementById('dash-kpi-row');
+  if (kpiEl) kpiEl.innerHTML = `
+    <div class="dash-kpi-card dash-kpi-blue" onclick="hrNavigate('personnel')">
+      <div class="dkc-top">
+        <span class="dkc-icon">👥</span>
+        <span class="dkc-delta">${active} aktif</span>
       </div>
-      <div class="stat-card">
-        <div class="stat-icon">✅</div>
-        <div class="stat-value">${active}</div>
-        <div class="stat-label">Aktif Personel</div>
+      <div class="dkc-value">${total}</div>
+      <div class="dkc-label">Toplam Personel</div>
+      <div class="dkc-sub">${passive} pasif · ${onLeave} izinde</div>
+    </div>
+    <div class="dash-kpi-card dash-kpi-green" onclick="hrNavigate('processes')">
+      <div class="dkc-top">
+        <span class="dkc-icon">📂</span>
+        <span class="dkc-delta">${inProgressProcs.length} devam ediyor</span>
       </div>
-      <div class="stat-card">
-        <div class="stat-icon">📂</div>
-        <div class="stat-value">${procs}</div>
-        <div class="stat-label">Açık Süreç</div>
+      <div class="dkc-value">${activeProcs.length}</div>
+      <div class="dkc-label">Aktif Süreç</div>
+      <div class="dkc-sub">${completedProcs.length} tamamlandı</div>
+    </div>
+    <div class="dash-kpi-card ${overdueCount > 0 ? 'dash-kpi-red' : 'dash-kpi-neutral'}" onclick="hrNavigate('processes')">
+      <div class="dkc-top">
+        <span class="dkc-icon">⚠</span>
+        <span class="dkc-delta">${soonCount} yaklaşıyor</span>
       </div>
-      <div class="stat-card ${overdueCount > 0 ? 'stat-card-danger' : ''}">
-        <div class="stat-icon">⚠</div>
-        <div class="stat-value" style="${overdueCount > 0 ? 'color:#e8637a' : ''}">${overdueCount}</div>
-        <div class="stat-label">Geciken Görev</div>
+      <div class="dkc-value">${overdueCount}</div>
+      <div class="dkc-label">Geciken Görev</div>
+      <div class="dkc-sub">7 gün içinde ${soonCount} görev daha</div>
+    </div>
+    <div class="dash-kpi-card ${expDocs.filter(d=>d.expired).length > 0 ? 'dash-kpi-amber' : 'dash-kpi-neutral'}" onclick="hrNavigate('calendar')">
+      <div class="dkc-top">
+        <span class="dkc-icon">📄</span>
+        <span class="dkc-delta">${expDocs.filter(d=>!d.expired).length} yaklaşıyor</span>
       </div>
-      <div class="stat-card ${soonCount > 0 ? 'stat-card-warning' : ''}">
-        <div class="stat-icon">⏰</div>
-        <div class="stat-value" style="${soonCount > 0 ? 'color:#e8a24a' : ''}">${soonCount}</div>
-        <div class="stat-label">7 Günde Bitiyor</div>
-      </div>`;
+      <div class="dkc-value">${expDocs.filter(d=>d.expired).length}</div>
+      <div class="dkc-label">Süresi Dolan Belge</div>
+      <div class="dkc-sub">30 gün içinde ${expDocs.filter(d=>!d.expired).length} belge daha</div>
+    </div>`;
+
+  // ══ GÖREV DURUMU ══
+  const tasksBody = document.getElementById('dash-tasks-body');
+  const tasksBadge = document.getElementById('dash-tasks-badge');
+  if (tasksBadge) {
+    tasksBadge.textContent = overdueCount > 0 ? `${overdueCount} gecikmiş` : (soonCount > 0 ? `${soonCount} yaklaşıyor` : 'Güncel');
+    tasksBadge.className = `badge ${overdueCount > 0 ? 'badge-danger' : soonCount > 0 ? 'badge-warning' : 'badge-success'}`;
+  }
+  if (tasksBody) {
+    if (!allPending.length) {
+      tasksBody.innerHTML = '<div class="dash-empty">✅ Bekleyen görev bulunmuyor</div>';
+    } else {
+      tasksBody.innerHTML = allPending.slice(0, 7).map(u => `
+        <div class="dash-task-row">
+          <div class="dtr-dot ${u.overdue ? 'dtr-red' : u.soon ? 'dtr-amber' : 'dtr-blue'}"></div>
+          <div class="dtr-info">
+            <div class="dtr-name">${u.taskName}</div>
+            <div class="dtr-meta">${u.procName}</div>
+          </div>
+          <div class="dtr-right">
+            <span class="dtr-date ${u.overdue ? 'dtr-date-red' : u.soon ? 'dtr-date-amber' : ''}">${u.overdue ? '⚠ ' : u.soon ? '⏰ ' : ''}${u.dueDate}</span>
+          </div>
+        </div>`).join('') +
+        (allPending.length > 7 ? `<div class="dash-more" onclick="hrNavigate('processes')">+${allPending.length - 7} görev daha →</div>` : '');
+    }
   }
 
-  /* Recent personnel */
-  const recentEl = document.getElementById('dash-recent-personnel');
-  if (recentEl) {
-    const recent = [...hrState.personnel].slice(-5).reverse();
-    if (!recent.length) {
-      recentEl.innerHTML = '<li><span class="text-muted text-sm">Henüz personel yok.</span></li>';
+  // ══ BELGE TAKİBİ ══
+  const docsBody = document.getElementById('dash-docs-body');
+  if (docsBody) {
+    if (!expDocs.length) {
+      docsBody.innerHTML = '<div class="dash-empty">✅ 30 gün içinde süresi dolacak belge yok</div>';
     } else {
-      recentEl.innerHTML = recent.map(p => {
-        const av = avatarColor(p.name);
-        return `<li>
-          <div class="flex items-center gap-2">
-            <div class="avatar avatar-sm" style="background:${av}">${initials(p.name)}</div>
-            <div>
-              <div class="rl-name">${p.name}</div>
-              <div class="rl-meta">${p.position || '-'}</div>
-            </div>
+      docsBody.innerHTML = expDocs.slice(0, 6).map(d => `
+        <div class="dash-task-row">
+          <div class="dtr-dot ${d.expired ? 'dtr-red' : 'dtr-amber'}"></div>
+          <div class="dtr-info">
+            <div class="dtr-name">${d.name}</div>
+            <div class="dtr-meta">${d.label}${d.position ? ' · ' + d.position : ''}</div>
           </div>
-          <span class="badge ${p.status==='active'?'badge-success':'badge-neutral'}">${p.status==='active'?'Aktif':'Pasif'}</span>
-        </li>`;
+          <div class="dtr-right">
+            <span class="dtr-date ${d.expired ? 'dtr-date-red' : 'dtr-date-amber'}">${d.expired ? '⚠ Doldu' : '⏰'} ${d.expiry}</span>
+          </div>
+        </div>`).join('') +
+        (expDocs.length > 6 ? `<div class="dash-more" onclick="hrNavigate('calendar')" >+${expDocs.length - 6} belge daha →</div>` : '');
+    }
+  }
+
+  // ══ PERSONEL ══
+  const personnelBody = document.getElementById('dash-personnel-body');
+  if (personnelBody) {
+    const list = [...hrState.personnel].reverse().slice(0, 6);
+    if (!list.length) {
+      personnelBody.innerHTML = '<div class="dash-empty">Henüz personel eklenmedi</div>';
+    } else {
+      personnelBody.innerHTML = list.map(p => {
+        const statusLabel = { active: 'Aktif', passive: 'Pasif', leave: 'İzinde' };
+        const statusCls   = { active: 'badge-success', passive: 'badge-neutral', leave: 'badge-warning' };
+        const permitWarn  = p.permitExpiry && p.permitExpiry <= in30;
+        const passWarn    = p.passportExpiry && p.passportExpiry <= in30;
+        return `<div class="dash-person-row">
+          <div class="avatar avatar-sm" style="background:${avatarColor(p.name)}">${initials(p.name)}</div>
+          <div class="dpr-info">
+            <div class="dpr-name">${p.name}${permitWarn ? ' <span style="color:#e8a24a;font-size:10px">● İzin</span>' : ''}${passWarn ? ' <span style="color:#8b5cf6;font-size:10px">● Pasaport</span>' : ''}</div>
+            <div class="dpr-meta">${p.position || '—'} · ${p.nationality || ''}</div>
+          </div>
+          <span class="badge ${statusCls[p.status] || 'badge-neutral'}" style="font-size:10px">${statusLabel[p.status] || p.status}</span>
+        </div>`;
       }).join('');
     }
   }
 
-  /* Upcoming + Overdue tasks */
-  const upcomingEl = document.getElementById('dash-upcoming');
-  if (upcomingEl) {
-    const top8 = allPending.slice(0, 8);
-    if (!top8.length) {
-      upcomingEl.innerHTML = '<li><span class="text-muted text-sm">Bekleyen görev yok.</span></li>';
+  // ══ AKTİF SÜREÇLER ══
+  const processesBody = document.getElementById('dash-processes-body');
+  if (processesBody) {
+    const top5 = activeProcs.slice(-5).reverse();
+    if (!top5.length) {
+      processesBody.innerHTML = '<div class="dash-empty">Henüz süreç oluşturulmadı</div>';
     } else {
-      upcomingEl.innerHTML = top8.map(u => {
-        const color = u.overdue ? '#e8637a' : (u.soon ? '#e8a24a' : '#9da4c8');
-        const icon = u.overdue ? '⚠' : (u.soon ? '⏰' : '📅');
-        return `<li>
-          <div>
-            <div class="rl-name">${u.taskName}</div>
-            <div class="rl-meta">${u.procName}</div>
+      processesBody.innerHTML = top5.map(proc => {
+        const done  = proc.tasks.filter(t => t.done).length;
+        const total = proc.tasks.length;
+        const pct   = total ? Math.round(done / total * 100) : 0;
+        const hasOverdue = proc.tasks.some(t => !t.done && t.dueDate && t.dueDate < todayStr);
+        return `<div class="dash-proc-row" onclick="hrNavigate('processes')" style="cursor:pointer">
+          <div class="dpr-info" style="flex:1;min-width:0">
+            <div class="dpr-name">${proc.personName}${hasOverdue ? ' <span style="color:#e8637a;font-size:10px">● Gecikmiş</span>' : ''}</div>
+            <div class="dpr-meta">${proc.templateName}</div>
           </div>
-          <span style="font-size:11px;color:${color};font-weight:${u.overdue?'600':'400'};white-space:nowrap">${icon} ${u.dueDate}</span>
-        </li>`;
+          <div class="dash-proc-progress">
+            <div class="dpp-bar"><div class="dpp-fill" style="width:${pct}%;background:${pct===100?'#2ea06e':'#5b7fe8'}"></div></div>
+            <span class="dpp-label">${done}/${total}</span>
+          </div>
+        </div>`;
       }).join('');
     }
   }
