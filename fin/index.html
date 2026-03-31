@@ -9,9 +9,81 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="fin.css">
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <style>
+    #fin-login-screen {
+      position: fixed; inset: 0; z-index: 9999;
+      background: #0a0a0f;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Inter', sans-serif;
+    }
+    #fin-login-screen .lbox {
+      width: 360px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 18px;
+      padding: 40px 36px;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.7);
+      text-align: center;
+    }
+    #fin-login-screen .llogo { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 6px; }
+    #fin-login-screen .llogo em { color: #6366f1; font-style: normal; }
+    #fin-login-screen .llogo span { color: #fff; }
+    #fin-login-screen .lsub { font-size: 11px; letter-spacing: 2.5px; text-transform: uppercase; color: #f59e0b; margin-bottom: 32px; }
+    #fin-login-screen .ltitle { font-size: 15px; font-weight: 600; color: #f0f0f8; margin-bottom: 6px; }
+    #fin-login-screen .ldesc { font-size: 12px; color: #606080; margin-bottom: 24px; }
+    #fin-login-screen .linput-wrap { position: relative; margin-bottom: 14px; }
+    #fin-login-screen input {
+      width: 100%; padding: 12px 44px 12px 16px;
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px; color: #f0f0f8; font-size: 14px; font-family: 'Inter', sans-serif;
+      outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    #fin-login-screen input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.2); }
+    #fin-login-screen input::placeholder { color: #404060; }
+    #fin-login-screen .ltoggle {
+      position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer; color: #606080; font-size: 16px; padding: 4px;
+    }
+    #fin-login-screen .ltoggle:hover { color: #a0a0c0; }
+    #fin-login-screen .lbtn {
+      width: 100%; padding: 12px; border: none; border-radius: 10px; cursor: pointer;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff;
+      font-size: 14px; font-weight: 600; font-family: 'Inter', sans-serif;
+      box-shadow: 0 4px 16px rgba(99,102,241,0.4);
+      transition: opacity 0.15s, transform 0.15s;
+    }
+    #fin-login-screen .lbtn:hover { opacity: 0.9; transform: translateY(-1px); }
+    #fin-login-screen .lbtn:active { transform: translateY(0); }
+    #fin-login-screen .lerr {
+      font-size: 12px; color: #ef4444; margin-top: 10px;
+      min-height: 18px; transition: opacity 0.2s;
+    }
+    #fin-login-screen .lshake { animation: lshake 0.35s ease; }
+    @keyframes lshake {
+      0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 60%{transform:translateX(6px)}
+    }
+  </style>
 </head>
 <body class="fin-page">
-<div class="fin-app">
+
+<!-- ══ LOGIN SCREEN ══ -->
+<div id="fin-login-screen">
+  <div class="lbox">
+    <div class="llogo"><em>Aurora</em><span>Nova</span></div>
+    <div class="lsub">Finance</div>
+    <div class="ltitle">Giriş Yap</div>
+    <div class="ldesc">Bu sayfa yetkili kullanıcılara özeldir.</div>
+    <div class="linput-wrap">
+      <input type="password" id="fin-pw-input" placeholder="Şifre" autocomplete="current-password"
+             onkeydown="if(event.key==='Enter')finCheckPw()">
+      <button class="ltoggle" onclick="finTogglePw()" title="Göster/Gizle">👁</button>
+    </div>
+    <button class="lbtn" onclick="finCheckPw()">Giriş</button>
+    <div class="lerr" id="fin-pw-err"></div>
+  </div>
+</div>
+
+<div class="fin-app" id="fin-app-wrap" style="display:none">
 
   <!-- ══ TOPBAR ══ -->
   <header class="topbar">
@@ -500,6 +572,50 @@
   </div>
 
 </div><!-- /.fin-app -->
+
+<script>
+// ── Auth (SHA-256, native crypto.subtle) ──
+const FIN_PW_HASH = '3a35c1515e28957067557f1ea0cbcf651c5bb75dacd31538c8a106ed2102f626';
+const FIN_SESSION_KEY = 'fin_auth_v1';
+
+async function finHashStr(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+async function finCheckPw() {
+  const val = document.getElementById('fin-pw-input').value;
+  const hash = await finHashStr(val);
+  if (hash === FIN_PW_HASH) {
+    sessionStorage.setItem(FIN_SESSION_KEY, '1');
+    finUnlock();
+  } else {
+    const errEl = document.getElementById('fin-pw-err');
+    errEl.textContent = 'Hatalı şifre.';
+    const box = document.querySelector('#fin-login-screen .lbox');
+    box.classList.remove('lshake');
+    void box.offsetWidth;
+    box.classList.add('lshake');
+    document.getElementById('fin-pw-input').value = '';
+    document.getElementById('fin-pw-input').focus();
+  }
+}
+
+function finTogglePw() {
+  const inp = document.getElementById('fin-pw-input');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+
+function finUnlock() {
+  document.getElementById('fin-login-screen').style.display = 'none';
+  document.getElementById('fin-app-wrap').style.display = 'block';
+}
+
+// Sayfa yüklenince oturum kontrolü
+if (sessionStorage.getItem(FIN_SESSION_KEY) === '1') {
+  finUnlock();
+}
+</script>
 <script defer src="fin.js"></script>
 </body>
 </html>
