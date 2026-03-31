@@ -92,11 +92,12 @@ body.hr-page {
 }
 
 .hr-app .sidebar-logo {
-  padding: 20px 18px 16px;
+  padding: 18px 16px 14px;
   border-bottom: 1px solid rgba(255,255,255,0.07);
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  overflow: hidden;
 }
 
 .hr-app .sidebar-logo-mark {
@@ -104,25 +105,25 @@ body.hr-page {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  background: rgba(232,118,44,0.1);
-  border: 1px solid rgba(232,118,44,0.25);
-  border-radius: 10px;
+  width: 32px;
+  height: 32px;
 }
 
 .hr-app .sidebar-logo-text {
   min-width: 0;
+  overflow: hidden;
 }
 
 .hr-app .sidebar-logo .brand-name {
   font-family: 'Syne', sans-serif;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 800;
   letter-spacing: -0.3px;
-  line-height: 1.1;
+  line-height: 1.15;
   color: #ffffff;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .hr-app .sidebar-logo .brand-name span {
@@ -131,9 +132,9 @@ body.hr-page {
 
 .hr-app .sidebar-logo .brand-sub {
   font-family: 'DM Sans', sans-serif;
-  font-size: 10.5px;
+  font-size: 10px;
   color: rgba(255,255,255,0.4);
-  letter-spacing: 0.3px;
+  letter-spacing: 0.2px;
   margin-top: 2px;
   white-space: nowrap;
 }
