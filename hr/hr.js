@@ -77,14 +77,16 @@ async function hrLoadState() {
 
 function renderDocCalendar() {
   initCalendar();
-  const pane = document.getElementById('cal-docs-pane');
-  if (!pane) return;
+  const gridWrap = document.getElementById('doc-cal-grid-wrap');
+  const titleEl  = document.getElementById('doc-cal-title');
+  if (!gridWrap) return;
 
   const monthNames = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran',
                       'Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+  if (titleEl) titleEl.textContent = monthNames[calMonth] + ' ' + calYear;
+
   const todayStr = today();
 
-  // Build event map
   const eventMap = {};
   const addDocEvent = (dateStr, label, type, personId) => {
     if (!dateStr) return;
@@ -93,40 +95,27 @@ function renderDocCalendar() {
     if (!eventMap[dateStr]) eventMap[dateStr] = [];
     const isOverdue = dateStr < todayStr;
     const isSoon = !isOverdue && dateStr <= addDays(todayStr, 30);
-    eventMap[dateStr].push({ label, type, personId, dateStr, isOverdue, isSoon });
+    eventMap[dateStr].push({ label, type, personId, isOverdue, isSoon });
   };
 
   hrState.personnel.forEach(p => {
     if (p.status === 'passive') return;
-    if (p.permitExpiry) addDocEvent(p.permitExpiry, p.name + ': Çalışma İzni', 'permit', p.id);
-    if (p.passportExpiry) addDocEvent(p.passportExpiry, p.name + ': Pasaport', 'passport', p.id);
+    if (p.permitExpiry)   addDocEvent(p.permitExpiry,   p.name + ': Çalışma İzni', 'permit',   p.id);
+    if (p.passportExpiry) addDocEvent(p.passportExpiry, p.name + ': Pasaport',      'passport', p.id);
   });
 
-  // Grid
-  const firstDay   = new Date(calYear, calMonth, 1).getDay();
+  const firstDay    = new Date(calYear, calMonth, 1).getDay();
   const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
   const daysInPrev  = new Date(calYear, calMonth, 0).getDate();
   const startDay    = (firstDay + 6) % 7;
 
-  let html = `
-    <div class="card" style="margin-bottom:14px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-        <button class="btn btn-secondary btn-sm" onclick="docCalNav(-1)">‹</button>
-        <span style="font-weight:700;font-size:15px" id="doc-cal-title">${monthNames[calMonth]} ${calYear}</span>
-        <button class="btn btn-secondary btn-sm" onclick="docCalNav(1)">›</button>
-      </div>
-      <div style="display:flex;gap:14px;font-size:11px;color:#9da4c8;margin-bottom:10px">
-        <span><span style="display:inline-block;width:10px;height:10px;background:#f59e0b;border-radius:2px;margin-right:4px;vertical-align:middle"></span>Çalışma İzni</span>
-        <span><span style="display:inline-block;width:10px;height:10px;background:#8b5cf6;border-radius:2px;margin-right:4px;vertical-align:middle"></span>Pasaport</span>
-      </div>
-      <div class="cal-grid">`;
+  let html = '<div class="cal-grid">';
 
   ['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'].forEach(d =>
     html += `<div class="cal-day-header">${d}</div>`);
 
-  for (let i = 0; i < startDay; i++) {
+  for (let i = 0; i < startDay; i++)
     html += `<div class="cal-cell other-month"><div class="cal-date">${daysInPrev - startDay + 1 + i}</div></div>`;
-  }
 
   for (let d = 1; d <= daysInMonth; d++) {
     const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
@@ -136,8 +125,8 @@ function renderDocCalendar() {
       <div class="cal-date">${isToday ? `<span>${d}</span>` : d}</div>` +
       events.map(ev => {
         const bg = ev.type === 'permit'
-          ? (ev.isOverdue ? '#ef4444' : (ev.isSoon ? '#f59e0b' : '#f59e0b'))
-          : (ev.isOverdue ? '#ef4444' : (ev.isSoon ? '#a78bfa' : '#8b5cf6'));
+          ? (ev.isOverdue ? '#ef4444' : '#f59e0b')
+          : (ev.isOverdue ? '#ef4444' : '#8b5cf6');
         const icon = ev.isOverdue ? '⚠ ' : (ev.isSoon ? '⏰ ' : '');
         return `<span class="cal-event cal-event-clickable" style="background:${bg}22;color:${bg};cursor:pointer"
           onclick="hrDocEventClick('${ev.personId}','${ev.type}')" title="${ev.label}">${icon}${ev.label}</span>`;
@@ -145,15 +134,13 @@ function renderDocCalendar() {
     `</div>`;
   }
 
-  const totalCells = startDay + daysInMonth;
-  const remainder  = totalCells % 7;
-  if (remainder !== 0) {
+  const remainder = (startDay + daysInMonth) % 7;
+  if (remainder !== 0)
     for (let d = 1; d <= 7 - remainder; d++)
       html += `<div class="cal-cell other-month"><div class="cal-date">${d}</div></div>`;
-  }
 
-  html += '</div></div>';
-  pane.innerHTML = html;
+  html += '</div>';
+  gridWrap.innerHTML = html;
 }
 
 function docCalNav(dir) {
@@ -2587,6 +2574,9 @@ async function vehRenderCalendar() {
   _vehVehicles.forEach(v => {
     dateFields.forEach(f => {
       if (!v[f.key]) return;
+      // Sadece bu aya ait tarihleri ekle
+      const [fy, fm] = v[f.key].split('-').map(Number);
+      if (fy !== _vehCalYear || fm !== _vehCalMonth + 1) return;
       if (!events[v[f.key]]) events[v[f.key]] = [];
       events[v[f.key]].push({ label: `${v.plate}: ${f.label}`, type: 'expiry' });
     });
@@ -2609,23 +2599,28 @@ async function vehRenderCalendar() {
   }
 
   const dayNames = ['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'];
-  let html = dayNames.map(d => `<div class="cal-day-header">${d}</div>`).join('');
-  for (let i = 0; i < startDow; i++) html += `<div class="cal-day other-month"></div>`;
+  let html = '<div class="cal-grid">';
+  html += dayNames.map(d => `<div class="cal-day-header">${d}</div>`).join('');
+  for (let i = 0; i < startDow; i++) html += `<div class="cal-cell other-month"><div class="cal-date"></div></div>`;
 
   for (let d = 1; d <= lastDay.getDate(); d++) {
     const ds = `${_vehCalYear}-${String(_vehCalMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const dayEvents = events[ds] || [];
     const isToday = ds === todayStr;
-    html += `<div class="cal-day${isToday?' today':''}">
-      <div class="cal-day-num">${d}</div>
-      ${dayEvents.slice(0,3).map(ev => `<div class="cal-event" style="background:${ev.type==='expiry'?'#e8637a':'#8b6be8'};color:#fff;font-size:10px;padding:2px 5px;border-radius:3px;margin-bottom:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis" title="${ev.label}">${ev.label}</div>`).join('')}
+    html += `<div class="cal-cell${isToday?' today':''}">
+      <div class="cal-date">${isToday ? `<span>${d}</span>` : d}</div>
+      ${dayEvents.slice(0,3).map(ev => {
+        const bg = ev.type === 'expiry' ? '#e8637a' : '#8b6be8';
+        return `<span class="cal-event" style="background:${bg}22;color:${bg}" title="${ev.label}">${ev.label}</span>`;
+      }).join('')}
       ${dayEvents.length > 3 ? `<div style="font-size:9px;color:var(--hr-text3)">+${dayEvents.length-3} daha</div>` : ''}
     </div>`;
   }
 
   const rem = (startDow + lastDay.getDate()) % 7;
-  if (rem) for (let i = 0; i < 7 - rem; i++) html += `<div class="cal-day other-month"></div>`;
+  if (rem) for (let i = 0; i < 7 - rem; i++) html += `<div class="cal-cell other-month"><div class="cal-date"></div></div>`;
 
+  html += '</div>';
   gridEl.innerHTML = html;
 }
 
