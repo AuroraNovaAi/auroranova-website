@@ -388,15 +388,12 @@ function renderDash() {
       <div class="chart-label">${MO[m-1]}</div>
       <div class="chart-bars">
         <div class="chart-track"><div class="chart-fill"
-          style="width:${Math.min(Math.abs(c.AF),100)}%;background:${c.AF>=0?'var(--fin-green)':'var(--fin-red)'}"></div></div>
-        <div class="chart-track"><div class="chart-fill"
-          style="width:${Math.min(c.AJ,100)}%;background:var(--fin-purple)"></div></div>
+          style="width:${Math.min(Math.abs(c.AT_pct),100)}%;background:${c.AT_pct>=0?'var(--fin-green)':'var(--fin-red)'}"></div></div>
       </div>
-      <div class="chart-val" style="color:${c.AF>=0?'var(--fin-green)':'var(--fin-red)'}">${fmtM(c.AF)}</div>
+      <div class="chart-val" style="color:${c.AT_pct>=0?'var(--fin-green)':'var(--fin-red)'}">${fmtM(c.AT_pct)}</div>
     </div>`).join('') + `
     <div style="display:flex;gap:14px;margin-top:10px;font-size:11px;color:var(--fin-text3)">
-      <span><span style="display:inline-block;width:8px;height:8px;background:var(--fin-green);border-radius:2px;margin-right:4px;vertical-align:middle"></span>Kar %</span>
-      <span><span style="display:inline-block;width:8px;height:8px;background:var(--fin-purple);border-radius:2px;margin-right:4px;vertical-align:middle"></span>Pers/Gel %</span>
+      <span><span style="display:inline-block;width:8px;height:8px;background:var(--fin-green);border-radius:2px;margin-right:4px;vertical-align:middle"></span>Dönem K/Z %</span>
     </div>`;
 
   document.getElementById('sum-head').innerHTML =
