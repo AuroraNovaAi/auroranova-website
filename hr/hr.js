@@ -378,6 +378,7 @@ function savePerson(e) {
   const person = {
     id,
     name: document.getElementById('p-name').value.trim(),
+    sicilNo: document.getElementById('p-sicil').value.trim(),
     position: document.getElementById('p-position').value.trim(),
     nationality: document.getElementById('p-nationality').value,
     email: document.getElementById('p-email').value.trim(),
@@ -414,6 +415,7 @@ function editPerson(id) {
   const form = document.getElementById('form-person');
   form.dataset.editId = id;
   document.getElementById('p-name').value = person.name || '';
+  document.getElementById('p-sicil').value = person.sicilNo || '';
   document.getElementById('p-position').value = person.position || '';
   document.getElementById('p-nationality').value = person.nationality || '';
   document.getElementById('p-email').value = person.email || '';
@@ -538,7 +540,7 @@ function renderPersonnelTable(list) {
 
   let html = `<div class="table-wrap"><table>
     <thead><tr>
-      <th>Ad Soyad</th><th>Pozisyon</th><th>Uyruk</th><th>E-posta</th>
+      <th>Ad Soyad</th><th>Sicil No</th><th>Pozisyon</th><th>Uyruk</th><th>E-posta</th>
       <th>Başlangıç</th><th>Ç.İzni Bitiş</th><th>Pasaport Bitiş</th><th>Durum</th><th></th>
     </tr></thead><tbody>`;
 
@@ -552,6 +554,7 @@ function renderPersonnelTable(list) {
         <div class="avatar" style="background:${color}">${ini}</div>
         <span style="font-weight:500">${p.name}</span>
       </div></td>
+      <td>${p.sicilNo || '-'}</td>
       <td>${p.position || '-'}</td>
       <td>${p.nationality || '-'}</td>
       <td>${p.email || '-'}</td>
@@ -1698,19 +1701,19 @@ function hrExportAll() {
 
   // ── Sheet 1: Personel ──
   const pHeaders = [
-    'Ad Soyad','Uyruk','TC/Pasaport No','Pozisyon','Bölüm',
+    'Ad Soyad','Sicil No','Uyruk','TC/Pasaport No','Pozisyon','Bölüm',
     'İşe Başlama','Çalışma İzni Bitiş','Pasaport No','Pasaport Bitiş',
     'E-posta','Telefon','Durum','Not'
   ];
   const pRows = hrState.personnel.map(p => [
-    p.name, p.nationality, p.idNo||'', p.position||'', p.department||'',
+    p.name, p.sicilNo||'', p.nationality, p.idNo||'', p.position||'', p.department||'',
     p.startDate||'', p.permitExpiry||'', p.passportNo||'', p.passportExpiry||'',
     p.email||'', p.phone||'',
     p.status==='active'?'Aktif':p.status==='passive'?'Pasif':'İzinde',
     p.note||''
   ]);
   const wsP = XLSX.utils.aoa_to_sheet([pHeaders, ...pRows]);
-  wsP['!cols'] = [{wch:22},{wch:10},{wch:18},{wch:16},{wch:14},{wch:14},{wch:18},{wch:16},{wch:18},{wch:24},{wch:18},{wch:10},{wch:24}];
+  wsP['!cols'] = [{wch:22},{wch:12},{wch:10},{wch:18},{wch:16},{wch:14},{wch:14},{wch:18},{wch:16},{wch:18},{wch:24},{wch:18},{wch:10},{wch:24}];
   _hrXlBoldHeader(wsP, pHeaders.length);
   XLSX.utils.book_append_sheet(wb, wsP, 'Personel');
 
