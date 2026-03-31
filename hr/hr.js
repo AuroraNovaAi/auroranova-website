@@ -1319,15 +1319,18 @@ function setupUploadZone() {
 // ══════════════════════════════════════════════════════
 
 const HR_XL_COLS = [
-  { header: 'Ad Soyad',              key: 'name'       },
-  { header: 'Uyruk',                 key: 'nationality' }, // TC | KKTC | 3. Ülke
-  { header: 'TC/Pasaport No',        key: 'idNo'       },
-  { header: 'Pozisyon',              key: 'position'   },
-  { header: 'Bölüm',                 key: 'department' },
-  { header: 'İşe Başlama Tarihi',    key: 'startDate'  }, // YYYY-AA-GG
-  { header: 'E-posta',               key: 'email'      },
-  { header: 'Telefon',               key: 'phone'      },
-  { header: 'Not',                   key: 'note'       },
+  { header: 'Ad Soyad',                    key: 'name'          },
+  { header: 'Uyruk',                       key: 'nationality'   }, // TC | KKTC | 3. Ülke
+  { header: 'TC/Pasaport No',              key: 'idNo'          },
+  { header: 'Pozisyon',                    key: 'position'      },
+  { header: 'Bölüm',                       key: 'department'    },
+  { header: 'İşe Başlama Tarihi',          key: 'startDate'     }, // YYYY-MM-DD
+  { header: 'Çalışma İzni Bitiş Tarihi',   key: 'permitExpiry'  }, // YYYY-MM-DD
+  { header: 'Pasaport No',                 key: 'passportNo'    },
+  { header: 'Pasaport Geçerlilik Tarihi',  key: 'passportExpiry'}, // YYYY-MM-DD
+  { header: 'E-posta',                     key: 'email'         },
+  { header: 'Telefon',                     key: 'phone'         },
+  { header: 'Not',                         key: 'note'          },
 ];
 
 let _hrXlRows = null;
@@ -1390,17 +1393,18 @@ function hrXlHandleFile(file) {
         else if (natRaw === 'kktc') r.nationality = 'KKTC';
         else r.nationality = '3. Ülke';
 
-        // Tarih formatı kontrolü (YYYY-MM-DD)
-        if (r.startDate && !/^\d{4}-\d{2}-\d{2}$/.test(r.startDate)) {
-          // Excel serial date desteği
-          const num = parseFloat(r.startDate);
+        // Tarih formatı normalize (YYYY-MM-DD) — Excel serial date desteği dahil
+        ['startDate','permitExpiry','passportExpiry'].forEach(field => {
+          if (!r[field]) return;
+          if (/^\d{4}-\d{2}-\d{2}$/.test(r[field])) return;
+          const num = parseFloat(r[field]);
           if (!isNaN(num)) {
             const d = new Date(Math.round((num - 25569) * 86400 * 1000));
-            r.startDate = d.toISOString().slice(0,10);
+            r[field] = d.toISOString().slice(0,10);
           } else {
-            r.startDate = '';
+            r[field] = '';
           }
-        }
+        });
 
         parsed.push(r);
       });
@@ -1430,8 +1434,9 @@ function hrXlShowPreview(rows) {
   wrap.style.display = 'block';
   wrap.innerHTML = `<table>
     <thead><tr>
-      <th>Ad Soyad</th><th>Uyruk</th><th>TC/Pasaport</th>
-      <th>Pozisyon</th><th>Bölüm</th><th>İşe Başlama</th>
+      <th>Ad Soyad</th><th>Uyruk</th><th>TC/Pasaport No</th>
+      <th>Pozisyon</th><th>İşe Başlama</th><th>İzin Bitiş</th>
+      <th>Pasaport No</th><th>Pasaport Bitiş</th>
     </tr></thead>
     <tbody>
       ${preview.map(r => `<tr>
@@ -1439,8 +1444,10 @@ function hrXlShowPreview(rows) {
         <td>${r.nationality}</td>
         <td>${r.idNo || '—'}</td>
         <td>${r.position || '—'}</td>
-        <td>${r.department || '—'}</td>
         <td>${r.startDate || '—'}</td>
+        <td>${r.permitExpiry || '—'}</td>
+        <td>${r.passportNo || '—'}</td>
+        <td>${r.passportExpiry || '—'}</td>
       </tr>`).join('')}
     </tbody>
   </table>
@@ -1461,17 +1468,20 @@ function hrXlConfirmImport() {
 
     hrState.personnel.push({
       id: hrGenId(),
-      name:       r.name,
-      nationality:r.nationality,
-      idNo:       r.idNo       || '',
-      position:   r.position   || '',
-      department: r.department || '',
-      startDate:  r.startDate  || '',
-      email:      r.email      || '',
-      phone:      r.phone      || '',
-      note:       r.note       || '',
-      status:     'active',
-      createdAt:  new Date().toISOString(),
+      name:          r.name,
+      nationality:   r.nationality,
+      idNo:          r.idNo          || '',
+      position:      r.position      || '',
+      department:    r.department    || '',
+      startDate:     r.startDate     || '',
+      permitExpiry:  r.permitExpiry  || '',
+      passportNo:    r.passportNo    || '',
+      passportExpiry:r.passportExpiry|| '',
+      email:         r.email         || '',
+      phone:         r.phone         || '',
+      note:          r.note          || '',
+      status:        'active',
+      createdAt:     new Date().toISOString(),
     });
     added++;
   });
@@ -1497,16 +1507,17 @@ function hrDownloadXlTemplate() {
   if (!window.XLSX) { alert('SheetJS yüklenemedi.'); return; }
 
   const headers = HR_XL_COLS.map(c => c.header);
+  //                name         nat      idNo           pos          dept       start        permitExp    passNo       passExp      email              phone              note
   const examples = [
-    ['Ahmet Yılmaz', 'TC',       '12345678901', 'Operatör',    'Üretim',  '2024-01-15', 'ahmet@firma.com', '+90 532 000 00 01', ''],
-    ['Mehmet Demir', 'KKTC',     'K12345678',   'Teknisyen',   'Bakım',   '2024-03-01', 'mehmet@firma.com','',                  ''],
-    ['Ali Veli',     '3. Ülke',  'P98765432',   'Mühendis',    'Ar-Ge',   '2025-06-01', '',                '',                  'Vize durumu takipte'],
+    ['Ahmet Yılmaz', 'TC',      '12345678901', 'Operatör',  'Üretim', '2024-01-15', '2026-03-31', '',            '',            'ahmet@firma.com',  '+90 532 000 00 01', ''],
+    ['Mehmet Demir', 'KKTC',    'K12345678',   'Teknisyen', 'Bakım',  '2024-03-01', '2025-12-31', 'K12345678',   '2027-06-15',  'mehmet@firma.com', '',                  ''],
+    ['Ali Veli',     '3. Ülke', 'P98765432',   'Mühendis',  'Ar-Ge',  '2025-06-01', '',            'P98765432',   '2026-09-20',  '',                 '',                  'Vize durumu takipte'],
   ];
 
   const ws = XLSX.utils.aoa_to_sheet([headers, ...examples]);
   ws['!cols'] = [
-    {wch:22},{wch:12},{wch:18},{wch:18},{wch:16},
-    {wch:20},{wch:24},{wch:20},{wch:24}
+    {wch:22},{wch:10},{wch:18},{wch:16},{wch:14},
+    {wch:18},{wch:24},{wch:18},{wch:24},{wch:26},{wch:22},{wch:24}
   ];
 
   const wb = XLSX.utils.book_new();
@@ -1515,15 +1526,18 @@ function hrDownloadXlTemplate() {
   // Talimatlar için ikinci sheet
   const infoData = [
     ['ALAN', 'AÇIKLAMA', 'ÖRNEK'],
-    ['Ad Soyad', 'Zorunlu', 'Ahmet Yılmaz'],
-    ['Uyruk', 'TC | KKTC | 3. Ülke (büyük/küçük harf fark etmez)', 'TC'],
-    ['TC/Pasaport No', 'Varsa girilmesi önerilir — duplicate kontrolü için', '12345678901'],
-    ['Pozisyon', 'Opsiyonel', 'Operatör'],
-    ['Bölüm', 'Opsiyonel', 'Üretim'],
-    ['İşe Başlama Tarihi', 'YYYY-AA-GG formatında', '2025-01-15'],
-    ['E-posta', 'Opsiyonel', 'ad@firma.com'],
-    ['Telefon', 'Opsiyonel', '+90 532 000 00 01'],
-    ['Not', 'Opsiyonel serbest metin', ''],
+    ['Ad Soyad',                   'Zorunlu',                                                      'Ahmet Yılmaz'],
+    ['Uyruk',                      'TC | KKTC | 3. Ülke (büyük/küçük harf fark etmez)',            'TC'],
+    ['TC/Pasaport No',             'Varsa girilmesi önerilir — duplicate kontrolü için',            '12345678901'],
+    ['Pozisyon',                   'Opsiyonel',                                                     'Operatör'],
+    ['Bölüm',                      'Opsiyonel',                                                     'Üretim'],
+    ['İşe Başlama Tarihi',         'YYYY-AA-GG formatında',                                         '2025-01-15'],
+    ['Çalışma İzni Bitiş Tarihi',  'YYYY-AA-GG formatında — boş bırakılabilir',                    '2026-03-31'],
+    ['Pasaport No',                'Opsiyonel',                                                     'P98765432'],
+    ['Pasaport Geçerlilik Tarihi', 'YYYY-AA-GG formatında — boş bırakılabilir',                    '2027-06-15'],
+    ['E-posta',                    'Opsiyonel',                                                     'ad@firma.com'],
+    ['Telefon',                    'Opsiyonel',                                                     '+90 532 000 00 01'],
+    ['Not',                        'Opsiyonel serbest metin',                                       ''],
   ];
   const ws2 = XLSX.utils.aoa_to_sheet(infoData);
   ws2['!cols'] = [{wch:24},{wch:48},{wch:24}];
