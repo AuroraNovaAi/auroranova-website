@@ -1862,8 +1862,9 @@ async function vehEnsureLoaded() {
   if (!db) return;
   _hrSyncBadge('Yükleniyor…');
   try {
-    const snap = await db.collection('vehicles').orderBy('createdAt', 'desc').get();
-    _vehVehicles = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const snap = await db.collection('vehicles').get();
+    _vehVehicles = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+      .sort((a,b) => (b.createdAt||'') > (a.createdAt||'') ? 1 : -1);
     _hrSyncBadge('✓ Senkronize', '#2ea06e');
     setTimeout(() => _hrSyncBadge(''), 2500);
   } catch(e) {
@@ -1904,8 +1905,9 @@ async function vehLoadAndRenderList() {
   if (!db) return;
   _hrSyncBadge('Yükleniyor…');
   try {
-    const snap = await db.collection('vehicles').orderBy('createdAt', 'desc').get();
-    _vehVehicles = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const snap = await db.collection('vehicles').get();
+    _vehVehicles = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+      .sort((a,b) => (b.createdAt||'') > (a.createdAt||'') ? 1 : -1);
     _hrSyncBadge('✓ Senkronize', '#2ea06e');
     setTimeout(() => _hrSyncBadge(''), 2500);
   } catch(e) {
@@ -2190,9 +2192,9 @@ async function vehRenderDetailDocs() {
   if (!db) return;
   try {
     const snap = await db.collection('vehicle_documents')
-      .where('vehicleId','==',_vehCurrentVehicleId)
-      .orderBy('createdAt','desc').get();
-    const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      .where('vehicleId','==',_vehCurrentVehicleId).get();
+    const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+      .sort((a,b) => (b.createdAt||'') > (a.createdAt||'') ? 1 : -1);
     const kochan = docs.find(d => d.docType === 'kochan');
     const others = docs.filter(d => d.docType !== 'kochan');
 
@@ -2276,11 +2278,13 @@ async function vehRenderDetailService() {
   if (!db) return;
   try {
     const [sSnap, pSnap] = await Promise.all([
-      db.collection('vehicle_services').where('vehicleId','==',_vehCurrentVehicleId).orderBy('date','desc').get(),
-      db.collection('vehicle_payments').where('vehicleId','==',_vehCurrentVehicleId).orderBy('date','desc').get(),
+      db.collection('vehicle_services').where('vehicleId','==',_vehCurrentVehicleId).get(),
+      db.collection('vehicle_payments').where('vehicleId','==',_vehCurrentVehicleId).get(),
     ]);
-    const services = sSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-    const payments = pSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const services = sSnap.docs.map(d => ({ id: d.id, ...d.data() }))
+      .sort((a,b) => (b.date||'') > (a.date||'') ? 1 : -1);
+    const payments = pSnap.docs.map(d => ({ id: d.id, ...d.data() }))
+      .sort((a,b) => (b.date||'') > (a.date||'') ? 1 : -1);
     const v = _vehVehicles.find(x => x.id === _vehCurrentVehicleId);
     const typeLabel  = { bakim:'Bakım', servis:'Servis', ariza:'Arıza' };
     const typeBadge  = { bakim:'badge-info', servis:'badge-success', ariza:'badge-danger' };
@@ -2431,9 +2435,9 @@ async function vehRenderDetailTasks() {
   if (!db) return;
   try {
     const snap = await db.collection('vehicle_tasks')
-      .where('vehicleId','==',_vehCurrentVehicleId)
-      .orderBy('createdAt','desc').get();
-    const tasks = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      .where('vehicleId','==',_vehCurrentVehicleId).get();
+    const tasks = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+      .sort((a,b) => (b.createdAt||'') > (a.createdAt||'') ? 1 : -1);
     const sLabel = { bekliyor:'Bekliyor', devam:'Devam Ediyor', tamamlandi:'Tamamlandı' };
     const sBadge = { bekliyor:'badge-warning', devam:'', tamamlandi:'badge-success' };
     const open = tasks.filter(t => t.status !== 'tamamlandi');
@@ -2604,7 +2608,7 @@ async function vehRenderDashboard() {
           const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
           months.push({ y: d.getFullYear(), m: d.getMonth(), label: d.toLocaleString('tr-TR', { month: 'short' }) });
         }
-        const snap = await db.collection('vehicle_payments').orderBy('date','desc').limit(300).get();
+        const snap = await db.collection('vehicle_payments').limit(500).get();
         const payments = snap.docs.map(d => d.data());
         const totals = months.map(mo => ({
           label: mo.label,
@@ -2670,10 +2674,10 @@ async function vehRenderCalendar() {
     try {
       const m0 = `${_vehCalYear}-${String(_vehCalMonth+1).padStart(2,'0')}-01`;
       const m1 = `${_vehCalYear}-${String(_vehCalMonth+1).padStart(2,'0')}-${String(lastDay.getDate()).padStart(2,'0')}`;
-      const tSnap = await db.collection('vehicle_tasks').where('due','>=',m0).where('due','<=',m1).get();
+      const tSnap = await db.collection('vehicle_tasks').get();
       tSnap.docs.forEach(d => {
         const t = d.data();
-        if (!t.due) return;
+        if (!t.due || t.due < m0 || t.due > m1) return;
         if (!events[t.due]) events[t.due] = [];
         const veh = _vehVehicles.find(x => x.id === t.vehicleId);
         events[t.due].push({ label: `${veh?.plate||'Araç'}: ${t.name}`, type: 'task' });
