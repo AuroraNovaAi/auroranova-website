@@ -1701,6 +1701,82 @@ function hrDownloadXlTemplate() {
   XLSX.writeFile(wb, 'AuroraNova_HR_Personel_Sablon.xlsx');
 }
 
+function hrExportAll() {
+  if (!window.XLSX) { alert('SheetJS yüklenemedi.'); return; }
+
+  const wb = XLSX.utils.book_new();
+  const date = new Date().toISOString().slice(0,10);
+
+  // ── Sheet 1: Personel ──
+  const pHeaders = [
+    'Ad Soyad','Uyruk','TC/Pasaport No','Pozisyon','Bölüm',
+    'İşe Başlama','Çalışma İzni Bitiş','Pasaport No','Pasaport Bitiş',
+    'E-posta','Telefon','Durum','Not'
+  ];
+  const pRows = hrState.personnel.map(p => [
+    p.name, p.nationality, p.idNo||'', p.position||'', p.department||'',
+    p.startDate||'', p.permitExpiry||'', p.passportNo||'', p.passportExpiry||'',
+    p.email||'', p.phone||'',
+    p.status==='active'?'Aktif':p.status==='passive'?'Pasif':'İzinde',
+    p.note||''
+  ]);
+  const wsP = XLSX.utils.aoa_to_sheet([pHeaders, ...pRows]);
+  wsP['!cols'] = [{wch:22},{wch:10},{wch:18},{wch:16},{wch:14},{wch:14},{wch:18},{wch:16},{wch:18},{wch:24},{wch:18},{wch:10},{wch:24}];
+  _hrXlBoldHeader(wsP, pHeaders.length);
+  XLSX.utils.book_append_sheet(wb, wsP, 'Personel');
+
+  // ── Sheet 2: Süreçler & Görevler ──
+  const tHeaders = [
+    'Personel','Süreç Şablonu','Başlangıç Tarihi',
+    'Görev No','Görev Adı','Sorumlu','Son Tarih','Tamamlandı','Tamamlanma Tarihi'
+  ];
+  const tRows = [];
+  hrState.processes.forEach(proc => {
+    proc.tasks.forEach((t, i) => {
+      tRows.push([
+        proc.personName, proc.templateName, proc.startDate,
+        i+1, t.name, t.assignee||'',
+        t.dueDate||'',
+        t.done ? 'Evet' : 'Hayır',
+        t.doneAt ? t.doneAt.slice(0,10) : ''
+      ]);
+    });
+    if (!proc.tasks.length) {
+      tRows.push([proc.personName, proc.templateName, proc.startDate, '', '', '', '', '', '']);
+    }
+  });
+  const wsT = XLSX.utils.aoa_to_sheet([tHeaders, ...tRows]);
+  wsT['!cols'] = [{wch:22},{wch:22},{wch:14},{wch:8},{wch:28},{wch:12},{wch:14},{wch:12},{wch:16}];
+  _hrXlBoldHeader(wsT, tHeaders.length);
+  XLSX.utils.book_append_sheet(wb, wsT, 'Süreçler ve Görevler');
+
+  // ── Sheet 3: Şablonlar ──
+  const sHeaders = ['Şablon Adı','Tür','Görev Sırası','Görev Adı','Gün Offseti','Sorumlu'];
+  const sRows = [];
+  hrState.templates.forEach(tmpl => {
+    (tmpl.tasks||[]).forEach((t, i) => {
+      sRows.push([tmpl.name, tmpl.type||'', i+1, t.name, t.days||0, t.assignee||'']);
+    });
+    if (!(tmpl.tasks||[]).length) sRows.push([tmpl.name, tmpl.type||'', '', '', '', '']);
+  });
+  const wsS = XLSX.utils.aoa_to_sheet([sHeaders, ...sRows]);
+  wsS['!cols'] = [{wch:24},{wch:16},{wch:10},{wch:28},{wch:12},{wch:12}];
+  _hrXlBoldHeader(wsS, sHeaders.length);
+  XLSX.utils.book_append_sheet(wb, wsS, 'Şablonlar');
+
+  if (!wb.SheetNames.length) { alert('Dışa aktarılacak veri yok.'); return; }
+
+  XLSX.writeFile(wb, `AuroraNova_HR_${date}.xlsx`);
+}
+
+function _hrXlBoldHeader(ws, colCount) {
+  for (let C = 0; C < colCount; C++) {
+    const addr = XLSX.utils.encode_cell({r:0, c:C});
+    if (!ws[addr]) continue;
+    ws[addr].s = { font: { bold: true }, fill: { fgColor: { rgb: 'EDF2FF' } } };
+  }
+}
+
 // ── Initialise ──
 (async () => {
   await hrLoadState();

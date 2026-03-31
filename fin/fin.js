@@ -860,6 +860,84 @@ function finDownloadTemplate() {
   XLSX.writeFile(wb, 'AuroraNova_Fin_Sablon.xlsx');
 }
 
+function finExportAll() {
+  if (!window.XLSX) { toast('SheetJS yüklenemedi.', 'error'); return; }
+
+  const companies = Object.values(finS.companies);
+  if (!companies.length) { toast('Dışa aktarılacak veri yok.', 'error'); return; }
+
+  const wb = XLSX.utils.book_new();
+
+  companies.forEach(co => {
+    const coData = finS.data[co.id] || {};
+    const rows = [];
+
+    // Başlık satırı
+    rows.push([
+      'Yıl', 'Ay',
+      'Gelirler Toplamı', 'Net Satışlar', 'SMM (Personel+Sarf)',
+      'Brüt K/Z', 'Brüt K/Z %',
+      'Faaliyet Giderleri', 'Faaliyet K/Z', 'Faaliyet K/Z %',
+      'Finansman Giderleri', 'Dönem K/Z', 'Dönem K/Z %',
+      'Personel Giderleri', 'Hammadde SARF',
+      'Başlık Satışlar', 'Baza Satışlar', 'Çekyat Satışlar', 'Metal Satışlar',
+      'Oturma Satışlar', 'Sandalye Satışlar', 'Mobilya Satışlar', 'Şilte Satışlar',
+      'Alıştan İade', 'Satıştan İade',
+      'Hammadde Alım', 'İnşaat Giderleri', 'Vergi/Tecil'
+    ]);
+
+    // Veri satırları — tüm yıllar ve aylar
+    const keys = Object.keys(coData).sort();
+    keys.forEach(k => {
+      const [y, m] = k.split('-').map(Number);
+      const d = coData[k];
+      const c = finCalc(d);
+      rows.push([
+        y, MO_F[m-1],
+        c.M, c.AP, c.AB,
+        c.AQ, +c.AQ_pct.toFixed(2),
+        c.faaliyet, c.AS, +c.AS_pct.toFixed(2),
+        c.finansman, c.AT, +c.AT_pct.toFixed(2),
+        c.personel, c.hmm_sarf,
+        d.baslik||0, d.baza||0, d.cekyat||0, d.metal||0,
+        d.oturma||0, d.sandalye||0, d.mobilya||0, d.silte||0,
+        d.alis_iade||0, d.satis_iade||0,
+        d.hmm_alim||0, d.insaat||0, d.vergi||0
+      ]);
+    });
+
+    if (rows.length < 2) return; // sadece başlık varsa atla
+
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [
+      {wch:6},{wch:10},{wch:16},{wch:16},{wch:18},
+      {wch:14},{wch:12},{wch:18},{wch:14},{wch:14},
+      {wch:18},{wch:14},{wch:12},
+      {wch:16},{wch:16},
+      {wch:14},{wch:14},{wch:14},{wch:14},
+      {wch:14},{wch:14},{wch:14},{wch:14},
+      {wch:14},{wch:14},{wch:14},{wch:14},{wch:12}
+    ];
+    // Başlık satırını kalın yap
+    const range = XLSX.utils.decode_range(ws['!ref']);
+    for (let C = range.s.c; C <= range.e.c; C++) {
+      const addr = XLSX.utils.encode_cell({r:0, c:C});
+      if (!ws[addr]) continue;
+      ws[addr].s = { font: { bold: true }, fill: { fgColor: { rgb: 'EEF2FF' } } };
+    }
+
+    // Sheet adı max 31 karakter
+    const sheetName = co.name.slice(0, 31).replace(/[\\\/\?\*\[\]]/g, '_');
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+  });
+
+  if (!wb.SheetNames.length) { toast('Dışa aktarılacak veri yok.', 'error'); return; }
+
+  const date = new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb, `AuroraNova_Finans_${date}.xlsx`);
+  toast(`${wb.SheetNames.length} şirket verisi dışa aktarıldı ✓`);
+}
+
 function populateYearSelects() {
   const currentYear = new Date().getFullYear();
   const startYear = 2020;
