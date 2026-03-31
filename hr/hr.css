@@ -905,6 +905,13 @@ body.hr-page {
   text-overflow: ellipsis;
   cursor: pointer;
 }
+.hr-app .cal-event.cal-event-clickable {
+  transition: filter 0.15s, transform 0.1s;
+}
+.hr-app .cal-event.cal-event-clickable:hover {
+  filter: brightness(0.88);
+  transform: translateX(2px);
+}
 
 .hr-app .cal-event.permit {
   background: rgba(91,127,232,0.15);

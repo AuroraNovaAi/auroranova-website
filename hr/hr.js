@@ -486,13 +486,58 @@ function startProcess(e) {
 function toggleTask(processId, taskId) {
   const proc = hrState.processes.find(p => p.id === processId);
   if (!proc) return;
-  const task = proc.tasks.find(t => t.id === taskId);
-  if (!task) return;
+  const taskIdx = proc.tasks.findIndex(t => t.id === taskId);
+  if (taskIdx === -1) return;
+  const task = proc.tasks[taskIdx];
+
+  // Sıralı tamamlama kontrolü: tamamlamak istiyorsa önceki tüm görevler tamamlanmış olmalı
+  if (!task.done) {
+    const firstPending = proc.tasks.findIndex(t => !t.done);
+    if (firstPending !== taskIdx) {
+      hrShowOrderWarning(proc, taskIdx);
+      return;
+    }
+  }
+
   task.done = !task.done;
   task.doneAt = task.done ? new Date().toISOString() : null;
   hrSaveState();
   renderProcesses();
   renderDashboard();
+  if (typeof renderCalendar === 'function') renderCalendar();
+}
+
+function hrShowOrderWarning(proc, taskIdx) {
+  const firstPendingIdx = proc.tasks.findIndex(t => !t.done);
+  const blocking = proc.tasks[firstPendingIdx];
+  const target   = proc.tasks[taskIdx];
+  const existing = document.getElementById('hr-order-modal');
+  if (existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'hr-order-modal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.55);padding:16px';
+  modal.innerHTML = `
+    <div style="background:#fff;border-radius:14px;padding:32px 28px;max-width:420px;width:100%;box-shadow:0 24px 64px rgba(0,0,0,0.18);font-family:'DM Sans',sans-serif">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+        <div style="width:40px;height:40px;border-radius:10px;background:#fef3c7;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">⚠️</div>
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:#1e2342">Sıralı Tamamlama Zorunlu</div>
+          <div style="font-size:12px;color:#9da4c8;margin-top:2px">${proc.personName} · ${proc.templateName}</div>
+        </div>
+      </div>
+      <p style="font-size:13px;color:#3d4466;line-height:1.6;margin:0 0 10px">
+        <strong style="color:#1e2342">"${target.name}"</strong> görevi tamamlanabilmesi için öncelikle aşağıdaki görevin kapatılması gerekmektedir:
+      </p>
+      <div style="background:#f5f6fb;border:1px solid #dde1ee;border-radius:8px;padding:12px 14px;margin-bottom:20px">
+        <div style="font-size:12px;color:#9da4c8;margin-bottom:4px">Bekleyen Görev (${firstPendingIdx + 1}/${proc.tasks.length})</div>
+        <div style="font-size:13px;font-weight:600;color:#1e2342">${blocking.name}</div>
+        ${blocking.dueDate ? `<div style="font-size:11px;color:#9da4c8;margin-top:4px">Son Tarih: ${blocking.dueDate}</div>` : ''}
+      </div>
+      <button onclick="document.getElementById('hr-order-modal').remove()" style="width:100%;padding:11px;background:#5b7fe8;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Anladım</button>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
 }
 
 function filterProcesses() {
@@ -664,7 +709,9 @@ function renderCalendar() {
           name: proc.personName + ': ' + task.name,
           cls: isOverdue ? 'overdue' : (isSoon ? 'soon' : (typeClass[proc.templateType] || 'other')),
           overdue: isOverdue,
-          soon: isSoon
+          soon: isSoon,
+          processId: proc.id,
+          taskId: task.id
         });
       }
     });
@@ -703,7 +750,7 @@ function renderCalendar() {
     html += `<div class="cal-cell${isToday ? ' today' : ''}">
       <div class="cal-date">${dateContent}</div>` +
       events.map(ev =>
-        `<span class="cal-event ${ev.cls}" title="${ev.name}">${ev.overdue ? '⚠ ' : (ev.soon ? '⏰ ' : '')}${ev.name}</span>`
+        `<span class="cal-event ${ev.cls} cal-event-clickable" title="${ev.name}" onclick="hrCalTaskClick('${ev.processId}','${ev.taskId}')">${ev.overdue ? '⚠ ' : (ev.soon ? '⏰ ' : '')}${ev.name}</span>`
       ).join('') +
     `</div>`;
   }
@@ -721,6 +768,74 @@ function renderCalendar() {
 
   const gridWrap = document.getElementById('cal-grid-wrap');
   if (gridWrap) gridWrap.innerHTML = html;
+}
+
+/* ============================================================
+   CALENDAR TASK MODAL
+   ============================================================ */
+
+function hrCalTaskClick(processId, taskId) {
+  const proc = hrState.processes.find(p => p.id === processId);
+  if (!proc) return;
+  const taskIdx = proc.tasks.findIndex(t => t.id === taskId);
+  if (taskIdx === -1) return;
+  const task = proc.tasks[taskIdx];
+  const doneCount = proc.tasks.filter(t => t.done).length;
+  const total = proc.tasks.length;
+
+  // Sıralı kontrol
+  const firstPendingIdx = proc.tasks.findIndex(t => !t.done);
+  const isBlocked = firstPendingIdx !== taskIdx;
+  const blocking = isBlocked ? proc.tasks[firstPendingIdx] : null;
+
+  const todayStr = today();
+  const isOverdue = task.dueDate && task.dueDate < todayStr;
+  const isSoon = task.dueDate && !isOverdue && task.dueDate <= addDays(todayStr, 7);
+  const statusColor = isOverdue ? '#ef4444' : (isSoon ? '#f59e0b' : '#5b7fe8');
+  const statusLabel = isOverdue ? 'Gecikmiş' : (isSoon ? 'Yaklaşıyor' : 'Bekliyor');
+
+  const existing = document.getElementById('hr-cal-task-modal');
+  if (existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'hr-cal-task-modal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.55);padding:16px';
+  modal.innerHTML = `
+    <div style="background:#fff;border-radius:14px;padding:28px;max-width:400px;width:100%;box-shadow:0 24px 64px rgba(0,0,0,0.18);font-family:'DM Sans',sans-serif">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px">
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:#1e2342">${proc.personName}</div>
+          <div style="font-size:11px;color:#9da4c8;margin-top:2px">${proc.templateName} · ${doneCount}/${total} tamamlandı</div>
+        </div>
+        <button onclick="document.getElementById('hr-cal-task-modal').remove()" style="background:none;border:none;font-size:18px;color:#9da4c8;cursor:pointer;padding:0;line-height:1">×</button>
+      </div>
+
+      <div style="background:#f5f6fb;border-radius:10px;padding:14px 16px;margin-bottom:16px">
+        <div style="font-size:13px;font-weight:600;color:#1e2342;margin-bottom:8px">${task.name}</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          ${task.dueDate ? `<span style="font-size:11px;background:#eef0f8;color:#5b6080;padding:3px 8px;border-radius:6px">📅 ${task.dueDate}</span>` : ''}
+          <span style="font-size:11px;padding:3px 8px;border-radius:6px;background:${statusColor}18;color:${statusColor};font-weight:600">${statusLabel}</span>
+          <span style="font-size:11px;background:#eef0f8;color:#5b6080;padding:3px 8px;border-radius:6px">Adım ${taskIdx + 1}/${total}</span>
+        </div>
+      </div>
+
+      ${isBlocked ? `
+      <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:9px;padding:12px 14px;margin-bottom:16px">
+        <div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:4px">⚠ Önceki Adım Tamamlanmadı</div>
+        <div style="font-size:12px;color:#78350f;line-height:1.5">Bu görevi tamamlayabilmek için önce <strong>"${blocking.name}"</strong> görevinin kapatılması gerekmektedir.</div>
+      </div>
+      <button disabled style="width:100%;padding:11px;background:#e5e7eb;color:#9ca3af;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:not-allowed;font-family:'DM Sans',sans-serif">Tamamla — Önceki Adım Bekliyor</button>
+      ` : `
+      <button onclick="hrCalConfirmTask('${processId}','${taskId}')" style="width:100%;padding:11px;background:#22c55e;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background 0.15s" onmouseover="this.style.background='#16a34a'" onmouseout="this.style.background='#22c55e'">✓ Görevi Tamamla</button>
+      `}
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+}
+
+function hrCalConfirmTask(processId, taskId) {
+  document.getElementById('hr-cal-task-modal')?.remove();
+  toggleTask(processId, taskId);
 }
 
 /* ============================================================
