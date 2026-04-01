@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="fin.css">
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <style>
     #fin-login-screen {
@@ -91,12 +92,10 @@
     <div class="lsub">Finance</div>
     <div class="ltitle">Giriş Yap</div>
     <div class="ldesc">Bu sayfa yetkili kullanıcılara özeldir.</div>
-    <div class="linput-wrap">
-      <input type="password" id="fin-pw-input" placeholder="Şifre" autocomplete="current-password"
-             onkeydown="if(event.key==='Enter')finCheckPw()">
-      <button class="ltoggle" onclick="finTogglePw()" title="Göster/Gizle">👁</button>
-    </div>
-    <button class="lbtn" onclick="finCheckPw()">Giriş</button>
+    <button class="lbtn" onclick="finGoogleSignIn()" style="display:flex;align-items:center;justify-content:center;gap:10px">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" height="18" alt="">
+      Google ile Giriş Yap
+    </button>
     <div class="lerr" id="fin-pw-err"></div>
   </div>
 </div>
@@ -122,6 +121,8 @@
 
     <span id="company-pill" class="company-pill" style="display:none"></span>
     <span id="fin-sync-badge" style="font-size:11px;color:var(--fin-text3);margin-left:8px;min-width:80px;text-align:right"></span>
+    <span id="fin-user-info" style="font-size:12px;opacity:.6;white-space:nowrap;overflow:hidden;max-width:160px;text-overflow:ellipsis"></span>
+    <button onclick="finSignOut()" style="font-size:12px;padding:4px 10px;border-radius:6px;border:1px solid rgba(255,255,255,0.15);background:transparent;color:inherit;cursor:pointer;white-space:nowrap">Çıkış</button>
 
     <a href="/" class="fin-back-link">← Ana Sayfa</a>
   </header>
@@ -617,62 +618,69 @@
 </div><!-- /.fin-app -->
 
 <script>
-// ── Auth ──
-const FIN_PW_HASH = '3a35c1515e28957067557f1ea0cbcf651c5bb75dacd31538c8a106ed2102f626';
-const FIN_SESSION_KEY = 'fin_auth_v1';
-
-async function finHashStr(str) {
-  try {
-    if (window.crypto && crypto.subtle) {
-      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
-    }
-  } catch(e) {}
-  // fallback: simple hash for non-HTTPS environments
-  let h = 0;
-  for (let i = 0; i < str.length; i++) { h = Math.imul(31, h) + str.charCodeAt(i) | 0; }
-  return 'fallback:' + h;
+// ── Firebase Config (auth için erken tanımlanıyor) ──
+const FIN_FB_CONFIG = {
+  apiKey: "AIzaSyD8fYMMpfVQlykMoKVDBJh0IP2Wc9A9WPY",
+  authDomain: "auroranova-website.firebaseapp.com",
+  projectId: "auroranova-website",
+  storageBucket: "auroranova-website.firebasestorage.app",
+  messagingSenderId: "1033362428789",
+  appId: "1:1033362428789:web:22837743ca9efd728a793c"
+};
+</script>
+<script>
+// ── Google Auth ──
+function _finGetApp() {
+  return firebase.apps.find(a => a.name === 'fin') ||
+         firebase.initializeApp(FIN_FB_CONFIG, 'fin');
 }
 
-const FIN_PW_FALLBACK = 'fallback:' + (() => {
-  const str = 'Bugra*123'; let h = 0;
-  for (let i = 0; i < str.length; i++) { h = Math.imul(31, h) + str.charCodeAt(i) | 0; }
-  return h;
-})();
+function finGoogleSignIn() {
+  const errEl = document.getElementById('fin-pw-err');
+  errEl.textContent = '';
+  firebase.auth(_finGetApp())
+    .signInWithPopup(new firebase.auth.GoogleAuthProvider())
+    .catch(() => { errEl.textContent = 'Giriş başarısız. Lütfen tekrar deneyin.'; });
+}
 
-async function finCheckPw() {
-  const val = document.getElementById('fin-pw-input').value;
-  const hash = await finHashStr(val);
-  const ok = (hash === FIN_PW_HASH) || (hash.startsWith('fallback:') && hash === FIN_PW_FALLBACK);
-  if (ok) {
-    sessionStorage.setItem(FIN_SESSION_KEY, '1');
-    finUnlock();
-  } else {
-    const errEl = document.getElementById('fin-pw-err');
-    errEl.textContent = 'Hatalı şifre.';
-    const box = document.querySelector('#fin-login-screen .lbox');
-    box.classList.remove('lshake');
-    void box.offsetWidth;
-    box.classList.add('lshake');
-    document.getElementById('fin-pw-input').value = '';
-    document.getElementById('fin-pw-input').focus();
+function finSignOut() {
+  firebase.auth(_finGetApp()).signOut();
+}
+
+(function() {
+  // fin.js yüklenmeden önce app init olmuş olabilir, DOMContentLoaded'ı bekle
+  function setupAuth() {
+    firebase.auth(_finGetApp()).onAuthStateChanged(async function(user) {
+      const loginEl = document.getElementById('fin-login-screen');
+      const appEl   = document.getElementById('fin-app-wrap');
+      const errEl   = document.getElementById('fin-pw-err');
+      const infoEl  = document.getElementById('fin-user-info');
+      if (!user) {
+        if (loginEl) loginEl.style.display = 'flex';
+        if (appEl)   appEl.style.display   = 'none';
+        return;
+      }
+      try {
+        const db   = _finInitDb();
+        const snap = await db.collection('users').doc(user.uid).get();
+        const roles = snap.exists ? (snap.data().roles || []) : [];
+        if (!roles.includes('fin')) {
+          firebase.auth(_finGetApp()).signOut();
+          if (errEl) errEl.textContent = 'Bu uygulamaya erişim yetkiniz yok.';
+          return;
+        }
+        if (loginEl) loginEl.style.display = 'none';
+        if (appEl)   appEl.style.display   = 'block';
+        if (infoEl)  infoEl.textContent    = user.displayName || user.email || '';
+      } catch(e) {
+        if (errEl) errEl.textContent = 'Yetki kontrolü başarısız: ' + e.message;
+        firebase.auth(_finGetApp()).signOut();
+      }
+    });
   }
-}
-
-function finTogglePw() {
-  const inp = document.getElementById('fin-pw-input');
-  inp.type = inp.type === 'password' ? 'text' : 'password';
-}
-
-function finUnlock() {
-  document.getElementById('fin-login-screen').style.display = 'none';
-  document.getElementById('fin-app-wrap').style.display = 'block';
-}
-
-// Sayfa yüklenince oturum kontrolü
-if (sessionStorage.getItem(FIN_SESSION_KEY) === '1') {
-  finUnlock();
-}
+  // fin.js defer yükleniyor; FIN_FB_CONFIG oradan geliyor — script yüklendikten sonra auth kur
+  document.addEventListener('DOMContentLoaded', setupAuth);
+})();
 </script>
 <script defer src="fin.js"></script>
 </body>

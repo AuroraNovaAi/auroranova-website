@@ -24,14 +24,17 @@ let hrState = {
 const HR_STORAGE_KEY = 'ik_data_v1';
 
 // ── Firebase Firestore sync ──
-const HR_FB_CONFIG = {
-  apiKey: "AIzaSyD8fYMMpfVQlykMoKVDBJh0IP2Wc9A9WPY",
-  authDomain: "auroranova-website.firebaseapp.com",
-  projectId: "auroranova-website",
-  storageBucket: "auroranova-website.firebasestorage.app",
-  messagingSenderId: "1033362428789",
-  appId: "1:1033362428789:web:e0b5e773efca7fcc8a793c"
-};
+// HR_FB_CONFIG index.html'de tanımlanmış olabilir (Google Auth için), yoksa buradan tanımla
+if (typeof HR_FB_CONFIG === 'undefined') {
+  var HR_FB_CONFIG = {
+    apiKey: "AIzaSyD8fYMMpfVQlykMoKVDBJh0IP2Wc9A9WPY",
+    authDomain: "auroranova-website.firebaseapp.com",
+    projectId: "auroranova-website",
+    storageBucket: "auroranova-website.firebasestorage.app",
+    messagingSenderId: "1033362428789",
+    appId: "1:1033362428789:web:e0b5e773efca7fcc8a793c"
+  };
+}
 let _hrDb = null;
 function _hrInitDb() {
   if (_hrDb) return _hrDb;
@@ -241,7 +244,7 @@ function hrDocStartProcess(personId) {
     notes: '',
     open: false,
     tasks: tmpl.tasks.map((t, i) => ({
-      id: 'task_' + i,
+      id: hrGenId() + '_t' + i,
       name: t.name,
       assignee: t.assignee,
       dueDate: addDays(startDate, t.days),
@@ -433,6 +436,7 @@ function editPerson(id) {
 function deletePerson(id) {
   if (!confirm('Bu personeli silmek istediğinizden emin misiniz?')) return;
   hrState.personnel = hrState.personnel.filter(p => p.id !== id);
+  hrState.processes = hrState.processes.filter(p => p.personId !== id);
   hrSaveState();
   renderPersonnel();
 }
@@ -793,7 +797,7 @@ function startProcess(e) {
     notes,
     open: false,
     tasks: tmpl.tasks.map((t, i) => ({
-      id: 'task_' + i,
+      id: hrGenId() + '_t' + i,
       name: t.name,
       assignee: t.assignee,
       dueDate: addDays(startDate, t.days),
@@ -935,6 +939,7 @@ function renderProcesses() {
           </div>
         </div>
         <div class="${bodyClass}">
+          ${proc.notes ? `<div style="font-size:12px;color:var(--hr-text3);font-style:italic;padding:8px 16px 0">${proc.notes}</div>` : ''}
           <div class="task-list">` +
           proc.tasks.map(t => {
             const todayStr = today();
@@ -949,10 +954,12 @@ function renderProcesses() {
                   : (isSoon
                       ? `<span style="color:#e8a24a;font-size:11px">⏰ Yaklaşıyor — ${t.dueDate}</span>`
                       : `<span style="font-size:11px;color:#9da4c8">Teslim: ${t.dueDate || '—'}</span>`));
+            const assigneeLabel = { ik:'IK', personel:'Personel', yonetim:'Yönetim' };
+            const assigneeBadge = t.assignee ? `<span class="badge badge-info" style="font-size:10px;margin-left:4px">${assigneeLabel[t.assignee]||t.assignee}</span>` : '';
             return `<div class="${doneClass}">
               <div class="task-check" onclick="toggleTask('${proc.id}','${t.id}')">${checkContent}</div>
               <div class="task-info">
-                <div class="task-name">${t.name}</div>
+                <div class="task-name">${t.name}${assigneeBadge}</div>
                 <div class="task-due">${dueLabel}</div>
               </div>
             </div>`;
@@ -1204,6 +1211,7 @@ function renderDashboard() {
     return person && person.status !== 'passive';
   });
   const completedProcs = activeProcs.filter(p => p.tasks.length && p.tasks.every(t => t.done));
+  const openProcs = activeProcs.filter(p => !p.tasks.length || !p.tasks.every(t => t.done));
   const inProgressProcs = activeProcs.filter(p => p.tasks.some(t => t.done) && !p.tasks.every(t => t.done));
 
   // ── Görev istatistikleri ──
@@ -1255,7 +1263,7 @@ function renderDashboard() {
         <span class="dkc-icon">📂</span>
         <span class="dkc-delta">${inProgressProcs.length} devam ediyor</span>
       </div>
-      <div class="dkc-value">${activeProcs.length}</div>
+      <div class="dkc-value">${openProcs.length}</div>
       <div class="dkc-label">Aktif Süreç</div>
       <div class="dkc-sub">${completedProcs.length} tamamlandı</div>
     </div>
@@ -2093,6 +2101,22 @@ async function vehDeleteVehicle(id) {
   const db = _hrInitDb();
   _hrSyncBadge('Siliniyor…');
   try {
+    // İlişkili dökümanları sil (Storage dahil)
+    const docsSnap = await db.collection('vehicle_documents').where('vehicleId','==',id).get();
+    for (const d of docsSnap.docs) {
+      const sp = d.data().storagePath;
+      if (sp) { try { await _vehStorage()?.ref(sp).delete(); } catch(e) {} }
+      await d.ref.delete();
+    }
+    // İlişkili servis, ödeme ve görevleri sil
+    const [svcSnap, paySnap, taskSnap] = await Promise.all([
+      db.collection('vehicle_services').where('vehicleId','==',id).get(),
+      db.collection('vehicle_payments').where('vehicleId','==',id).get(),
+      db.collection('vehicle_tasks').where('vehicleId','==',id).get()
+    ]);
+    const delAll = [...svcSnap.docs, ...paySnap.docs, ...taskSnap.docs];
+    await Promise.all(delAll.map(d => d.ref.delete()));
+    // Aracı sil
     await db.collection('vehicles').doc(id).delete();
     _vehVehicles = _vehVehicles.filter(x => x.id !== id);
     _hrSyncBadge('✓ Silindi', '#2ea06e');
@@ -2519,15 +2543,15 @@ async function vehRenderDashboard() {
   const total    = _vehVehicles.length;
   const zimmetli = _vehVehicles.filter(v => v.assigneeId).length;
   const bosta    = total - zimmetli;
-  let critical   = 0;
   const todayMs  = new Date().setHours(0,0,0,0);
   const in30Ms   = todayMs + 30 * 86400000;
+  const criticalSet = new Set();
   _vehVehicles.forEach(v => {
-    [v.insurance,v.seyrusefer,v.muayene,v.gkry,v.rumSigorta,v.bIzni].forEach(d => {
-      if (!d) return;
-      if (new Date(d).getTime() <= in30Ms) critical++;
-    });
+    const has = [v.insurance,v.seyrusefer,v.muayene,v.gkry,v.rumSigorta,v.bIzni]
+      .some(d => d && new Date(d).getTime() <= in30Ms);
+    if (has) criticalSet.add(v.id);
   });
+  const critical = criticalSet.size;
 
   const kpiEl = document.getElementById('veh-dash-kpi');
   if (kpiEl) kpiEl.innerHTML = `
@@ -2632,6 +2656,11 @@ async function vehRenderDashboard() {
 }
 
 /* ── Takvim ── */
+function vehCalDayClick(dateStr) {
+  document.getElementById('vt-due').value = dateStr;
+  hrOpenModal('veh-modal-task');
+}
+
 function vehCalNav(dir) {
   _vehCalMonth += dir;
   if (_vehCalMonth > 11) { _vehCalMonth = 0; _vehCalYear++; }
@@ -2665,7 +2694,7 @@ async function vehRenderCalendar() {
       const [fy, fm] = v[f.key].split('-').map(Number);
       if (fy !== _vehCalYear || fm !== _vehCalMonth + 1) return;
       if (!events[v[f.key]]) events[v[f.key]] = [];
-      events[v[f.key]].push({ label: `${v.plate}: ${f.label}`, type: 'expiry' });
+      events[v[f.key]].push({ label: `${v.plate}: ${f.label}`, type: 'expiry', vehicleId: v.id });
     });
   });
 
@@ -2674,10 +2703,13 @@ async function vehRenderCalendar() {
     try {
       const m0 = `${_vehCalYear}-${String(_vehCalMonth+1).padStart(2,'0')}-01`;
       const m1 = `${_vehCalYear}-${String(_vehCalMonth+1).padStart(2,'0')}-${String(lastDay.getDate()).padStart(2,'0')}`;
-      const tSnap = await db.collection('vehicle_tasks').get();
+      const tSnap = await db.collection('vehicle_tasks')
+        .where('due', '>=', m0)
+        .where('due', '<=', m1)
+        .get();
       tSnap.docs.forEach(d => {
         const t = d.data();
-        if (!t.due || t.due < m0 || t.due > m1) return;
+        if (!t.due) return;
         if (!events[t.due]) events[t.due] = [];
         const veh = _vehVehicles.find(x => x.id === t.vehicleId);
         events[t.due].push({ label: `${veh?.plate||'Araç'}: ${t.name}`, type: 'task' });
@@ -2694,11 +2726,14 @@ async function vehRenderCalendar() {
     const ds = `${_vehCalYear}-${String(_vehCalMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const dayEvents = events[ds] || [];
     const isToday = ds === todayStr;
-    html += `<div class="cal-cell${isToday?' today':''}">
+    html += `<div class="cal-cell${isToday?' today':''}" onclick="vehCalDayClick('${ds}')">
       <div class="cal-date">${isToday ? `<span>${d}</span>` : d}</div>
       ${dayEvents.slice(0,3).map(ev => {
         const bg = ev.type === 'expiry' ? '#e8637a' : '#8b6be8';
-        return `<span class="cal-event" style="background:${bg}22;color:${bg}" title="${ev.label}">${ev.label}</span>`;
+        const clickAttr = ev.type === 'expiry' && ev.vehicleId
+          ? `onclick="event.stopPropagation();vehOpenDetail('${ev.vehicleId}')"`
+          : '';
+        return `<span class="cal-event" style="background:${bg}22;color:${bg}" title="${ev.label}" ${clickAttr}>${ev.label}</span>`;
       }).join('')}
       ${dayEvents.length > 3 ? `<div style="font-size:9px;color:var(--hr-text3)">+${dayEvents.length-3} daha</div>` : ''}
     </div>`;
