@@ -699,27 +699,45 @@ function renderTemplates() {
     'calisma-izni': 'Çalışma İzni',
     'izin-yenileme': 'İzin Yenileme',
     'kota-basvurusu': 'Kota Başvurusu',
-    'diger': 'Diğer'
+    'diger': 'Diğer',
+    'arac-bakim': 'Araç Bakım',
+    'arac-muayene': 'Muayene / Sigorta',
+    'arac-diger': 'Araç Diğer'
   };
 
-  wrap.innerHTML = '<div class="template-grid">' +
-    hrState.templates.map(t => `
-      <div class="template-card">
-        <div class="tc-head">
-          <div>
-            <div class="tc-title">${t.name}</div>
-            <div class="tc-type">${typeLabel[t.type] || t.type || '-'}</div>
-          </div>
-          <span class="badge badge-accent">${(t.tasks||[]).length} görev</span>
+  const vehTypes = new Set(['arac-bakim', 'arac-muayene', 'arac-diger']);
+  const hrTmpls  = hrState.templates.filter(t => !vehTypes.has(t.type));
+  const vehTmpls = hrState.templates.filter(t =>  vehTypes.has(t.type));
+
+  function tmplCard(t) {
+    const isVeh = vehTypes.has(t.type);
+    return `<div class="template-card">
+      <div class="tc-head">
+        <div>
+          <div class="tc-title">${t.name}</div>
+          <div class="tc-type">${typeLabel[t.type] || t.type || '-'}</div>
         </div>
-        ${t.desc ? `<p class="text-sm text-muted mb-3">${t.desc}</p>` : ''}
-        <div class="tc-actions">
-          ${canEdit('hr.templates') ? `<button class="btn btn-secondary btn-sm" onclick="openTemplateModal('${t.id}')">Düzenle</button>` : ''}
-          ${canEdit('hr.processes') ? `<button class="btn btn-primary btn-sm" onclick="openProcessModalFor('${t.id}')">Süreç Başlat</button>` : ''}
-          ${canAdmin('hr.templates') ? `<button class="btn btn-danger btn-sm" onclick="deleteTemplate('${t.id}')">Sil</button>` : ''}
-        </div>
-      </div>`).join('') +
-  '</div>';
+        <span class="badge badge-accent">${(t.tasks||[]).length} görev</span>
+      </div>
+      ${t.desc ? `<p class="text-sm text-muted mb-3">${t.desc}</p>` : ''}
+      <div class="tc-actions">
+        ${canEdit('hr.templates') ? `<button class="btn btn-secondary btn-sm" onclick="openTemplateModal('${t.id}')">Düzenle</button>` : ''}
+        ${!isVeh && canEdit('hr.processes') ? `<button class="btn btn-primary btn-sm" onclick="openProcessModalFor('${t.id}')">Süreç Başlat</button>` : ''}
+        ${canAdmin('hr.templates') ? `<button class="btn btn-danger btn-sm" onclick="deleteTemplate('${t.id}')">Sil</button>` : ''}
+      </div>
+    </div>`;
+  }
+
+  let html = '';
+  if (hrTmpls.length) {
+    html += `<div style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:var(--hr-text2);letter-spacing:0.5px;margin-bottom:12px;text-transform:uppercase">İK Süreç Şablonları</div>`;
+    html += '<div class="template-grid">' + hrTmpls.map(tmplCard).join('') + '</div>';
+  }
+  if (vehTmpls.length) {
+    html += `<div style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:var(--hr-text2);letter-spacing:0.5px;margin:${hrTmpls.length ? '28px' : '0'} 0 12px;text-transform:uppercase">Araç Görev Şablonları</div>`;
+    html += '<div class="template-grid">' + vehTmpls.map(tmplCard).join('') + '</div>';
+  }
+  wrap.innerHTML = html;
 }
 
 /* ============================================================
@@ -2474,7 +2492,10 @@ async function vehRenderDetailTasks() {
     pane.innerHTML = `
       <div class="veh-section-header">
         <span class="veh-section-title">Açık Görevler</span>
-        ${canEdit('hr.vehicles') ? `<button class="btn btn-primary btn-sm" onclick="vehOpenTaskModal()">+ Görev Ekle</button>` : ''}
+        <div style="display:flex;gap:8px">
+          ${canEdit('hr.vehicles') ? `<button class="btn btn-secondary btn-sm" onclick="vehOpenStartFromTemplate('${_vehCurrentVehicleId}')">📋 Şablondan Başlat</button>` : ''}
+          ${canEdit('hr.vehicles') ? `<button class="btn btn-primary btn-sm" onclick="vehOpenTaskModal('${_vehCurrentVehicleId}')">+ Görev Ekle</button>` : ''}
+        </div>
       </div>
       <div style="display:flex;flex-direction:column;gap:8px">
         ${open.length ? open.map(t => vehTaskHtml(t, sLabel, sBadge)).join('')
@@ -2509,16 +2530,27 @@ function vehTaskHtml(t, sLabel, sBadge) {
   </div>`;
 }
 
-function vehOpenTaskModal() {
+function vehOpenTaskModal(vehicleId = null) {
   document.getElementById('veh-form-task').reset();
   document.getElementById('veh-modal-task-title').textContent = 'Görev Ekle';
+  const sel = document.getElementById('vt-vehicle');
+  sel.innerHTML = _vehVehicles.map(v =>
+    `<option value="${v.id}">${v.plate}${v.brand ? ' — ' + v.brand + (v.model ? ' ' + v.model : '') : ''}</option>`
+  ).join('');
+  if (vehicleId) {
+    sel.value = vehicleId;
+    sel.disabled = true;
+  } else {
+    sel.disabled = false;
+  }
   hrOpenModal('veh-modal-task');
 }
 
 async function vehSaveTask(e) {
   e.preventDefault();
+  const vehicleId = document.getElementById('vt-vehicle').value;
   await _hrInitDb().collection('vehicle_tasks').add({
-    vehicleId: _vehCurrentVehicleId,
+    vehicleId,
     name:   document.getElementById('vt-name').value.trim(),
     due:    document.getElementById('vt-due').value,
     status: document.getElementById('vt-status').value,
@@ -2526,7 +2558,7 @@ async function vehSaveTask(e) {
     createdAt: new Date().toISOString(),
   });
   hrCloseModal('veh-modal-task');
-  vehRenderDetailTasks();
+  if (vehicleId === _vehCurrentVehicleId) vehRenderDetailTasks();
 }
 
 async function vehUpdateTaskStatus(id, status) {
@@ -2661,8 +2693,8 @@ async function vehRenderDashboard() {
 
 /* ── Takvim ── */
 function vehCalDayClick(dateStr) {
+  vehOpenTaskModal(null);
   document.getElementById('vt-due').value = dateStr;
-  hrOpenModal('veh-modal-task');
 }
 
 function vehCalNav(dir) {
@@ -2757,6 +2789,68 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.target === this) hrCloseModal('modal-person');
   });
 });
+
+/* ============================================================
+   ARAÇ — ŞABLONDAN GÖREV BAŞLAT
+   ============================================================ */
+
+function vehOpenStartFromTemplate(vehicleId) {
+  const vehTypes = new Set(['arac-bakim', 'arac-muayene', 'arac-diger']);
+  const vehTmpls = hrState.templates.filter(t => vehTypes.has(t.type));
+  const sel = document.getElementById('vst-template');
+  if (!vehTmpls.length) {
+    alert('Henüz araç şablonu oluşturulmadı. Önce Şablonlar sayfasından bir araç şablonu ekleyin.');
+    return;
+  }
+  sel.innerHTML = '<option value="">— Şablon seçin —</option>' +
+    vehTmpls.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+  document.getElementById('vst-vehicle-id').value = vehicleId;
+  document.getElementById('vst-start').value = today();
+  document.getElementById('vst-preview').innerHTML = '';
+  document.getElementById('veh-form-start-template').reset();
+  document.getElementById('vst-vehicle-id').value = vehicleId;
+  document.getElementById('vst-start').value = today();
+  hrOpenModal('veh-modal-start-template');
+}
+
+function vehPreviewTemplateTask() {
+  const tmplId = document.getElementById('vst-template').value;
+  const preview = document.getElementById('vst-preview');
+  if (!tmplId) { preview.innerHTML = ''; return; }
+  const tmpl = hrState.templates.find(t => t.id === tmplId);
+  if (!tmpl) { preview.innerHTML = ''; return; }
+  preview.innerHTML = `<div style="margin-top:8px;padding:10px;background:var(--hr-surface2);border-radius:var(--hr-radius-sm)">
+    <div style="font-size:11px;color:var(--hr-text3);margin-bottom:6px">${tmpl.tasks.length} görev oluşturulacak:</div>
+    ${tmpl.tasks.map((t,i) => `<div style="font-size:12px;padding:3px 0;border-bottom:1px solid var(--hr-border)">${i+1}. ${t.name}${t.days ? ` <span style="color:var(--hr-text3)">(+${t.days} gün)</span>` : ''}</div>`).join('')}
+  </div>`;
+}
+
+async function vehSaveFromTemplate(e) {
+  e.preventDefault();
+  const tmplId = document.getElementById('vst-template').value;
+  const startDate = document.getElementById('vst-start').value;
+  const vehicleId = document.getElementById('vst-vehicle-id').value;
+  const tmpl = hrState.templates.find(t => t.id === tmplId);
+  if (!tmpl || !vehicleId) return;
+  const db = _hrInitDb();
+  try {
+    for (const t of tmpl.tasks) {
+      await db.collection('vehicle_tasks').add({
+        vehicleId,
+        templateId: tmplId,
+        templateName: tmpl.name,
+        name: t.name,
+        due: t.days ? addDays(startDate, t.days) : startDate,
+        status: 'bekliyor',
+        createdAt: new Date().toISOString(),
+      });
+    }
+    hrCloseModal('veh-modal-start-template');
+    vehRenderDetailTasks();
+  } catch(err) {
+    alert('Görevler oluşturulamadı: ' + err.message);
+  }
+}
 
 /* ============================================================
    AYARLAR & KULLANICI YÖNETİMİ

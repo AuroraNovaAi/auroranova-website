@@ -601,10 +601,17 @@
             <div class="form-group">
               <label class="form-label">Tür</label>
               <select id="t-type">
-                <option value="calisma-izni">Çalışma İzni</option>
-                <option value="izin-yenileme">İzin Yenileme</option>
-                <option value="kota-basvurusu">Kota Başvurusu</option>
-                <option value="diger">Diğer</option>
+                <optgroup label="İK Süreçleri">
+                  <option value="calisma-izni">Çalışma İzni</option>
+                  <option value="izin-yenileme">İzin Yenileme</option>
+                  <option value="kota-basvurusu">Kota Başvurusu</option>
+                  <option value="diger">Diğer</option>
+                </optgroup>
+                <optgroup label="Araç Görevleri">
+                  <option value="arac-bakim">Araç Bakım</option>
+                  <option value="arac-muayene">Muayene / Sigorta</option>
+                  <option value="arac-diger">Araç Diğer</option>
+                </optgroup>
               </select>
             </div>
           </div>
@@ -911,6 +918,10 @@
       </div>
       <div class="modal-body">
         <form id="veh-form-task" onsubmit="vehSaveTask(event)">
+          <div class="form-group" id="vt-vehicle-group">
+            <label class="form-label">Araç *</label>
+            <select id="vt-vehicle" required></select>
+          </div>
           <div class="form-group">
             <label class="form-label">Görev Adı *</label>
             <input type="text" id="vt-name" placeholder="Yıllık muayene..." required>
@@ -936,6 +947,34 @@
           <div class="modal-footer" style="padding:0;margin-top:8px">
             <button type="button" class="btn btn-secondary" onclick="hrCloseModal('veh-modal-task')">İptal</button>
             <button type="submit" class="btn btn-primary">Kaydet</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Şablondan Görev Başlat -->
+  <div id="veh-modal-start-template" class="modal-backdrop">
+    <div class="modal" style="max-width:440px">
+      <div class="modal-header">
+        <span class="modal-title">Şablondan Görev Başlat</span>
+        <button class="modal-close" onclick="hrCloseModal('veh-modal-start-template')">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="veh-form-start-template" onsubmit="vehSaveFromTemplate(event)">
+          <div class="form-group">
+            <label class="form-label">Şablon *</label>
+            <select id="vst-template" required onchange="vehPreviewTemplateTask()"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Başlangıç Tarihi *</label>
+            <input type="date" id="vst-start" required>
+          </div>
+          <div id="vst-preview" style="font-size:12px;color:var(--hr-text2);margin-top:4px"></div>
+          <input type="hidden" id="vst-vehicle-id">
+          <div class="modal-footer" style="padding:0;margin-top:16px">
+            <button type="button" class="btn btn-secondary" onclick="hrCloseModal('veh-modal-start-template')">İptal</button>
+            <button type="submit" class="btn btn-primary">Başlat</button>
           </div>
         </form>
       </div>
