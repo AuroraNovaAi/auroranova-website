@@ -311,6 +311,7 @@ const pageTitles = {
   'vehicles-dashboard': 'Taşıtlar · Dashboard',
   'vehicles-calendar': 'Taşıtlar · Takvim',
   'vehicles-detail': 'Taşıt Detayı',
+  settings: 'Ayarlar',
 };
 
 function hrNavigate(page) {
@@ -319,7 +320,8 @@ function hrNavigate(page) {
     personnel: 'hr.personnel', processes: 'hr.processes',
     templates: 'hr.templates', calendar: 'hr.calendar',
     vehicles: 'hr.vehicles', 'vehicles-dashboard': 'hr.vehicles',
-    'vehicles-calendar': 'hr.vehicles', 'vehicles-detail': 'hr.vehicles'
+    'vehicles-calendar': 'hr.vehicles', 'vehicles-detail': 'hr.vehicles',
+    settings: 'hr.settings'
   };
   const perm = pagePermMap[page];
   if (perm && !canView(perm)) return;
@@ -349,6 +351,7 @@ function hrNavigate(page) {
     'vehicles-dashboard': '',
     'vehicles-calendar': '',
     'vehicles-detail': '',
+    settings: '',
   };
   const actionsEl = document.getElementById('topbar-actions');
   if (actionsEl) actionsEl.innerHTML = actions[page] || '';
@@ -362,6 +365,7 @@ function hrNavigate(page) {
   if (page === 'vehicles') { if (_vehVehicles.length) vehRenderList(); else vehLoadAndRenderList(); }
   if (page === 'vehicles-dashboard') { vehEnsureLoaded().then(vehRenderDashboard); }
   if (page === 'vehicles-calendar')  { vehEnsureLoaded().then(vehRenderCalendar); }
+  if (page === 'settings') renderSettings();
 }
 
 /* ============================================================
@@ -2753,3 +2757,194 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.target === this) hrCloseModal('modal-person');
   });
 });
+
+/* ============================================================
+   AYARLAR & KULLANICI YÖNETİMİ
+   ============================================================ */
+
+async function renderSettings() {
+  const root = document.getElementById('settings-root');
+  if (!root) return;
+  root.innerHTML = '<p style="color:var(--hr-text3)">Yükleniyor…</p>';
+  const db = _hrInitDb();
+  if (!db) return;
+  let users = [];
+  try {
+    const snap = await db.collection('users').get();
+    users = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+  } catch(e) {
+    root.innerHTML = '<p style="color:var(--hr-danger)">Kullanıcılar yüklenemedi: ' + e.message + '</p>';
+    return;
+  }
+
+  root.innerHTML = `
+    <div class="card" style="margin-bottom:20px">
+      <div class="card-header">
+        <div class="card-title">Kullanıcı Yönetimi</div>
+        <button class="btn btn-primary" onclick="settingsOpenAddUser()">+ Kullanıcı Ekle</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Ad / Email</th><th>Roller</th><th>HR İzinleri</th><th>Fin İzinleri</th><th></th>
+          </tr></thead>
+          <tbody>
+            ${users.map(u => settingsUserRow(u)).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="modal-settings-user" class="modal-backdrop">
+      <div class="modal" style="max-width:540px;width:100%">
+        <div class="modal-header">
+          <div class="modal-title" id="settings-modal-title">Kullanıcı Ekle</div>
+          <button class="modal-close" onclick="hrCloseModal('modal-settings-user')">✕</button>
+        </div>
+        <form onsubmit="settingsSaveUser(event)" style="padding:20px;display:flex;flex-direction:column;gap:14px">
+          <div class="form-group">
+            <label class="form-label">Email (Google hesabı)</label>
+            <input type="email" id="su-email" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Ad Soyad</label>
+            <input type="text" id="su-name" class="form-control">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Uygulamalar</label>
+            <div style="display:flex;gap:16px;margin-top:4px">
+              <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+                <input type="checkbox" id="su-role-hr"> HR
+              </label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+                <input type="checkbox" id="su-role-fin"> Finance
+              </label>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">HR İzinleri</label>
+            ${settingsPermRows('hr', ['personnel','processes','templates','calendar','vehicles','export','settings'])}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Fin İzinleri</label>
+            ${settingsPermRows('fin', ['entry','history','compare','companies','export','settings'])}
+          </div>
+          <input type="hidden" id="su-uid">
+          <div style="display:flex;gap:8px;padding-top:4px">
+            <button type="submit" class="btn btn-primary">Kaydet</button>
+            <button type="button" class="btn btn-ghost" onclick="hrCloseModal('modal-settings-user')">İptal</button>
+          </div>
+        </form>
+      </div>
+    </div>`;
+}
+
+function settingsPermRows(app, modules) {
+  const labels = {
+    personnel:'Personel', processes:'Süreçler', templates:'Şablonlar',
+    calendar:'Takvim', vehicles:'Taşıtlar', export:'Excel/Dışa Aktar',
+    settings:'Ayarlar', entry:'Veri Girişi', history:'Geçmiş',
+    compare:'Karşılaştırma', companies:'Şirketler'
+  };
+  return `<div style="display:flex;flex-direction:column;gap:4px;margin-top:4px">` +
+    modules.map(m => `
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="width:120px;font-size:12px;color:var(--hr-text2)">${labels[m]||m}</span>
+      <select id="su-perm-${app}-${m}" style="font-size:12px;padding:3px 8px;border-radius:6px;border:1px solid var(--hr-border);background:var(--hr-surface);color:var(--hr-text)">
+        <option value="">— Erişim Yok —</option>
+        <option value="view">Görüntüle</option>
+        <option value="edit">Düzenle</option>
+        <option value="admin">Tam Yetki</option>
+      </select>
+    </div>`).join('') + `</div>`;
+}
+
+function settingsUserRow(u) {
+  const roles = (u.roles||[]).join(', ');
+  const perms = u.permissions || {};
+  const hrPerms = Object.entries(perms).filter(([k])=>k.startsWith('hr.')).map(([k,v])=>`${k.replace('hr.','')}:${v}`).join(', ');
+  const finPerms = Object.entries(perms).filter(([k])=>k.startsWith('fin.')).map(([k,v])=>`${k.replace('fin.','')}:${v}`).join(', ');
+  return `<tr>
+    <td>
+      <div style="font-weight:500">${u.name||'—'}</div>
+      <div style="font-size:12px;color:var(--hr-text3)">${u.email||u.uid}</div>
+    </td>
+    <td><span class="badge badge-accent">${roles||'—'}</span></td>
+    <td style="font-size:12px;color:var(--hr-text2)">${hrPerms||'—'}</td>
+    <td style="font-size:12px;color:var(--hr-text2)">${finPerms||'—'}</td>
+    <td style="white-space:nowrap">
+      <button class="btn btn-ghost btn-sm" onclick="settingsEditUser('${u.uid}')">Düzenle</button>
+      <button class="btn btn-danger btn-sm" onclick="settingsDeleteUser('${u.uid}')">Sil</button>
+    </td>
+  </tr>`;
+}
+
+function settingsOpenAddUser() {
+  document.getElementById('settings-modal-title').textContent = 'Kullanıcı Ekle';
+  document.getElementById('su-email').value = '';
+  document.getElementById('su-name').value = '';
+  document.getElementById('su-uid').value = '';
+  document.getElementById('su-role-hr').checked = false;
+  document.getElementById('su-role-fin').checked = false;
+  document.querySelectorAll('[id^="su-perm-"]').forEach(s => s.value = '');
+  hrOpenModal('modal-settings-user');
+}
+
+async function settingsEditUser(uid) {
+  const db = _hrInitDb();
+  const snap = await db.collection('users').doc(uid).get();
+  if (!snap.exists) return;
+  const u = snap.data();
+  document.getElementById('settings-modal-title').textContent = 'Kullanıcıyı Düzenle';
+  document.getElementById('su-email').value = u.email || '';
+  document.getElementById('su-name').value = u.name || '';
+  document.getElementById('su-uid').value = uid;
+  document.getElementById('su-role-hr').checked = (u.roles||[]).includes('hr');
+  document.getElementById('su-role-fin').checked = (u.roles||[]).includes('fin');
+  const perms = u.permissions || {};
+  document.querySelectorAll('[id^="su-perm-"]').forEach(s => {
+    const key = s.id.replace('su-perm-', '').replace(/-(?=[^-]*$)/, '.');
+    s.value = perms[key] || '';
+  });
+  hrOpenModal('modal-settings-user');
+}
+
+async function settingsSaveUser(e) {
+  e.preventDefault();
+  const db = _hrInitDb();
+  const uid = document.getElementById('su-uid').value;
+  const email = document.getElementById('su-email').value.trim();
+  const name = document.getElementById('su-name').value.trim();
+  const roles = [];
+  if (document.getElementById('su-role-hr').checked) roles.push('hr');
+  if (document.getElementById('su-role-fin').checked) roles.push('fin');
+  const permissions = {};
+  document.querySelectorAll('[id^="su-perm-"]').forEach(s => {
+    if (s.value) {
+      const key = s.id.replace('su-perm-', '').replace(/-(?=[^-]*$)/, '.');
+      permissions[key] = s.value;
+    }
+  });
+  const data = { email, name, roles, permissions };
+  try {
+    if (uid) {
+      await db.collection('users').doc(uid).update(data);
+    } else {
+      await db.collection('users').add({ ...data, createdAt: new Date().toISOString() });
+    }
+    hrCloseModal('modal-settings-user');
+    renderSettings();
+  } catch(err) {
+    alert('Kayıt hatası: ' + err.message);
+  }
+}
+
+async function settingsDeleteUser(uid) {
+  if (!confirm('Bu kullanıcının erişimi kaldırılacak. Emin misiniz?')) return;
+  try {
+    await _hrInitDb().collection('users').doc(uid).delete();
+    renderSettings();
+  } catch(err) {
+    alert('Silme hatası: ' + err.message);
+  }
+}

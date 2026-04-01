@@ -117,6 +117,7 @@
       <button class="nav-item" onclick="finGo('companies')">Şirketler</button>
       <button class="nav-item" onclick="finOpenImport()" title="Excel ile veri aktar">⬆ Excel İçe Aktar</button>
       <button class="nav-item" onclick="finExportAll()" title="Tüm verileri Excel olarak indir">⬇ Excel Dışa Aktar</button>
+      <button class="nav-item" id="fin-settings-btn" onclick="finGo('settings')" style="margin-left:auto">⚙ Ayarlar</button>
     </nav>
 
     <span id="company-pill" class="company-pill" style="display:none"></span>
@@ -566,6 +567,11 @@
 
     </section>
 
+    <!-- ── AYARLAR ── -->
+    <section id="p-settings" class="page">
+      <div id="fin-settings-root"></div>
+    </section>
+
   </main>
 
   <!-- Toast notification -->
@@ -658,6 +664,8 @@ function applyPermissions() {
       .forEach(el => el.style.display = 'none');
   }
   // History edit butonu — fin.js render eder, canEdit kontrolü fin.js'de yapılacak
+  const settingsBtn = document.getElementById('fin-settings-btn');
+  if (settingsBtn) settingsBtn.style.display = canAdmin('fin.settings') ? '' : 'none';
 }
 
 // ── Google Auth ──
@@ -692,8 +700,16 @@ function finSignOut() {
         return;
       }
       try {
-        const db   = _finInitDb();
-        const snap = await db.collection('users').doc(user.uid).get();
+        const db = _finInitDb();
+        let snap = await db.collection('users').doc(user.uid).get();
+        if (!snap.exists) {
+          const emailSnap = await db.collection('users')
+            .where('email', '==', user.email).limit(1).get();
+          if (!emailSnap.empty) {
+            snap = emailSnap.docs[0];
+            await emailSnap.docs[0].ref.update({ uid: user.uid });
+          }
+        }
         const data  = snap.exists ? snap.data() : {};
         const roles = data.roles || [];
         if (!roles.includes('fin')) {

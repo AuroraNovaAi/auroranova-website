@@ -147,6 +147,15 @@
       <div class="nav-item" data-page="vehicles-calendar" onclick="hrNavigate('vehicles-calendar')" style="padding-left:28px;font-size:12px">
         <span class="nav-icon"><svg viewBox="0 0 20 20" fill="none"><rect x="2" y="4" width="16" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M6 2v4M14 2v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M2 9h16" stroke="currentColor" stroke-width="1.5"/></svg></span> Takvim
       </div>
+      <div class="nav-item" data-page="settings" onclick="hrNavigate('settings')"
+           style="margin-top:auto;border-top:1px solid rgba(255,255,255,0.06);padding-top:12px">
+        <span class="nav-icon">
+          <svg viewBox="0 0 20 20" fill="none">
+            <circle cx="10" cy="10" r="2.5" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.22 4.22l1.42 1.42M14.36 14.36l1.42 1.42M4.22 15.78l1.42-1.42M14.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </span> Ayarlar
+      </div>
       <div class="nav-item" onclick="hrOpenXlImport()" title="Excel ile personel aktar" style="margin-top:4px;border-top:1px solid rgba(255,255,255,0.06);padding-top:12px">
         <span class="nav-icon">
           <svg viewBox="0 0 20 20" fill="none"><path d="M10 3v10M6 9l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 15v1a1 1 0 001 1h12a1 1 0 001-1v-1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
@@ -422,6 +431,11 @@
         <div id="veh-detail-docs"    class="veh-detail-pane"></div>
         <div id="veh-detail-service" class="veh-detail-pane"></div>
         <div id="veh-detail-tasks"   class="veh-detail-pane"></div>
+      </section>
+
+      <!-- ---- AYARLAR ---- -->
+      <section id="page-settings" class="page-section">
+        <div id="settings-root"></div>
       </section>
 
     </div><!-- /content-area -->
@@ -1015,6 +1029,8 @@ function applyPermissions() {
     document.querySelectorAll('[onclick*="hrOpenXlImport"],[onclick*="hrExportAll"]')
       .forEach(el => el.style.display = 'none');
   }
+  const settingsNav = document.querySelector('[data-page="settings"]');
+  if (settingsNav) settingsNav.style.display = canAdmin('hr.settings') ? '' : 'none';
 }
 
 // ── Google Auth ──
@@ -1048,8 +1064,16 @@ function hrSignOut() {
         return;
       }
       try {
-        const db   = _hrInitDb();
-        const snap = await db.collection('users').doc(user.uid).get();
+        const db = _hrInitDb();
+        let snap = await db.collection('users').doc(user.uid).get();
+        if (!snap.exists) {
+          const emailSnap = await db.collection('users')
+            .where('email', '==', user.email).limit(1).get();
+          if (!emailSnap.empty) {
+            snap = emailSnap.docs[0];
+            await emailSnap.docs[0].ref.update({ uid: user.uid });
+          }
+        }
         const data  = snap.exists ? snap.data() : {};
         const roles = data.roles || [];
         if (!roles.includes('hr')) {
