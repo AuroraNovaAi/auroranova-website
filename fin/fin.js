@@ -417,7 +417,7 @@ function renderDash() {
     {l:'Net Satışlar', v:`${cr}${fmt(tot.AP)}`, color:'var(--fin-purple)'},
     {l:'Giderler (Sarf)', v:`${cr}${fmt(tot.AC)}`, color:'var(--fin-amber)'},
     {l:'Dönem Kar/Zarar', v:`${cr}${fmt(tot.AT)}`, color:tot.AT>=0?'var(--fin-green)':'var(--fin-red)'},
-    {l:'Ort. Kar Oranı', v:fmtM(periodAF), color:periodAF>=0?'var(--fin-green)':'var(--fin-red)'},
+    {l:'Dönem Kar Oranı', v:fmtM(periodAF), color:periodAF>=0?'var(--fin-green)':'var(--fin-red)'},
   ];
   document.getElementById('kpi-row').innerHTML = kpis.map(k=>`
     <div class="kpi" style="--kpi-color:${k.color}">
