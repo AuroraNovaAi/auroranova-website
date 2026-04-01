@@ -16,17 +16,7 @@ const PALETTES = [
 let finS = { companies:{}, data:{}, activeCo:null };
 
 // ── Firebase Firestore sync ──
-// FIN_FB_CONFIG index.html'de tanımlanmış olabilir (Google Auth için), yoksa buradan tanımla
-if (typeof FIN_FB_CONFIG === 'undefined') {
-  var FIN_FB_CONFIG = {
-    apiKey: "AIzaSyD8fYMMpfVQlykMoKVDBJh0IP2Wc9A9WPY",
-    authDomain: "auroranova-website.firebaseapp.com",
-    projectId: "auroranova-website",
-    storageBucket: "auroranova-website.firebasestorage.app",
-    messagingSenderId: "1033362428789",
-    appId: "1:1033362428789:web:22837743ca9efd728a793c"
-  };
-}
+// FIN_FB_CONFIG index.html'de tanımlanıyor
 let _finDb = null;
 function _finInitDb() {
   if (_finDb) return _finDb;

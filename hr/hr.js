@@ -24,17 +24,7 @@ let hrState = {
 const HR_STORAGE_KEY = 'ik_data_v1';
 
 // ── Firebase Firestore sync ──
-// HR_FB_CONFIG index.html'de tanımlanmış olabilir (Google Auth için), yoksa buradan tanımla
-if (typeof HR_FB_CONFIG === 'undefined') {
-  var HR_FB_CONFIG = {
-    apiKey: "AIzaSyD8fYMMpfVQlykMoKVDBJh0IP2Wc9A9WPY",
-    authDomain: "auroranova-website.firebaseapp.com",
-    projectId: "auroranova-website",
-    storageBucket: "auroranova-website.firebasestorage.app",
-    messagingSenderId: "1033362428789",
-    appId: "1:1033362428789:web:e0b5e773efca7fcc8a793c"
-  };
-}
+// HR_FB_CONFIG index.html'de tanımlanıyor
 let _hrDb = null;
 function _hrInitDb() {
   if (_hrDb) return _hrDb;
