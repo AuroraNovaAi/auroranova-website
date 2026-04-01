@@ -410,14 +410,14 @@ function renderDash() {
     M:a.M+c.M, AC:a.AC+c.AC, AT:a.AT+c.AT, AP:a.AP+c.AP,
     personel:a.personel+c.personel
   }),{M:0,AC:0,AT:0,AP:0,personel:0});
-  const avgAF = months.reduce((a,{c})=>a+c.AF,0)/months.length;
+  const periodAF = tot.M ? ((tot.M - tot.AC) / tot.M) * 100 : 0;
 
   const kpis = [
     {l:'Gelirler Toplamı', v:`${cr}${fmt(tot.M)}`, color:'var(--fin-blue)', sub:`${months.length} ay`},
     {l:'Net Satışlar', v:`${cr}${fmt(tot.AP)}`, color:'var(--fin-purple)'},
     {l:'Giderler (Sarf)', v:`${cr}${fmt(tot.AC)}`, color:'var(--fin-amber)'},
     {l:'Dönem Kar/Zarar', v:`${cr}${fmt(tot.AT)}`, color:tot.AT>=0?'var(--fin-green)':'var(--fin-red)'},
-    {l:'Ort. Kar Oranı', v:fmtM(avgAF), color:avgAF>=0?'var(--fin-green)':'var(--fin-red)'},
+    {l:'Ort. Kar Oranı', v:fmtM(periodAF), color:periodAF>=0?'var(--fin-green)':'var(--fin-red)'},
   ];
   document.getElementById('kpi-row').innerHTML = kpis.map(k=>`
     <div class="kpi" style="--kpi-color:${k.color}">
