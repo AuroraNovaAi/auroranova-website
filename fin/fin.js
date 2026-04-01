@@ -410,7 +410,7 @@ function renderDash() {
     M:a.M+c.M, AC:a.AC+c.AC, AT:a.AT+c.AT, AP:a.AP+c.AP,
     personel:a.personel+c.personel
   }),{M:0,AC:0,AT:0,AP:0,personel:0});
-  const periodAF = tot.M ? ((tot.M - tot.AC) / tot.M) * 100 : 0;
+  const periodAF = tot.AP ? (tot.AT / tot.AP) * 100 : 0;
 
   const kpis = [
     {l:'Gelirler Toplamı', v:`${cr}${fmt(tot.M)}`, color:'var(--fin-blue)', sub:`${months.length} ay`},
