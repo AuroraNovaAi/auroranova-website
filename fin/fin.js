@@ -466,13 +466,13 @@ function renderDash() {
     {l:'Net Satışlar',         fn:c=>c.AP,        bold:true},
     {l:'Satılan Malın Maliyeti',fn:c=>c.AB,       bold:false},
     {l:'Brüt K/Z',             fn:c=>c.AQ,        bold:true,  signed:true},
-    {l:'Brüt K/Z %',           fn:c=>c.AQ_pct,    bold:false, pct:true, signed:true},
+    {l:'Brüt K/Z %',           fn:c=>c.AQ_pct,    bold:false, pct:true, signed:true, numFn:c=>c.AQ, denFn:c=>c.AP},
     {l:'Faaliyet Giderleri',   fn:c=>c.faaliyet,  bold:false},
     {l:'Faaliyet K/Z',         fn:c=>c.AS,        bold:true,  signed:true},
-    {l:'Faaliyet K/Z %',       fn:c=>c.AS_pct,    bold:false, pct:true, signed:true},
+    {l:'Faaliyet K/Z %',       fn:c=>c.AS_pct,    bold:false, pct:true, signed:true, numFn:c=>c.AS, denFn:c=>c.AP},
     {l:'Finansman Giderleri',  fn:c=>c.finansman, bold:false},
     {l:'Dönem K/Z',            fn:c=>c.AT,        bold:true,  signed:true},
-    {l:'Dönem K/Z %',          fn:c=>c.AT_pct,    bold:false, pct:true, signed:true},
+    {l:'Dönem K/Z %',          fn:c=>c.AT_pct,    bold:false, pct:true, signed:true, numFn:c=>c.AT, denFn:c=>c.AP},
   ];
 
   document.getElementById('sum-body').innerHTML = rows.map(row=>{
@@ -484,14 +484,21 @@ function renderDash() {
       if (row.signed) return `<td class="${v>=0?'pos':'neg'}">${cr}${fmt(v)}</td>`;
       return `<td class="num">${cr}${fmt(v)}</td>`;
     }).join('');
-    const avgTotal = total/months.length;
+    let totVal;
+    if (row.pct && row.numFn && row.denFn) {
+      const totNum = months.reduce((a,{c})=>a+row.numFn(c),0);
+      const totDen = months.reduce((a,{c})=>a+row.denFn(c),0);
+      totVal = totDen ? (totNum/totDen)*100 : 0;
+    } else {
+      totVal = row.pct ? total/months.length : total;
+    }
     const totCell = (row.pct && row.signed)
-      ? `<td class="${avgTotal>=0?'pos':'neg'}" style="font-weight:600">${fmtM(avgTotal)}</td>`
+      ? `<td class="${totVal>=0?'pos':'neg'}" style="font-weight:600">${fmtM(totVal)}</td>`
       : row.pct
-        ? `<td class="num" style="font-weight:600">${fmtM(avgTotal)}</td>`
+        ? `<td class="num" style="font-weight:600">${fmtM(totVal)}</td>`
         : row.signed
-          ? `<td class="${total>=0?'pos':'neg'}" style="font-weight:600">${cr}${fmt(total)}</td>`
-          : `<td class="num" style="font-weight:600">${cr}${fmt(total)}</td>`;
+          ? `<td class="${totVal>=0?'pos':'neg'}" style="font-weight:600">${cr}${fmt(totVal)}</td>`
+          : `<td class="num" style="font-weight:600">${cr}${fmt(totVal)}</td>`;
     return `<tr><td style="font-weight:${row.bold?600:400}">${row.l}</td>${cells}${totCell}</tr>`;
   }).join('');
 }
