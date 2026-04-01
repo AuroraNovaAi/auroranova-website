@@ -666,6 +666,7 @@ body.hr-page {
 .hr-app input[type=text],
 .hr-app input[type=date],
 .hr-app input[type=email],
+.hr-app input[type=number],
 .hr-app textarea,
 .hr-app select {
   width: 100%;
@@ -683,6 +684,7 @@ body.hr-page {
 .hr-app input[type=text]:focus,
 .hr-app input[type=date]:focus,
 .hr-app input[type=email]:focus,
+.hr-app input[type=number]:focus,
 .hr-app textarea:focus,
 .hr-app select:focus {
   border-color: var(--hr-accent);
