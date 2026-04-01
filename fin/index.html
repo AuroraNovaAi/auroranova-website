@@ -629,6 +629,37 @@ const FIN_FB_CONFIG = {
 };
 </script>
 <script>
+// ── İzin Sistemi ──
+let _appPerms = {};
+
+function canView(module)  { return !!_appPerms[module]; }
+function canEdit(module)  { return ['edit','admin'].includes(_appPerms[module]); }
+function canAdmin(module) { return _appPerms[module] === 'admin'; }
+
+function applyPermissions() {
+  // Excel butonları
+  if (!canAdmin('fin.export')) {
+    document.querySelectorAll('[onclick*="finOpenImport"],[onclick*="finExportAll"]')
+      .forEach(el => el.style.display = 'none');
+  }
+  // Veri girişi — kaydet
+  if (!canEdit('fin.entry')) {
+    const saveBtn = document.querySelector('[onclick*="saveEntry"]');
+    if (saveBtn) saveBtn.style.display = 'none';
+  }
+  // Veri girişi — sil (zaten JS tarafından kontrol ediliyor ama ek güvenlik)
+  if (!canAdmin('fin.entry')) {
+    const delBtn = document.getElementById('del-btn');
+    if (delBtn) delBtn.style.display = 'none !important';
+  }
+  // Şirketler — yeni şirket ekle
+  if (!canEdit('fin.companies')) {
+    document.querySelectorAll('[onclick*="toggleAddForm"]')
+      .forEach(el => el.style.display = 'none');
+  }
+  // History edit butonu — fin.js render eder, canEdit kontrolü fin.js'de yapılacak
+}
+
 // ── Google Auth ──
 function _finGetApp() {
   return firebase.apps.find(a => a.name === 'fin') ||
@@ -663,15 +694,18 @@ function finSignOut() {
       try {
         const db   = _finInitDb();
         const snap = await db.collection('users').doc(user.uid).get();
-        const roles = snap.exists ? (snap.data().roles || []) : [];
+        const data  = snap.exists ? snap.data() : {};
+        const roles = data.roles || [];
         if (!roles.includes('fin')) {
           firebase.auth(_finGetApp()).signOut();
           if (errEl) errEl.textContent = 'Bu uygulamaya erişim yetkiniz yok.';
           return;
         }
+        _appPerms = data.permissions || {};
         if (loginEl) loginEl.style.display = 'none';
         if (appEl)   appEl.style.display   = 'block';
         if (infoEl)  infoEl.textContent    = user.displayName || user.email || '';
+        applyPermissions();
       } catch(e) {
         if (errEl) errEl.textContent = 'Yetki kontrolü başarısız: ' + e.message;
         firebase.auth(_finGetApp()).signOut();

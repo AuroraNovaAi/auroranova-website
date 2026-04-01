@@ -215,7 +215,7 @@ function renderCoList() {
       </div>
       <div style="display:flex;gap:6px;margin-top:10px">
         <button class="btn btn-sm" style="flex:1" onclick="event.stopPropagation();selectCoAndEntry('${c.id}')">Veri Gir</button>
-        <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();delCo('${c.id}')">Sil</button>
+        ${(typeof canAdmin === 'function' && canAdmin('fin.companies')) ? `<button class="btn btn-sm btn-danger" onclick="event.stopPropagation();delCo('${c.id}')">Sil</button>` : ''}
       </div>
     </div>`;
   }).join('');
@@ -544,7 +544,7 @@ function renderHistory() {
           <td class="num">${cr}${fmt(c.AP)}</td>
           <td class="num">${cr}${fmt(c.personel)}</td>
           <td class="num">${cr}${fmt(c.hmm_sarf)}</td>
-          <td><button class="btn btn-ghost btn-sm" onclick="editEntry(${m},'${y}')">✎ Düzenle</button></td>
+          <td>${(typeof canEdit === 'function' && canEdit('fin.history')) ? `<button class="btn btn-ghost btn-sm" onclick="editEntry(${m},'${y}')">✎ Düzenle</button>` : ''}</td>
         </tr>`).join('')}
       </tbody>
     </table>

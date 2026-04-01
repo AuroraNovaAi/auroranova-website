@@ -314,6 +314,16 @@ const pageTitles = {
 };
 
 function hrNavigate(page) {
+  /* İzin kontrolü */
+  const pagePermMap = {
+    personnel: 'hr.personnel', processes: 'hr.processes',
+    templates: 'hr.templates', calendar: 'hr.calendar',
+    vehicles: 'hr.vehicles', 'vehicles-dashboard': 'hr.vehicles',
+    'vehicles-calendar': 'hr.vehicles', 'vehicles-detail': 'hr.vehicles'
+  };
+  const perm = pagePermMap[page];
+  if (perm && !canView(perm)) return;
+
   /* Update nav items */
   document.querySelectorAll('.hr-app .nav-item').forEach(el => {
     el.classList.toggle('active', el.dataset.page === page);
@@ -331,11 +341,11 @@ function hrNavigate(page) {
   /* Topbar action buttons */
   const actions = {
     dashboard: '',
-    personnel: '<button class="btn btn-primary" onclick="hrOpenModal(\'modal-person\')">+ Personel Ekle</button>',
-    processes: '<button class="btn btn-primary" onclick="openProcessModal()">+ Süreç Başlat</button>',
+    personnel: canEdit('hr.personnel') ? '<button class="btn btn-primary" onclick="hrOpenModal(\'modal-person\')">+ Personel Ekle</button>' : '',
+    processes: canEdit('hr.processes') ? '<button class="btn btn-primary" onclick="openProcessModal()">+ Süreç Başlat</button>' : '',
     calendar: '',
-    templates: '<button class="btn btn-primary" onclick="openTemplateModal()">+ Yeni Şablon</button>',
-    vehicles: '<button class="btn btn-ghost btn-sm" onclick="vehLoadAndRenderList()" title="Yenile">↻</button><button class="btn btn-primary" onclick="vehOpenAddVehicle()">+ Araç Ekle</button>',
+    templates: canEdit('hr.templates') ? '<button class="btn btn-primary" onclick="openTemplateModal()">+ Yeni Şablon</button>' : '',
+    vehicles: '<button class="btn btn-ghost btn-sm" onclick="vehLoadAndRenderList()" title="Yenile">↻</button>' + (canEdit('hr.vehicles') ? '<button class="btn btn-primary" onclick="vehOpenAddVehicle()">+ Araç Ekle</button>' : ''),
     'vehicles-dashboard': '',
     'vehicles-calendar': '',
     'vehicles-detail': '',
@@ -555,8 +565,8 @@ function renderPersonnelTable(list) {
       <td>${hrExpiryCell(p.passportExpiry)}</td>
       <td><span class="badge ${sBadge}">${sLabel}</span></td>
       <td><div class="td-actions">
-        <button class="btn btn-ghost btn-sm" onclick="editPerson('${p.id}')">Düzenle</button>
-        <button class="btn btn-danger btn-sm" onclick="deletePerson('${p.id}')">Sil</button>
+        ${canEdit('hr.personnel') ? `<button class="btn btn-ghost btn-sm" onclick="editPerson('${p.id}')">Düzenle</button>` : ''}
+        ${canAdmin('hr.personnel') ? `<button class="btn btn-danger btn-sm" onclick="deletePerson('${p.id}')">Sil</button>` : ''}
       </div></td>
     </tr>`;
   });
@@ -700,9 +710,9 @@ function renderTemplates() {
         </div>
         ${t.desc ? `<p class="text-sm text-muted mb-3">${t.desc}</p>` : ''}
         <div class="tc-actions">
-          <button class="btn btn-secondary btn-sm" onclick="openTemplateModal('${t.id}')">Düzenle</button>
-          <button class="btn btn-primary btn-sm" onclick="openProcessModalFor('${t.id}')">Süreç Başlat</button>
-          <button class="btn btn-danger btn-sm" onclick="deleteTemplate('${t.id}')">Sil</button>
+          ${canEdit('hr.templates') ? `<button class="btn btn-secondary btn-sm" onclick="openTemplateModal('${t.id}')">Düzenle</button>` : ''}
+          ${canEdit('hr.processes') ? `<button class="btn btn-primary btn-sm" onclick="openProcessModalFor('${t.id}')">Süreç Başlat</button>` : ''}
+          ${canAdmin('hr.templates') ? `<button class="btn btn-danger btn-sm" onclick="deleteTemplate('${t.id}')">Sil</button>` : ''}
         </div>
       </div>`).join('') +
   '</div>';
@@ -925,7 +935,7 @@ function renderProcesses() {
               <span>${done}/${total}</span>
             </div>
             ${pct === 100 ? '<span class="badge badge-success" style="font-size:11px">✓ Tamamlandı</span>' : ''}
-            <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteProcess('${proc.id}')">Sil</button>
+            ${canAdmin('hr.processes') ? `<button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteProcess('${proc.id}')">Sil</button>` : ''}
           </div>
         </div>
         <div class="${bodyClass}">
@@ -947,7 +957,7 @@ function renderProcesses() {
             const assigneeLabel = { ik:'IK', personel:'Personel', yonetim:'Yönetim' };
             const assigneeBadge = t.assignee ? `<span class="badge badge-info" style="font-size:10px;margin-left:4px">${assigneeLabel[t.assignee]||t.assignee}</span>` : '';
             return `<div class="${doneClass}">
-              <div class="task-check" onclick="toggleTask('${proc.id}','${t.id}')">${checkContent}</div>
+              <div class="task-check" ${canEdit('hr.processes') ? `onclick="toggleTask('${proc.id}','${t.id}')"` : 'style="opacity:.4;cursor:default"'}>${checkContent}</div>
               <div class="task-info">
                 <div class="task-name">${t.name}${assigneeBadge}</div>
                 <div class="task-due">${dueLabel}</div>
@@ -1979,8 +1989,8 @@ function vehCardHtml(v) {
     <div style="display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid var(--hr-border)">
       <span style="font-size:12px;color:var(--hr-text3)">${v.type||''} · ${v.owner||''}</span>
       <div style="display:flex;gap:6px" onclick="event.stopPropagation()">
-        <button class="btn btn-ghost btn-sm" onclick="vehOpenEditVehicle('${v.id}')">Düzenle</button>
-        <button class="btn btn-danger btn-sm" onclick="vehDeleteVehicle('${v.id}')">Sil</button>
+        ${canEdit('hr.vehicles') ? `<button class="btn btn-ghost btn-sm" onclick="vehOpenEditVehicle('${v.id}')">Düzenle</button>` : ''}
+        ${canAdmin('hr.vehicles') ? `<button class="btn btn-danger btn-sm" onclick="vehDeleteVehicle('${v.id}')">Sil</button>` : ''}
       </div>
     </div>
   </div>`;
@@ -2216,10 +2226,10 @@ async function vehRenderDetailDocs() {
       <div class="veh-section-header"><span class="veh-section-title">Koçan (Ruhsat)</span></div>
       ${kochan
         ? `<div class="veh-doc-list">${vehDocItemHtml(kochan)}</div>`
-        : `<div style="margin-bottom:12px"><button class="btn btn-secondary btn-sm" onclick="vehOpenDocModal('kochan')">📄 Koçan Yükle</button></div>`}
+        : `<div style="margin-bottom:12px">${canEdit('hr.vehicles') ? `<button class="btn btn-secondary btn-sm" onclick="vehOpenDocModal('kochan')">📄 Koçan Yükle</button>` : ''}</div>`}
       <div class="veh-section-header" style="margin-top:20px">
         <span class="veh-section-title">Diğer Evraklar</span>
-        <button class="btn btn-primary btn-sm" onclick="vehOpenDocModal('other')">+ Evrak Ekle</button>
+        ${canEdit('hr.vehicles') ? `<button class="btn btn-primary btn-sm" onclick="vehOpenDocModal('other')">+ Evrak Ekle</button>` : ''}
       </div>
       <div class="veh-doc-list">
         ${others.length ? others.map(d => vehDocItemHtml(d)).join('') : '<p style="color:var(--hr-text3);font-size:13px;padding:8px 0">Henüz evrak yüklenmedi.</p>'}
@@ -2236,7 +2246,7 @@ function vehDocItemHtml(doc) {
     <span style="flex:1;font-size:13px;font-weight:500">${doc.name}</span>
     <div style="display:flex;gap:6px;flex-shrink:0">
       <a href="${doc.url}" target="_blank" class="btn btn-ghost btn-sm">Görüntüle</a>
-      <button class="btn btn-danger btn-sm" onclick="vehDeleteDoc('${doc.id}','${doc.storagePath||''}')">Sil</button>
+      ${canAdmin('hr.vehicles') ? `<button class="btn btn-danger btn-sm" onclick="vehDeleteDoc('${doc.id}','${doc.storagePath||''}')">Sil</button>` : ''}
     </div>
   </div>`;
 }
@@ -2314,7 +2324,7 @@ async function vehRenderDetailService() {
       </div>
       <div class="veh-section-header">
         <span class="veh-section-title">Servis & Bakım Kayıtları</span>
-        <button class="btn btn-primary btn-sm" onclick="vehOpenServiceModal()">+ Servis Ekle</button>
+        ${canEdit('hr.vehicles') ? `<button class="btn btn-primary btn-sm" onclick="vehOpenServiceModal()">+ Servis Ekle</button>` : ''}
       </div>
       <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px">
         ${services.length ? services.map(s => `
@@ -2327,7 +2337,7 @@ async function vehRenderDetailService() {
               </div>
               <div style="display:flex;align-items:center;gap:8px">
                 ${s.cost ? `<span style="font-size:13px;font-weight:600">₺${Number(s.cost).toLocaleString('tr-TR')}</span>` : ''}
-                <button class="btn btn-danger btn-sm" onclick="vehDeleteService('${s.id}')">Sil</button>
+                ${canAdmin('hr.vehicles') ? `<button class="btn btn-danger btn-sm" onclick="vehDeleteService('${s.id}')">Sil</button>` : ''}
               </div>
             </div>
             <div style="font-size:13px;font-weight:500">${s.desc}</div>
@@ -2338,14 +2348,14 @@ async function vehRenderDetailService() {
       </div>
       <div class="veh-section-header">
         <span class="veh-section-title">Ödemeler</span>
-        <button class="btn btn-primary btn-sm" onclick="vehOpenPaymentModal()">+ Ödeme Ekle</button>
+        ${canEdit('hr.vehicles') ? `<button class="btn btn-primary btn-sm" onclick="vehOpenPaymentModal()">+ Ödeme Ekle</button>` : ''}
       </div>
       ${payments.length ? `<div class="table-wrap"><table>
         <thead><tr><th>Tarih</th><th>Açıklama</th><th>Tutar</th><th></th></tr></thead>
         <tbody>${payments.map(p => `<tr>
           <td>${vehFmtDate(p.date)}</td><td>${p.desc}</td>
           <td style="font-weight:600">₺${Number(p.amount).toLocaleString('tr-TR')}</td>
-          <td><button class="btn btn-danger btn-sm" onclick="vehDeletePayment('${p.id}')">Sil</button></td>
+          <td>${canAdmin('hr.vehicles') ? `<button class="btn btn-danger btn-sm" onclick="vehDeletePayment('${p.id}')">Sil</button>` : ''}</td>
         </tr>`).join('')}</tbody>
       </table></div>`
       : '<p style="color:var(--hr-text3);font-size:13px;padding:8px 0">Henüz ödeme kaydı yok.</p>'}`;
@@ -2460,7 +2470,7 @@ async function vehRenderDetailTasks() {
     pane.innerHTML = `
       <div class="veh-section-header">
         <span class="veh-section-title">Açık Görevler</span>
-        <button class="btn btn-primary btn-sm" onclick="vehOpenTaskModal()">+ Görev Ekle</button>
+        ${canEdit('hr.vehicles') ? `<button class="btn btn-primary btn-sm" onclick="vehOpenTaskModal()">+ Görev Ekle</button>` : ''}
       </div>
       <div style="display:flex;flex-direction:column;gap:8px">
         ${open.length ? open.map(t => vehTaskHtml(t, sLabel, sBadge)).join('')
@@ -2490,7 +2500,7 @@ function vehTaskHtml(t, sLabel, sBadge) {
         <option value="devam"    ${t.status==='devam'?'selected':''}>Devam</option>
         <option value="tamamlandi" ${t.status==='tamamlandi'?'selected':''}>Tamamlandı</option>
       </select>
-      <button class="btn btn-danger btn-sm" onclick="vehDeleteTask('${t.id}')">Sil</button>
+      ${canAdmin('hr.vehicles') ? `<button class="btn btn-danger btn-sm" onclick="vehDeleteTask('${t.id}')">Sil</button>` : ''}
     </div>
   </div>`;
 }
