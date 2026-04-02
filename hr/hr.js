@@ -2548,7 +2548,7 @@ async function vehRenderDetailProcesses() {
             ${assigneeNames ? `<div style="font-size:11px;color:var(--hr-text3)">👤 ${assigneeNames}</div>` : ''}
           </div>
           <div style="display:flex;align-items:center;gap:5px;flex-shrink:0">
-            <span class="badge ${sBadge[t.status]||'badge-neutral'}" style="${t.status==='devam'?'background:#e8f0fe;color:#3557c7';font-size:10px}">${sLabel[t.status]||t.status}</span>
+            <span class="badge ${sBadge[t.status]||'badge-neutral'}" style="${t.status==='devam'?'background:#e8f0fe;color:#3557c7':''}font-size:10px">${sLabel[t.status]||t.status}</span>
             ${canComplete ? `<select class="btn btn-ghost btn-sm" style="padding:3px 5px;font-size:10px" onchange="vehUpdateTaskStatus('${t.id}',this.value);vehRenderDetailProcesses()">
               <option value="bekliyor" ${t.status==='bekliyor'?'selected':''}>Bekliyor</option>
               <option value="devam"    ${t.status==='devam'?'selected':''}>Devam</option>
