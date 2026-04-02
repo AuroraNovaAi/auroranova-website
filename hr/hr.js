@@ -3473,31 +3473,55 @@ async function renderExpenseTypeSettings() {
   if (!listEl) return;
   const db = _hrInitDb();
   if (!db) return;
+  const isAdmin = canAdmin('hr.settings');
   try {
     const snap = await db.collection('vehicle_expense_types').orderBy('name').get();
     const types = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const addForm = isAdmin ? `
+      <div id="expense-type-add-row" style="display:none;padding:10px 16px;border-top:1px solid var(--hr-border);display:flex;gap:8px;align-items:center">
+        <input type="text" id="expense-type-input" placeholder="Gider türü adı (ör: Sigorta, Yakıt...)"
+          style="flex:1;height:34px;border:1px solid var(--hr-border);border-radius:var(--hr-radius-sm);padding:0 10px;font-size:13px;background:var(--hr-surface);color:var(--hr-text)"
+          onkeydown="if(event.key==='Enter'){event.preventDefault();settingsSaveExpenseType();}">
+        <button class="btn btn-primary btn-sm" onclick="settingsSaveExpenseType()">Kaydet</button>
+        <button class="btn btn-ghost btn-sm" onclick="settingsHideExpenseTypeForm()">İptal</button>
+      </div>` : '';
     if (!types.length) {
-      listEl.innerHTML = '<p style="padding:12px 16px;color:var(--hr-text3);font-size:13px">Henüz gider türü tanımlanmadı.</p>';
+      listEl.innerHTML = '<p style="padding:12px 16px;color:var(--hr-text3);font-size:13px">Henüz gider türü tanımlanmadı.</p>' + addForm;
       return;
     }
     listEl.innerHTML = `<div class="table-wrap"><table>
       <thead><tr><th>Gider Türü</th><th></th></tr></thead>
       <tbody>${types.map(t => `<tr>
         <td style="font-size:13px">${t.name}</td>
-        <td>${canAdmin('hr.settings') ? `<button class="btn btn-danger btn-sm" onclick="settingsDeleteExpenseType('${t.id}')">Sil</button>` : ''}</td>
+        <td style="text-align:right">${isAdmin ? `<button class="btn btn-danger btn-sm" onclick="settingsDeleteExpenseType('${t.id}')">Sil</button>` : ''}</td>
       </tr>`).join('')}</tbody>
-    </table></div>`;
+    </table></div>${addForm}`;
   } catch(e) {
     listEl.innerHTML = '<p style="padding:12px 16px;color:var(--hr-danger);font-size:13px">Yüklenemedi: ' + e.message + '</p>';
   }
 }
 
-async function settingsOpenAddExpenseType() {
-  const name = prompt('Gider türü adı:');
-  if (!name || !name.trim()) return;
+function settingsOpenAddExpenseType() {
+  const row = document.getElementById('expense-type-add-row');
+  if (!row) return;
+  row.style.display = 'flex';
+  const input = document.getElementById('expense-type-input');
+  input.value = '';
+  input.focus();
+}
+
+function settingsHideExpenseTypeForm() {
+  const row = document.getElementById('expense-type-add-row');
+  if (row) row.style.display = 'none';
+}
+
+async function settingsSaveExpenseType() {
+  const input = document.getElementById('expense-type-input');
+  const name = input?.value?.trim();
+  if (!name) { input?.focus(); return; }
   const db = _hrInitDb();
   try {
-    await db.collection('vehicle_expense_types').add({ name: name.trim(), createdAt: new Date().toISOString() });
+    await db.collection('vehicle_expense_types').add({ name, createdAt: new Date().toISOString() });
     renderExpenseTypeSettings();
   } catch(e) {
     alert('Eklenemedi: ' + e.message);
