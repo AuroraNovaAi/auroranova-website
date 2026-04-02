@@ -1046,6 +1046,7 @@ const HR_FB_CONFIG = {
   appId: "1:1033362428789:web:e0b5e773efca7fcc8a793c"
 };
 </script>
+<script src="hr.js"></script>
 <script>
 // ── İzin Sistemi ──
 let _appPerms = {};
@@ -1091,51 +1092,47 @@ function hrSignOut() {
   firebase.auth(_hrGetApp()).signOut();
 }
 
-(function() {
-  function setupAuth() {
-    firebase.auth(_hrGetApp()).onAuthStateChanged(async function(user) {
-      const loginEl = document.getElementById('hr-login-screen');
-      const appEl   = document.getElementById('hr-app-wrap');
-      const errEl   = document.getElementById('hr-pw-err');
-      const infoEl  = document.getElementById('hr-user-info');
-      if (!user) {
-        if (loginEl) loginEl.style.display = 'flex';
-        if (appEl)   appEl.style.display   = 'none';
-        return;
-      }
-      try {
-        const db = _hrInitDb();
-        let snap = await db.collection('users').doc(user.uid).get();
-        if (!snap.exists) {
-          const emailSnap = await db.collection('users')
-            .where('email', '==', user.email).limit(1).get();
-          if (!emailSnap.empty) {
-            snap = emailSnap.docs[0];
-            await emailSnap.docs[0].ref.update({ uid: user.uid });
-          }
-        }
-        const data  = snap.exists ? snap.data() : {};
-        const roles = data.roles || [];
-        if (!roles.includes('hr')) {
-          firebase.auth(_hrGetApp()).signOut();
-          if (errEl) errEl.textContent = 'Bu uygulamaya erişim yetkiniz yok.';
-          return;
-        }
-        _appPerms = data.permissions || {};
-        _currentUserUid = user.uid;
-        if (loginEl) loginEl.style.display = 'none';
-        if (appEl)   appEl.style.display   = 'flex';
-        if (infoEl)  infoEl.textContent    = user.displayName || user.email || '';
-        applyPermissions();
-      } catch(e) {
-        if (errEl) errEl.textContent = 'Yetki kontrolü başarısız: ' + e.message;
-        firebase.auth(_hrGetApp()).signOut();
-      }
-    });
+firebase.auth(_hrGetApp()).onAuthStateChanged(async function(user) {
+  const loginEl = document.getElementById('hr-login-screen');
+  const appEl   = document.getElementById('hr-app-wrap');
+  const errEl   = document.getElementById('hr-pw-err');
+  const infoEl  = document.getElementById('hr-user-info');
+  if (!user) {
+    if (loginEl) loginEl.style.display = 'flex';
+    if (appEl)   appEl.style.display   = 'none';
+    return;
   }
-  document.addEventListener('DOMContentLoaded', setupAuth);
-})();
+  try {
+    const db = _hrInitDb();
+    let snap = await db.collection('users').doc(user.uid).get();
+    if (!snap.exists) {
+      const emailSnap = await db.collection('users')
+        .where('email', '==', user.email).limit(1).get();
+      if (!emailSnap.empty) {
+        snap = emailSnap.docs[0];
+        await emailSnap.docs[0].ref.update({ uid: user.uid });
+      }
+    }
+    const data  = snap.exists ? snap.data() : {};
+    const roles = data.roles || [];
+    if (!roles.includes('hr')) {
+      firebase.auth(_hrGetApp()).signOut();
+      if (errEl) errEl.textContent = 'Bu uygulamaya erişim yetkiniz yok.';
+      return;
+    }
+    _appPerms = data.permissions || {};
+    _currentUserUid = user.uid;
+    if (loginEl) loginEl.style.display = 'none';
+    if (appEl)   appEl.style.display   = 'flex';
+    if (infoEl)  infoEl.textContent    = user.displayName || user.email || '';
+    applyPermissions();
+    await hrLoadState();
+    renderDashboard();
+  } catch(e) {
+    if (errEl) errEl.textContent = 'Yetki kontrolü başarısız: ' + e.message;
+    firebase.auth(_hrGetApp()).signOut();
+  }
+});
 </script>
-<script src="hr.js"></script>
 </body>
 </html>

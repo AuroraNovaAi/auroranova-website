@@ -1855,11 +1855,7 @@ function _hrXlBoldHeader(ws, colCount) {
   }
 }
 
-// ── Initialise ──
-(async () => {
-  await hrLoadState();
-  renderDashboard();
-})();
+// ── Initialise: auth callback'ten tetikleniyor (index.html) ──
 
 /* ============================================================
    TAŞIT YÖNETİMİ
