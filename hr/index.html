@@ -626,11 +626,6 @@
           <!-- Add new task row -->
           <div class="add-task-row mt-2">
             <input type="text" id="new-task-name" placeholder="Yeni görev adı...">
-            <select id="new-task-assignee">
-              <option value="ik">İK</option>
-              <option value="personel">Personel</option>
-              <option value="yonetim">Yönetim</option>
-            </select>
             <input type="number" id="new-task-days" min="0" placeholder="Gün" style="width:100%">
             <button type="button" class="btn btn-primary btn-sm" onclick="confirmAddTask()">+ Ekle</button>
           </div>
@@ -1049,6 +1044,7 @@ const HR_FB_CONFIG = {
 <script>
 // ── İzin Sistemi ──
 let _appPerms = {};
+let _currentUserUid = null;
 
 function canView(module)  { return !!_appPerms[module]; }
 function canEdit(module)  { return ['edit','admin'].includes(_appPerms[module]); }
@@ -1121,6 +1117,7 @@ function hrSignOut() {
           return;
         }
         _appPerms = data.permissions || {};
+        _currentUserUid = user.uid;
         if (loginEl) loginEl.style.display = 'none';
         if (appEl)   appEl.style.display   = 'flex';
         if (infoEl)  infoEl.textContent    = user.displayName || user.email || '';

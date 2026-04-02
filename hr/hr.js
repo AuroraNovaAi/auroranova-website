@@ -236,7 +236,7 @@ function hrDocStartProcess(personId) {
     tasks: tmpl.tasks.map((t, i) => ({
       id: hrGenId() + '_t' + i,
       name: t.name,
-      assignee: t.assignee,
+      assignees: t.assignees || [],
       dueDate: addDays(startDate, t.days),
       done: false
     }))
@@ -585,8 +585,9 @@ function renderPersonnelTable(list) {
 
 let _editingTemplate = null;
 let _taskRows = [];
+let _settingsUsers = []; // Firestore users cache — şablon editörü için
 
-function openTemplateModal(id) {
+async function openTemplateModal(id) {
   _taskRows = [];
   _editingTemplate = null;
   const form = document.getElementById('form-template');
@@ -604,6 +605,15 @@ function openTemplateModal(id) {
       document.getElementById('modal-template-title').textContent = 'Şablonu Düzenle';
     }
   }
+
+  // Kullanıcıları çek (önbellekte yoksa)
+  if (!_settingsUsers.length) {
+    try {
+      const snap = await _hrInitDb().collection('users').get();
+      _settingsUsers = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+    } catch(e) { _settingsUsers = []; }
+  }
+
   renderTaskEditorList();
   hrOpenModal('modal-template');
 }
@@ -615,35 +625,57 @@ function renderTaskEditorList() {
     wrap.innerHTML = '<p class="text-muted text-sm" style="padding:8px 0">Henüz görev yok.</p>';
     return;
   }
-  wrap.innerHTML = _taskRows.map((t, i) => `
-    <div class="task-row">
-      <input type="text" value="${t.name || ''}" placeholder="Görev adı"
+  const userOpts = _settingsUsers.length
+    ? _settingsUsers.map(u => ({ uid: u.uid, name: u.name || u.email || u.uid }))
+    : [];
+
+  wrap.innerHTML = _taskRows.map((t, i) => {
+    const assignees = t.assignees || [];
+    const checkboxes = userOpts.length
+      ? userOpts.map(u => `
+          <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;white-space:nowrap">
+            <input type="checkbox" value="${u.uid}" ${assignees.includes(u.uid)?'checked':''}
+              onchange="taskToggleAssignee(${i},'${u.uid}',this.checked)">
+            ${u.name}
+          </label>`).join('')
+      : '<span style="font-size:12px;color:var(--hr-text3)">Kullanıcı yok</span>';
+    return `<div class="task-row" style="flex-wrap:wrap;gap:6px;align-items:flex-start">
+      <input type="text" value="${t.name || ''}" placeholder="Görev adı" style="flex:1;min-width:120px"
         oninput="_taskRows[${i}].name=this.value">
-      <select onchange="_taskRows[${i}].assignee=this.value">
-        <option value="ik" ${t.assignee==='ik'?'selected':''}>İK</option>
-        <option value="personel" ${t.assignee==='personel'?'selected':''}>Personel</option>
-        <option value="yonetim" ${t.assignee==='yonetim'?'selected':''}>Yönetim</option>
-      </select>
       <input type="number" value="${t.days || 0}" min="0" style="width:64px"
         oninput="_taskRows[${i}].days=+this.value" title="Gün sayısı">
       <button class="btn btn-danger btn-sm btn-icon" onclick="removeTaskRow(${i})" title="Kaldır">✕</button>
-    </div>`).join('');
+      <div style="width:100%;display:flex;flex-wrap:wrap;gap:8px;padding:4px 0 2px">
+        <span style="font-size:11px;color:var(--hr-text3);align-self:center">Atanan kullanıcılar:</span>
+        ${checkboxes}
+      </div>
+    </div>`;
+  }).join('');
 }
 
 function addTaskRow() {
   const nameEl = document.getElementById('new-task-name');
-  const assigneeEl = document.getElementById('new-task-assignee');
   const daysEl = document.getElementById('new-task-days');
   const name = nameEl?.value.trim();
   if (!name) return;
   _taskRows.push({
     name,
-    assignee: assigneeEl?.value || 'ik',
+    assignees: [],
     days: +(daysEl?.value || 0)
   });
   if (nameEl) nameEl.value = '';
   if (daysEl) daysEl.value = '';
   renderTaskEditorList();
+}
+
+function taskToggleAssignee(rowIdx, uid, checked) {
+  if (!_taskRows[rowIdx]) return;
+  if (!_taskRows[rowIdx].assignees) _taskRows[rowIdx].assignees = [];
+  if (checked) {
+    if (!_taskRows[rowIdx].assignees.includes(uid)) _taskRows[rowIdx].assignees.push(uid);
+  } else {
+    _taskRows[rowIdx].assignees = _taskRows[rowIdx].assignees.filter(u => u !== uid);
+  }
 }
 
 function confirmAddTask() {
@@ -821,7 +853,7 @@ function startProcess(e) {
     tasks: tmpl.tasks.map((t, i) => ({
       id: hrGenId() + '_t' + i,
       name: t.name,
-      assignee: t.assignee,
+      assignees: t.assignees || [],
       dueDate: addDays(startDate, t.days),
       done: false
     }))
@@ -2512,19 +2544,28 @@ async function vehRenderDetailTasks() {
 }
 
 function vehTaskHtml(t, sLabel, sBadge) {
+  const assignees = t.assignees || [];
+  const canComplete = !assignees.length || assignees.includes(_currentUserUid);
+  const assigneeNames = assignees.length
+    ? assignees.map(uid => {
+        const u = _settingsUsers.find(u => u.uid === uid);
+        return u ? (u.name || u.email) : uid;
+      }).join(', ')
+    : null;
   return `<div style="display:flex;align-items:center;gap:12px;background:var(--hr-surface);border:1px solid var(--hr-border);border-radius:var(--hr-radius-sm);padding:10px 14px;${t.status==='tamamlandi'?'opacity:0.6':''}">
     <div style="flex:1">
       <div style="font-size:13px;font-weight:500;${t.status==='tamamlandi'?'text-decoration:line-through':''}">${t.name}</div>
       ${t.due ? `<div style="font-size:11px;color:var(--hr-text3);margin-top:2px">Son: ${vehFmtDate(t.due)}</div>` : ''}
       ${t.note ? `<div style="font-size:12px;color:var(--hr-text2);margin-top:2px">${t.note}</div>` : ''}
+      ${assigneeNames ? `<div style="font-size:11px;color:var(--hr-text3);margin-top:2px">👤 ${assigneeNames}</div>` : ''}
     </div>
     <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
       <span class="badge ${sBadge[t.status]||'badge-neutral'}" style="${t.status==='devam'?'background:#e8f0fe;color:#3557c7':''}">${sLabel[t.status]||t.status}</span>
-      <select class="btn btn-ghost btn-sm" style="padding:4px 6px;font-size:11px" onchange="vehUpdateTaskStatus('${t.id}',this.value)">
+      ${canComplete ? `<select class="btn btn-ghost btn-sm" style="padding:4px 6px;font-size:11px" onchange="vehUpdateTaskStatus('${t.id}',this.value)">
         <option value="bekliyor" ${t.status==='bekliyor'?'selected':''}>Bekliyor</option>
         <option value="devam"    ${t.status==='devam'?'selected':''}>Devam</option>
         <option value="tamamlandi" ${t.status==='tamamlandi'?'selected':''}>Tamamlandı</option>
-      </select>
+      </select>` : `<span style="font-size:11px;color:var(--hr-text3)">Yetki yok</span>`}
       ${canAdmin('hr.vehicles') ? `<button class="btn btn-danger btn-sm" onclick="vehDeleteTask('${t.id}')">Sil</button>` : ''}
     </div>
   </div>`;
@@ -2840,6 +2881,7 @@ async function vehSaveFromTemplate(e) {
         templateId: tmplId,
         templateName: tmpl.name,
         name: t.name,
+        assignees: t.assignees || [],
         due: t.days ? addDays(startDate, t.days) : startDate,
         status: 'bekliyor',
         createdAt: new Date().toISOString(),
@@ -2866,6 +2908,7 @@ async function renderSettings() {
   try {
     const snap = await db.collection('users').get();
     users = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+    _settingsUsers = users; // önbelleğe al
   } catch(e) {
     root.innerHTML = '<p style="color:var(--hr-danger)">Kullanıcılar yüklenemedi: ' + e.message + '</p>';
     return;
