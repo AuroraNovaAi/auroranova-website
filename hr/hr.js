@@ -3091,6 +3091,114 @@ function vehCalDayClick(dateStr) {
   document.getElementById('vst-start').value = dateStr;
 }
 
+function vehCalExpiryClick(vehicleId, fieldKey) {
+  const veh = _vehVehicles.find(x => x.id === vehicleId);
+  if (!veh) return;
+
+  const fieldLabels = {
+    insurance:   'Sigorta',
+    seyrusefer:  'Seyrüsefer İzni',
+    muayene:     'Muayene',
+    gkry:        'GKRY İzni',
+    rumSigorta:  'Rum Sigorta',
+    bIzni:       'B İzni',
+  };
+  const label  = fieldLabels[fieldKey] || fieldKey;
+  const expiry = veh[fieldKey];
+  const todayStr = today();
+  const isOverdue = expiry && expiry < todayStr;
+  const isSoon    = expiry && !isOverdue && expiry <= addDays(todayStr, 30);
+  const statusLabel = isOverdue ? 'Süresi Dolmuş' : (isSoon ? '30 Gün İçinde Bitiyor' : 'Geçerli');
+  const statusColor = isOverdue ? '#ef4444' : (isSoon ? '#f59e0b' : '#22c55e');
+  const labelColor  = '#e8637a';
+
+  const vehTypes = new Set(['arac-bakim', 'arac-muayene', 'arac-diger']);
+  const vehTmpls = hrState.templates.filter(t => vehTypes.has(t.type));
+  const templateOpts = vehTmpls.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+
+  const existing = document.getElementById('veh-cal-expiry-modal');
+  if (existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'veh-cal-expiry-modal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.55);padding:16px';
+  modal.innerHTML = `
+    <div style="background:#fff;border-radius:14px;padding:28px;max-width:420px;width:100%;box-shadow:0 24px 64px rgba(0,0,0,0.18);font-family:'DM Sans',sans-serif">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px">
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:#1e2342">${veh.plate}${veh.brand ? ' · ' + veh.brand + (veh.model ? ' ' + veh.model : '') : ''}</div>
+          <div style="font-size:11px;color:#9da4c8;margin-top:2px">${label} Detayı</div>
+        </div>
+        <button onclick="document.getElementById('veh-cal-expiry-modal').remove()" style="background:none;border:none;font-size:18px;color:#9da4c8;cursor:pointer;padding:0">×</button>
+      </div>
+
+      <div style="background:#f5f6fb;border-radius:10px;padding:14px 16px;margin-bottom:16px">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+          <span style="font-size:11px;padding:3px 8px;border-radius:6px;background:${labelColor}18;color:${labelColor};font-weight:600">${label}</span>
+          <span style="font-size:11px;padding:3px 8px;border-radius:6px;background:${statusColor}18;color:${statusColor};font-weight:600">${statusLabel}</span>
+        </div>
+        <div style="font-size:13px;color:#1e2342"><strong>Bitiş Tarihi:</strong> ${expiry || '—'}</div>
+      </div>
+
+      ${vehTmpls.length ? `
+      <div style="margin-bottom:14px">
+        <div style="font-size:12px;font-weight:600;color:#1e2342;margin-bottom:8px">Süreç Başlat</div>
+        <select id="veh-expiry-modal-tmpl" style="width:100%;padding:9px 12px;border:1px solid #dde1ee;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;margin-bottom:8px">
+          <option value="">Şablon seçin...</option>
+          ${templateOpts}
+        </select>
+        <input type="date" id="veh-expiry-modal-start" value="${today()}" style="width:100%;padding:9px 12px;border:1px solid #dde1ee;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;box-sizing:border-box">
+        <button onclick="vehCalExpiryStartProcess('${vehicleId}')" style="width:100%;margin-top:8px;padding:11px;background:#5b7fe8;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Süreci Başlat</button>
+      </div>` : '<p style="font-size:12px;color:#9da4c8;margin-bottom:14px">Süreç başlatmak için önce Şablonlar bölümünden araç şablonu oluşturun.</p>'}
+
+      <button onclick="document.getElementById('veh-cal-expiry-modal').remove()" style="width:100%;padding:11px;background:#f5f6fb;color:#5b6080;border:1px solid #dde1ee;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Kapat</button>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+}
+
+async function vehCalExpiryStartProcess(vehicleId) {
+  const templateId = document.getElementById('veh-expiry-modal-tmpl')?.value;
+  const startDate  = document.getElementById('veh-expiry-modal-start')?.value;
+  if (!templateId) { alert('Lütfen bir şablon seçin.'); return; }
+  if (!startDate)  { alert('Lütfen başlangıç tarihi girin.'); return; }
+  const tmpl = hrState.templates.find(t => t.id === templateId);
+  if (!tmpl) return;
+  const db = _hrInitDb();
+  try {
+    const procRef = await db.collection('vehicle_processes').add({
+      vehicleId,
+      templateId,
+      templateName: tmpl.name,
+      startDate,
+      status: 'devam',
+      createdBy: _currentUserUid || '',
+      createdAt: new Date().toISOString(),
+    });
+    const processId = procRef.id;
+    for (let i = 0; i < tmpl.tasks.length; i++) {
+      const t = tmpl.tasks[i];
+      await db.collection('vehicle_tasks').add({
+        vehicleId, processId, templateId,
+        templateName: tmpl.name,
+        name: t.name, order: i,
+        assignees: t.assignees || [],
+        due: t.days ? addDays(startDate, t.days) : startDate,
+        status: 'bekliyor',
+        createdAt: new Date().toISOString(),
+      });
+    }
+    document.getElementById('veh-cal-expiry-modal')?.remove();
+    // Önbelleği güncelle ve sayfayı yenile
+    _vehAllProcesses = [];
+    _vehAllProcTasks = [];
+    vehRenderCalendar();
+    alert(`"${tmpl.name}" süreci başlatıldı.`);
+  } catch(err) {
+    alert('Süreç oluşturulamadı: ' + err.message);
+  }
+}
+
 function vehCalNav(dir) {
   _vehCalMonth += dir;
   if (_vehCalMonth > 11) { _vehCalMonth = 0; _vehCalYear++; }
@@ -3124,7 +3232,7 @@ async function vehRenderCalendar() {
       const [fy, fm] = v[f.key].split('-').map(Number);
       if (fy !== _vehCalYear || fm !== _vehCalMonth + 1) return;
       if (!events[v[f.key]]) events[v[f.key]] = [];
-      events[v[f.key]].push({ label: `${v.plate}: ${f.label}`, type: 'expiry', vehicleId: v.id });
+      events[v[f.key]].push({ label: `${v.plate}: ${f.label}`, type: 'expiry', vehicleId: v.id, fieldKey: f.key });
     });
   });
 
@@ -3169,11 +3277,11 @@ async function vehRenderCalendar() {
       ${dayEvents.slice(0,3).map(ev => {
         const bg = ev.type === 'expiry' ? '#e8637a' : ev.type === 'next-service' ? '#16a34a' : '#8b6be8';
         const clickAttr = ev.type === 'expiry' && ev.vehicleId
-          ? `onclick="event.stopPropagation();vehOpenDetail('${ev.vehicleId}')"`
+          ? `onclick="event.stopPropagation();vehCalExpiryClick('${ev.vehicleId}','${ev.fieldKey||''}')"`
           : ev.type === 'next-service' && ev.vehicleId
             ? `onclick="event.stopPropagation();vehOpenServiceModal('${ev.vehicleId}')"`
             : '';
-        return `<span class="cal-event" style="background:${bg}22;color:${bg}" title="${ev.label}" ${clickAttr}>${ev.label}</span>`;
+        return `<span class="cal-event" style="background:${bg}22;color:${bg};cursor:pointer" title="${ev.label}" ${clickAttr}>${ev.label}</span>`;
       }).join('')}
       ${dayEvents.length > 3 ? `<div style="font-size:9px;color:var(--hr-text3)">+${dayEvents.length-3} daha</div>` : ''}
     </div>`;
