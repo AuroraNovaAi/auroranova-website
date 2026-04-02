@@ -2397,8 +2397,9 @@ async function vehRenderDetailService() {
               </div>
             </div>
             <div style="font-size:13px;font-weight:500">${s.desc}</div>
-            ${s.parts    ? `<div style="font-size:12px;color:var(--hr-text2);margin-top:4px">Parçalar: ${s.parts}</div>` : ''}
-            ${s.location ? `<div style="font-size:12px;color:var(--hr-text2);margin-top:2px">Servis: ${s.location}</div>` : ''}
+            ${s.parts          ? `<div style="font-size:12px;color:var(--hr-text2);margin-top:4px">Parçalar: ${s.parts}</div>` : ''}
+            ${s.location       ? `<div style="font-size:12px;color:var(--hr-text2);margin-top:2px">Servis: ${s.location}</div>` : ''}
+            ${s.nextServiceDate ? `<div style="font-size:12px;color:#16a34a;margin-top:4px;font-weight:500">🔧 Sonraki Bakım: ${vehFmtDate(s.nextServiceDate)}</div>` : ''}
           </div>`).join('')
           : '<p style="color:var(--hr-text3);font-size:13px;padding:8px 0">Henüz servis kaydı yok.</p>'}
       </div>
@@ -2407,9 +2408,9 @@ async function vehRenderDetailService() {
         ${canEdit('hr.vehicles') ? `<button class="btn btn-primary btn-sm" onclick="vehOpenPaymentModal()">+ Ödeme Ekle</button>` : ''}
       </div>
       ${payments.length ? `<div class="table-wrap"><table>
-        <thead><tr><th>Tarih</th><th>Açıklama</th><th>Tutar</th><th></th></tr></thead>
+        <thead><tr><th>Tarih</th><th>Gider Türü</th><th>Tutar</th><th></th></tr></thead>
         <tbody>${payments.map(p => `<tr>
-          <td>${vehFmtDate(p.date)}</td><td>${p.desc}</td>
+          <td>${vehFmtDate(p.date)}</td><td>${p.expenseType || p.desc || '—'}</td>
           <td style="font-weight:600">₺${Number(p.amount).toLocaleString('tr-TR')}</td>
           <td>${canAdmin('hr.vehicles') ? `<button class="btn btn-danger btn-sm" onclick="vehDeletePayment('${p.id}')">Sil</button>` : ''}</td>
         </tr>`).join('')}</tbody>
@@ -2420,11 +2421,13 @@ async function vehRenderDetailService() {
   }
 }
 
-function vehOpenServiceModal() {
+function vehOpenServiceModal(vehicleId = null) {
   _vehEditServiceId = null;
   document.getElementById('veh-form-service').reset();
   document.getElementById('veh-modal-service-title').textContent = 'Servis Kaydı Ekle';
-  document.getElementById('vs-date').value = new Date().toISOString().slice(0,10);
+  document.getElementById('vs-date').value = today();
+  document.getElementById('vs-next-service').value = '';
+  if (vehicleId) _vehCurrentVehicleId = vehicleId;
   hrOpenModal('veh-modal-service');
 }
 
@@ -2439,7 +2442,8 @@ async function vehSaveService(e) {
     parts:    document.getElementById('vs-parts').value.trim(),
     cost:     document.getElementById('vs-cost').value || '',
     location: document.getElementById('vs-location').value.trim(),
-    km:       document.getElementById('vs-km').value || '',
+    km:              document.getElementById('vs-km').value || '',
+    nextServiceDate: document.getElementById('vs-next-service').value || null,
     createdAt: new Date().toISOString(),
   };
   try {
@@ -2452,7 +2456,8 @@ async function vehSaveService(e) {
       }
     }
     hrCloseModal('veh-modal-service');
-    vehRenderDetailService();
+    if (document.getElementById('veh-detail-service')?.closest('.active')) vehRenderDetailService();
+    if (document.getElementById('page-vehicles-calendar')?.classList.contains('active')) vehRenderCalendar();
   } catch(err) { alert('Kayıt hatası: ' + err.message); }
 }
 
@@ -2462,19 +2467,32 @@ async function vehDeleteService(id) {
   vehRenderDetailService();
 }
 
-function vehOpenPaymentModal() {
+async function vehOpenPaymentModal() {
   document.getElementById('veh-form-payment').reset();
-  document.getElementById('vp-date').value = new Date().toISOString().slice(0,10);
+  document.getElementById('vp-date').value = today();
+  document.getElementById('vp-amount').value = '';
+  // Gider türlerini yükle
+  const db = _hrInitDb();
+  const sel = document.getElementById('vp-type');
+  sel.innerHTML = '<option value="">— Gider Türü Seçin —</option>';
+  if (db) {
+    try {
+      const snap = await db.collection('vehicle_expense_types').orderBy('name').get();
+      sel.innerHTML += snap.docs.map(d => `<option value="${d.data().name}">${d.data().name}</option>`).join('');
+    } catch(e) {}
+  }
   hrOpenModal('veh-modal-payment');
 }
 
 async function vehSavePayment(e) {
   e.preventDefault();
+  const expenseType = document.getElementById('vp-type').value;
   await _hrInitDb().collection('vehicle_payments').add({
     vehicleId: _vehCurrentVehicleId,
-    date:   document.getElementById('vp-date').value,
-    amount: document.getElementById('vp-amount').value,
-    desc:   document.getElementById('vp-desc').value.trim(),
+    date:        document.getElementById('vp-date').value,
+    amount:      document.getElementById('vp-amount').value,
+    expenseType,
+    desc:        expenseType, // geriye uyumluluk
     createdAt: new Date().toISOString(),
   });
   hrCloseModal('veh-modal-payment');
@@ -3110,22 +3128,29 @@ async function vehRenderCalendar() {
     });
   });
 
-  // Tekil görevler (processId olmayan) — tarih takip takviminde de göster
+  // Tekil görevler (processId olmayan) + Sonraki Bakım tarihleri
   const db = _hrInitDb();
   if (db) {
     try {
       const m0 = `${_vehCalYear}-${String(_vehCalMonth+1).padStart(2,'0')}-01`;
       const m1 = `${_vehCalYear}-${String(_vehCalMonth+1).padStart(2,'0')}-${String(lastDay.getDate()).padStart(2,'0')}`;
-      const tSnap = await db.collection('vehicle_tasks')
-        .where('due', '>=', m0)
-        .where('due', '<=', m1)
-        .get();
+      const [tSnap, sSnap] = await Promise.all([
+        db.collection('vehicle_tasks').where('due','>=',m0).where('due','<=',m1).get(),
+        db.collection('vehicle_services').where('nextServiceDate','>=',m0).where('nextServiceDate','<=',m1).get(),
+      ]);
       tSnap.docs.forEach(d => {
         const t = d.data();
         if (!t.due || t.processId) return; // sadece tekil görevler
         if (!events[t.due]) events[t.due] = [];
         const veh = _vehVehicles.find(x => x.id === t.vehicleId);
         events[t.due].push({ label: `${veh?.plate||'Araç'}: ${t.name}`, type: 'task' });
+      });
+      sSnap.docs.forEach(d => {
+        const s = { id: d.id, ...d.data() };
+        if (!s.nextServiceDate) return;
+        if (!events[s.nextServiceDate]) events[s.nextServiceDate] = [];
+        const veh = _vehVehicles.find(x => x.id === s.vehicleId);
+        events[s.nextServiceDate].push({ label: `${veh?.plate||'Araç'}: Bakım`, type: 'next-service', vehicleId: s.vehicleId });
       });
     } catch(e) {}
   }
@@ -3142,10 +3167,12 @@ async function vehRenderCalendar() {
     html += `<div class="cal-cell${isToday?' today':''}" onclick="vehCalDayClick('${ds}')">
       <div class="cal-date">${isToday ? `<span>${d}</span>` : d}</div>
       ${dayEvents.slice(0,3).map(ev => {
-        const bg = ev.type === 'expiry' ? '#e8637a' : '#8b6be8';
+        const bg = ev.type === 'expiry' ? '#e8637a' : ev.type === 'next-service' ? '#16a34a' : '#8b6be8';
         const clickAttr = ev.type === 'expiry' && ev.vehicleId
           ? `onclick="event.stopPropagation();vehOpenDetail('${ev.vehicleId}')"`
-          : '';
+          : ev.type === 'next-service' && ev.vehicleId
+            ? `onclick="event.stopPropagation();vehOpenServiceModal('${ev.vehicleId}')"`
+            : '';
         return `<span class="cal-event" style="background:${bg}22;color:${bg}" title="${ev.label}" ${clickAttr}>${ev.label}</span>`;
       }).join('')}
       ${dayEvents.length > 3 ? `<div style="font-size:9px;color:var(--hr-text3)">+${dayEvents.length-3} daha</div>` : ''}
@@ -3373,6 +3400,13 @@ async function renderSettings() {
   root.innerHTML = `
     <div class="card" style="margin-bottom:20px">
       <div class="card-header">
+        <div class="card-title">Araç Gider Türleri</div>
+        ${canAdmin('hr.settings') ? '<button class="btn btn-primary" onclick="settingsOpenAddExpenseType()">+ Tür Ekle</button>' : ''}
+      </div>
+      <div id="settings-expense-types-list"><p style="padding:12px 16px;color:var(--hr-text3);font-size:13px">Yükleniyor…</p></div>
+    </div>
+    <div class="card" style="margin-bottom:20px">
+      <div class="card-header">
         <div class="card-title">Kullanıcı Yönetimi</div>
         <button class="btn btn-primary" onclick="settingsOpenAddUser()">+ Kullanıcı Ekle</button>
       </div>
@@ -3430,6 +3464,54 @@ async function renderSettings() {
         </form>
       </div>
     </div>`;
+  // Ayarlar HTML enjekte edildikten sonra gider türlerini yükle
+  renderExpenseTypeSettings();
+}
+
+async function renderExpenseTypeSettings() {
+  const listEl = document.getElementById('settings-expense-types-list');
+  if (!listEl) return;
+  const db = _hrInitDb();
+  if (!db) return;
+  try {
+    const snap = await db.collection('vehicle_expense_types').orderBy('name').get();
+    const types = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (!types.length) {
+      listEl.innerHTML = '<p style="padding:12px 16px;color:var(--hr-text3);font-size:13px">Henüz gider türü tanımlanmadı.</p>';
+      return;
+    }
+    listEl.innerHTML = `<div class="table-wrap"><table>
+      <thead><tr><th>Gider Türü</th><th></th></tr></thead>
+      <tbody>${types.map(t => `<tr>
+        <td style="font-size:13px">${t.name}</td>
+        <td>${canAdmin('hr.settings') ? `<button class="btn btn-danger btn-sm" onclick="settingsDeleteExpenseType('${t.id}')">Sil</button>` : ''}</td>
+      </tr>`).join('')}</tbody>
+    </table></div>`;
+  } catch(e) {
+    listEl.innerHTML = '<p style="padding:12px 16px;color:var(--hr-danger);font-size:13px">Yüklenemedi: ' + e.message + '</p>';
+  }
+}
+
+async function settingsOpenAddExpenseType() {
+  const name = prompt('Gider türü adı:');
+  if (!name || !name.trim()) return;
+  const db = _hrInitDb();
+  try {
+    await db.collection('vehicle_expense_types').add({ name: name.trim(), createdAt: new Date().toISOString() });
+    renderExpenseTypeSettings();
+  } catch(e) {
+    alert('Eklenemedi: ' + e.message);
+  }
+}
+
+async function settingsDeleteExpenseType(id) {
+  if (!confirm('Bu gider türünü silmek istiyor musunuz?')) return;
+  try {
+    await _hrInitDb().collection('vehicle_expense_types').doc(id).delete();
+    renderExpenseTypeSettings();
+  } catch(e) {
+    alert('Silinemedi: ' + e.message);
+  }
 }
 
 function settingsPermRows(app, modules) {

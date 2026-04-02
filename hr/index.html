@@ -415,6 +415,7 @@
             <div style="padding:8px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--hr-border)">
               <span style="font-size:12px;color:var(--hr-text3);display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:10px;height:10px;background:#e8637a;border-radius:2px"></span>Evrak Bitiş</span>
               <span style="font-size:12px;color:var(--hr-text3);display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:10px;height:10px;background:#8b6be8;border-radius:2px"></span>Tekil Görev</span>
+              <span style="font-size:12px;color:var(--hr-text3);display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:10px;height:10px;background:#16a34a;border-radius:2px"></span>Sonraki Bakım</span>
               <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="vehCalDayClick('')">+ Tekil Görev Ekle</button>
             </div>
             <div id="veh-cal-grid"></div>
@@ -901,7 +902,10 @@
               <label class="form-label">Km (o anki)</label>
               <input type="number" id="vs-km" placeholder="85000" min="0">
             </div>
-            <div class="form-group"></div>
+            <div class="form-group">
+              <label class="form-label">Sonraki Bakım Tarihi</label>
+              <input type="date" id="vs-next-service">
+            </div>
           </div>
           <div class="modal-footer" style="padding:0;margin-top:8px">
             <button type="button" class="btn btn-secondary" onclick="hrCloseModal('veh-modal-service')">İptal</button>
@@ -932,8 +936,10 @@
             </div>
           </div>
           <div class="form-group">
-            <label class="form-label">Açıklama *</label>
-            <input type="text" id="vp-desc" placeholder="Sigorta ödemesi..." required>
+            <label class="form-label">Gider Türü *</label>
+            <select id="vp-type" required>
+              <option value="">— Gider Türü Seçin —</option>
+            </select>
           </div>
           <div class="modal-footer" style="padding:0;margin-top:8px">
             <button type="button" class="btn btn-secondary" onclick="hrCloseModal('veh-modal-payment')">İptal</button>
