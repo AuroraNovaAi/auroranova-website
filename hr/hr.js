@@ -310,6 +310,7 @@ const pageTitles = {
   vehicles: 'Taşıtlar',
   'vehicles-dashboard': 'Taşıtlar · Dashboard',
   'vehicles-calendar': 'Taşıtlar · Takvim',
+  'vehicles-processes': 'Taşıtlar · Süreçler',
   'vehicles-detail': 'Taşıt Detayı',
   settings: 'Ayarlar',
 };
@@ -320,7 +321,8 @@ function hrNavigate(page) {
     personnel: 'hr.personnel', processes: 'hr.processes',
     templates: 'hr.templates', calendar: 'hr.calendar',
     vehicles: 'hr.vehicles', 'vehicles-dashboard': 'hr.vehicles',
-    'vehicles-calendar': 'hr.vehicles', 'vehicles-detail': 'hr.vehicles',
+    'vehicles-calendar': 'hr.vehicles', 'vehicles-processes': 'hr.vehicles',
+    'vehicles-detail': 'hr.vehicles',
     settings: 'hr.settings'
   };
   const perm = pagePermMap[page];
@@ -350,6 +352,7 @@ function hrNavigate(page) {
     vehicles: '<button class="btn btn-ghost btn-sm" onclick="vehLoadAndRenderList()" title="Yenile">↻</button>' + (canEdit('hr.vehicles') ? '<button class="btn btn-primary" onclick="vehOpenAddVehicle()">+ Araç Ekle</button>' : ''),
     'vehicles-dashboard': '',
     'vehicles-calendar': '',
+    'vehicles-processes': canEdit('hr.vehicles') ? '<button class="btn btn-primary" onclick="vehOpenStartFromTemplate(null)">+ Süreç Başlat</button>' : '',
     'vehicles-detail': '',
     settings: '',
   };
@@ -365,6 +368,7 @@ function hrNavigate(page) {
   if (page === 'vehicles') { if (_vehVehicles.length) vehRenderList(); else vehLoadAndRenderList(); }
   if (page === 'vehicles-dashboard') { vehEnsureLoaded().then(vehRenderDashboard); }
   if (page === 'vehicles-calendar')  { vehEnsureLoaded().then(vehRenderCalendar); }
+  if (page === 'vehicles-processes') { vehEnsureLoaded().then(vehRenderProcessesPage); }
   if (page === 'settings') renderSettings();
 }
 
@@ -2512,14 +2516,17 @@ async function vehRenderDetailProcesses() {
   try {
     const [procSnap, taskSnap] = await Promise.all([
       db.collection('vehicle_processes').where('vehicleId','==',_vehCurrentVehicleId).orderBy('createdAt','desc').get(),
-      db.collection('vehicle_tasks').where('vehicleId','==',_vehCurrentVehicleId).get()
+      db.collection('vehicle_tasks').where('vehicleId','==',_vehCurrentVehicleId).where('processId','!=','').get()
     ]);
     const allTasks = taskSnap.docs.map(d => ({ id: d.id, ...d.data() }));
     const processes = procSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
     const header = `<div class="veh-section-header">
       <span class="veh-section-title">Araç Süreçleri</span>
-      ${canEdit('hr.vehicles') ? `<button class="btn btn-primary btn-sm" onclick="vehOpenStartFromTemplate('${_vehCurrentVehicleId}')">+ Süreç Başlat</button>` : ''}
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="btn btn-ghost btn-sm" onclick="hrNavigate('vehicles-processes')" style="font-size:12px">Tüm Süreçler →</button>
+        ${canEdit('hr.vehicles') ? `<button class="btn btn-primary btn-sm" onclick="vehOpenStartFromTemplate('${_vehCurrentVehicleId}')">+ Süreç Başlat</button>` : ''}
+      </div>
     </div>`;
 
     if (!processes.length) {
@@ -2527,57 +2534,28 @@ async function vehRenderDetailProcesses() {
       return;
     }
 
-    const cards = processes.map(proc => {
+    const rows = processes.map(proc => {
       const procTasks = allTasks.filter(t => t.processId === proc.id);
       const total = procTasks.length;
       const done  = procTasks.filter(t => t.status === 'tamamlandi').length;
       const pct   = total ? Math.round(done / total * 100) : 0;
-      const sLabel = { bekliyor:'Bekliyor', devam:'Devam Ediyor', tamamlandi:'Tamamlandı' };
-      const sBadge = { bekliyor:'badge-warning', devam:'', tamamlandi:'badge-success' };
-
-      const taskRows = procTasks.map(t => {
-        const assignees = t.assignees || [];
-        const canComplete = !assignees.length || assignees.includes(_currentUserUid);
-        const assigneeNames = assignees.length
-          ? assignees.map(uid => { const u = _settingsUsers.find(u => u.uid === uid); return u ? (u.name || u.email) : uid; }).join(', ')
-          : null;
-        return `<div style="display:flex;align-items:center;gap:10px;padding:7px 10px;border-bottom:1px solid var(--hr-border);${t.status==='tamamlandi'?'opacity:0.55':''}">
-          <div style="flex:1">
-            <div style="font-size:12px;font-weight:500;${t.status==='tamamlandi'?'text-decoration:line-through':''}">${t.name}</div>
-            ${t.due ? `<div style="font-size:11px;color:var(--hr-text3)">Son: ${vehFmtDate(t.due)}</div>` : ''}
-            ${assigneeNames ? `<div style="font-size:11px;color:var(--hr-text3)">👤 ${assigneeNames}</div>` : ''}
-          </div>
-          <div style="display:flex;align-items:center;gap:5px;flex-shrink:0">
-            <span class="badge ${sBadge[t.status]||'badge-neutral'}" style="${t.status==='devam'?'background:#e8f0fe;color:#3557c7':''}font-size:10px">${sLabel[t.status]||t.status}</span>
-            ${canComplete ? `<select class="btn btn-ghost btn-sm" style="padding:3px 5px;font-size:10px" onchange="vehUpdateTaskStatus('${t.id}',this.value);vehRenderDetailProcesses()">
-              <option value="bekliyor" ${t.status==='bekliyor'?'selected':''}>Bekliyor</option>
-              <option value="devam"    ${t.status==='devam'?'selected':''}>Devam</option>
-              <option value="tamamlandi" ${t.status==='tamamlandi'?'selected':''}>Tamamlandı</option>
-            </select>` : ''}
-          </div>
-        </div>`;
-      }).join('');
-
-      const statusColor = proc.status === 'tamamlandi' ? 'var(--hr-success)' : pct === 100 ? 'var(--hr-success)' : 'var(--hr-accent)';
-      return `<div style="background:var(--hr-surface);border:1px solid var(--hr-border);border-radius:var(--hr-radius);margin-bottom:12px;overflow:hidden">
-        <div style="display:flex;align-items:center;gap:12px;padding:12px 14px">
-          <div style="flex:1">
-            <div style="font-size:13px;font-weight:600">${proc.templateName}</div>
-            <div style="font-size:11px;color:var(--hr-text3);margin-top:2px">Başlangıç: ${proc.startDate} · ${total} görev</div>
-          </div>
-          <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
-            <div style="font-size:12px;color:${statusColor};font-weight:600">${done}/${total} tamamlandı</div>
-            <div style="width:80px;height:6px;background:var(--hr-border);border-radius:3px;overflow:hidden">
-              <div style="width:${pct}%;height:100%;background:${statusColor};border-radius:3px;transition:width 0.3s"></div>
-            </div>
-            ${canAdmin('hr.vehicles') ? `<button class="btn btn-danger btn-sm" onclick="vehDeleteProcess('${proc.id}')">Sil</button>` : ''}
-          </div>
+      const statusColor = pct === 100 ? 'var(--hr-success)' : 'var(--hr-accent)';
+      return `<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--hr-border)">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${proc.templateName}</div>
+          <div style="font-size:11px;color:var(--hr-text3);margin-top:2px">Başlangıç: ${proc.startDate || '—'}</div>
         </div>
-        ${total ? `<div style="border-top:1px solid var(--hr-border)">${taskRows}</div>` : ''}
+        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+          <div style="width:60px;height:5px;background:var(--hr-border);border-radius:3px;overflow:hidden">
+            <div style="width:${pct}%;height:100%;background:${statusColor};border-radius:3px"></div>
+          </div>
+          <span style="font-size:11px;color:${statusColor};font-weight:600">${done}/${total}</span>
+          ${canAdmin('hr.vehicles') ? `<button class="btn btn-danger btn-sm" onclick="vehDeleteProcess('${proc.id}')">Sil</button>` : ''}
+        </div>
       </div>`;
     }).join('');
 
-    pane.innerHTML = header + cards;
+    pane.innerHTML = header + `<div style="background:var(--hr-surface);border:1px solid var(--hr-border);border-radius:var(--hr-radius);overflow:hidden">${rows}</div>`;
   } catch(e) {
     pane.innerHTML = '<p style="color:var(--hr-danger);font-size:13px">Süreçler yüklenemedi: ' + e.message + '</p>';
   }
@@ -2590,10 +2568,236 @@ async function vehDeleteProcess(processId) {
     const taskSnap = await db.collection('vehicle_tasks').where('processId','==',processId).get();
     await Promise.all(taskSnap.docs.map(d => d.ref.delete()));
     await db.collection('vehicle_processes').doc(processId).delete();
-    vehRenderDetailProcesses();
+    // Önbellekten kaldır
+    _vehAllProcesses = _vehAllProcesses.filter(p => p.id !== processId);
+    _vehAllProcTasks = _vehAllProcTasks.filter(t => t.processId !== processId);
+    if (document.getElementById('veh-processes-wrap')) _vehRenderProcessList();
+    if (document.getElementById('veh-detail-processes')?.closest('.active')) vehRenderDetailProcesses();
   } catch(err) {
     alert('Silme hatası: ' + err.message);
   }
+}
+
+/* ============================================================
+   ARAÇ — SÜREÇLER SAYFASI
+   ============================================================ */
+
+let _vehAllProcesses = [];
+let _vehAllProcTasks = [];
+let _vehProcOpenState = {};
+
+async function vehRenderProcessesPage() {
+  const wrap = document.getElementById('veh-processes-wrap');
+  if (!wrap) return;
+  wrap.innerHTML = '<p style="color:var(--hr-text3);font-size:13px;padding:16px 0">Yükleniyor…</p>';
+  const db = _hrInitDb();
+  if (!db) return;
+  try {
+    const [procSnap, taskSnap] = await Promise.all([
+      db.collection('vehicle_processes').orderBy('createdAt','desc').get(),
+      db.collection('vehicle_tasks').get()
+    ]);
+    _vehAllProcesses = procSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    _vehAllProcTasks = taskSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    // Araç filtre dropdown'ını doldur
+    const vSel = document.getElementById('veh-proc-filter-vehicle');
+    if (vSel) {
+      const used = [...new Set(_vehAllProcesses.map(p => p.vehicleId))];
+      const opts = used.map(vid => {
+        const v = _vehVehicles.find(x => x.id === vid);
+        return `<option value="${vid}">${v ? v.plate : vid}</option>`;
+      });
+      vSel.innerHTML = '<option value="">Tüm Araçlar</option>' + opts.join('');
+    }
+
+    _vehRenderProcessList();
+  } catch(e) {
+    wrap.innerHTML = '<p style="color:var(--hr-danger);font-size:13px">Yüklenemedi: ' + e.message + '</p>';
+  }
+}
+
+function vehFilterProcesses() {
+  _vehRenderProcessList();
+}
+
+function _vehRenderProcessList() {
+  const wrap = document.getElementById('veh-processes-wrap');
+  if (!wrap) return;
+
+  const search = (document.getElementById('veh-proc-search')?.value || '').toLowerCase();
+  const vehicleFilter = document.getElementById('veh-proc-filter-vehicle')?.value || '';
+  const statusFilter = document.getElementById('veh-proc-filter-status')?.value || '';
+  const todayStr = today();
+
+  const filtered = _vehAllProcesses.filter(p => {
+    if (vehicleFilter && p.vehicleId !== vehicleFilter) return false;
+    if (statusFilter && p.status !== statusFilter) return false;
+    if (search) {
+      const veh = _vehVehicles.find(x => x.id === p.vehicleId);
+      const plate = veh ? veh.plate.toLowerCase() : '';
+      const tname = (p.templateName || '').toLowerCase();
+      if (!plate.includes(search) && !tname.includes(search)) return false;
+    }
+    return true;
+  });
+
+  if (!filtered.length) {
+    wrap.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📂</div><p>Henüz süreç bulunmuyor.</p></div>';
+    return;
+  }
+
+  wrap.innerHTML = '<div class="process-list">' +
+    filtered.map(proc => {
+      const procTasks = _vehAllProcTasks
+        .filter(t => t.processId === proc.id)
+        .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+      const total = procTasks.length;
+      const done  = procTasks.filter(t => t.status === 'tamamlandi').length;
+      const pct   = total ? Math.round(done / total * 100) : 0;
+      const veh   = _vehVehicles.find(x => x.id === proc.vehicleId);
+      const plate = veh ? veh.plate : (proc.vehicleId || '?');
+      const initials2 = plate.replace(/\s/g,'').slice(0,2).toUpperCase();
+      const isOpen = !!_vehProcOpenState[proc.id];
+
+      const hasOverdue = procTasks.some(t => t.status !== 'tamamlandi' && t.due && t.due < todayStr);
+      const hasSoon    = procTasks.some(t => t.status !== 'tamamlandi' && t.due && t.due >= todayStr && t.due <= addDays(todayStr, 7));
+
+      const taskRows = procTasks.map(t => {
+        const isDone = t.status === 'tamamlandi';
+        const isOverdue = !isDone && t.due && t.due < todayStr;
+        const isSoon    = !isDone && t.due && !isOverdue && t.due <= addDays(todayStr, 7);
+        const doneClass = isDone ? 'task-item done' : (isOverdue ? 'task-item overdue' : (isSoon ? 'task-item soon' : 'task-item'));
+        const checkContent = isDone ? '✓' : '';
+        const dueLabel = isDone
+          ? `<span style="color:#2ea06e;font-size:11px">✓ ${t.completedAt ? t.completedAt.slice(0,10) + ' tamamlandı' : 'Tamamlandı'}</span>`
+          : (isOverdue
+              ? `<span style="color:#e8637a;font-size:11px;font-weight:600">⚠ Gecikmiş — ${t.due}</span>`
+              : (isSoon
+                  ? `<span style="color:#e8a24a;font-size:11px">⏰ Yaklaşıyor — ${t.due}</span>`
+                  : `<span style="font-size:11px;color:#9da4c8">Teslim: ${t.due || '—'}</span>`));
+        const assignees = t.assignees || [];
+        const canComplete = !assignees.length || assignees.includes(_currentUserUid);
+        const assigneeNames = assignees.length
+          ? assignees.map(uid => { const u = _settingsUsers.find(u => u.uid === uid); return u ? (u.name || u.email) : uid; }).join(', ')
+          : null;
+        return `<div class="${doneClass}">
+          <div class="task-check" ${canComplete && canEdit('hr.vehicles') ? `onclick="vehToggleTask('${proc.id}','${t.id}')"` : 'style="opacity:.4;cursor:default"'}>${checkContent}</div>
+          <div class="task-info">
+            <div class="task-name">${t.name}${assigneeNames ? `<span class="badge badge-info" style="font-size:10px;margin-left:4px">👤 ${assigneeNames}</span>` : ''}</div>
+            <div class="task-due">${dueLabel}</div>
+          </div>
+        </div>`;
+      }).join('');
+
+      return `<div class="process-card">
+        <div class="process-header" onclick="vehToggleProcessBody('${proc.id}')">
+          <div class="ph-left">
+            <div class="avatar" style="background:#3557c7;font-size:11px">${initials2}</div>
+            <div class="ph-info">
+              <div class="ph-title">${plate} — ${proc.templateName || '—'}</div>
+              <div class="ph-meta">Başlangıç: ${proc.startDate || '—'}${hasOverdue ? ' <span style="color:#e8637a;font-size:11px;font-weight:600">● Geciken görev var</span>' : (hasSoon ? ' <span style="color:#e8a24a;font-size:11px">● Yaklaşan görev var</span>' : '')}</div>
+            </div>
+          </div>
+          <div class="ph-right">
+            <div class="ph-progress">
+              <div class="progress-bar-wrap">
+                <div class="progress-bar-fill" style="width:${pct}%"></div>
+              </div>
+              <span>${done}/${total}</span>
+            </div>
+            ${pct === 100 ? '<span class="badge badge-success" style="font-size:11px">✓ Tamamlandı</span>' : ''}
+            ${canAdmin('hr.vehicles') ? `<button class="btn btn-danger btn-sm" onclick="event.stopPropagation();vehDeleteProcess('${proc.id}')">Sil</button>` : ''}
+          </div>
+        </div>
+        <div class="${isOpen ? 'process-body open' : 'process-body'}">
+          <div class="task-list">${taskRows || '<div style="padding:12px 16px;font-size:12px;color:var(--hr-text3)">Görev bulunamadı.</div>'}</div>
+        </div>
+      </div>`;
+    }).join('') +
+  '</div>';
+}
+
+function vehToggleProcessBody(procId) {
+  _vehProcOpenState[procId] = !_vehProcOpenState[procId];
+  _vehRenderProcessList();
+}
+
+async function vehToggleTask(processId, taskId) {
+  const db = _hrInitDb();
+  if (!db) return;
+  try {
+    // Sürecin tüm görevlerini sıralı çek
+    const snap = await db.collection('vehicle_tasks')
+      .where('processId','==',processId).get();
+    const tasks = snap.docs
+      .map(d => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    const taskIdx = tasks.findIndex(t => t.id === taskId);
+    if (taskIdx === -1) return;
+    const task = tasks[taskIdx];
+
+    // Assignee kontrolü
+    const assignees = task.assignees || [];
+    if (assignees.length && !assignees.includes(_currentUserUid)) return;
+
+    // Sıralı tamamlama kontrolü — sadece tamamlanmamış görevi tamamlarken
+    if (task.status !== 'tamamlandi') {
+      const firstPending = tasks.findIndex(t => t.status !== 'tamamlandi');
+      if (firstPending !== taskIdx) {
+        vehShowOrderWarning(tasks[firstPending], task, tasks);
+        return;
+      }
+    }
+
+    const newStatus = task.status === 'tamamlandi' ? 'bekliyor' : 'tamamlandi';
+    await db.collection('vehicle_tasks').doc(taskId).update({
+      status: newStatus,
+      completedBy:  newStatus === 'tamamlandi' ? _currentUserUid : null,
+      completedAt:  newStatus === 'tamamlandi' ? new Date().toISOString() : null,
+    });
+
+    // Önbellekteki task'ı güncelle ve listeyi yeniden çiz
+    const cached = _vehAllProcTasks.find(t => t.id === taskId);
+    if (cached) {
+      cached.status      = newStatus;
+      cached.completedBy = newStatus === 'tamamlandi' ? _currentUserUid : null;
+      cached.completedAt = newStatus === 'tamamlandi' ? new Date().toISOString() : null;
+    }
+    _vehRenderProcessList();
+  } catch(e) {
+    alert('Görev güncellenemedi: ' + e.message);
+  }
+}
+
+function vehShowOrderWarning(blockingTask, targetTask, allTasks) {
+  const existing = document.getElementById('veh-order-modal');
+  if (existing) existing.remove();
+  const blockingIdx = allTasks.findIndex(t => t.id === blockingTask.id);
+  const modal = document.createElement('div');
+  modal.id = 'veh-order-modal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.55);padding:16px';
+  modal.innerHTML = `
+    <div style="background:#fff;border-radius:14px;padding:32px 28px;max-width:420px;width:100%;box-shadow:0 24px 64px rgba(0,0,0,0.18);font-family:'DM Sans',sans-serif">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+        <div style="width:40px;height:40px;border-radius:10px;background:#fef3c7;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">⚠️</div>
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:#1e2342">Sıralı Tamamlama Zorunlu</div>
+          <div style="font-size:12px;color:#9da4c8;margin-top:2px">Araç Süreci</div>
+        </div>
+      </div>
+      <p style="font-size:13px;color:#3d4466;line-height:1.6;margin:0 0 10px">
+        <strong style="color:#1e2342">"${targetTask.name}"</strong> görevi tamamlanabilmesi için öncelikle aşağıdaki görevin kapatılması gerekmektedir:
+      </p>
+      <div style="background:#f5f6fb;border:1px solid #dde1ee;border-radius:8px;padding:12px 14px;margin-bottom:20px">
+        <div style="font-size:12px;color:#9da4c8;margin-bottom:4px">Bekleyen Görev (${blockingIdx + 1}/${allTasks.length})</div>
+        <div style="font-size:13px;font-weight:600;color:#1e2342">${blockingTask.name}</div>
+        ${blockingTask.due ? `<div style="font-size:11px;color:#9da4c8;margin-top:4px">Son Tarih: ${blockingTask.due}</div>` : ''}
+      </div>
+      <button onclick="document.getElementById('veh-order-modal').remove()" style="width:100%;padding:11px;background:#5b7fe8;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Anladım</button>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
 }
 
 async function vehRenderDetailTasks() {
@@ -2820,7 +3024,35 @@ async function vehRenderDashboard() {
 }
 
 /* ── Takvim ── */
+let _vehCalActiveTab = 'dates';
+
+function vehCalTab(tab) {
+  _vehCalActiveTab = tab;
+  const datesBtn = document.getElementById('veh-cal-tab-dates');
+  const procBtn  = document.getElementById('veh-cal-tab-processes');
+  const datesWrap = document.getElementById('veh-cal-dates-wrap');
+  const procWrap  = document.getElementById('veh-cal-proc-wrap');
+  if (!datesBtn || !procBtn) return;
+  if (tab === 'dates') {
+    datesBtn.style.background = 'var(--hr-accent)'; datesBtn.style.color = '#fff'; datesBtn.className = 'btn btn-sm';
+    procBtn.style.background = ''; procBtn.style.color = ''; procBtn.className = 'btn btn-ghost btn-sm';
+    datesWrap.style.display = '';
+    procWrap.style.display  = 'none';
+    vehRenderCalendar();
+  } else {
+    procBtn.style.background = 'var(--hr-accent)'; procBtn.style.color = '#fff'; procBtn.className = 'btn btn-sm';
+    datesBtn.style.background = ''; datesBtn.style.color = ''; datesBtn.className = 'btn btn-ghost btn-sm';
+    datesWrap.style.display = 'none';
+    procWrap.style.display  = '';
+    vehRenderProcessCalendar();
+  }
+}
+
 function vehCalDayClick(dateStr) {
+  if (_vehCalActiveTab === 'processes') {
+    vehShowProcCalDayDetail(dateStr);
+    return;
+  }
   vehOpenStartFromTemplate(null);
   document.getElementById('vst-start').value = dateStr;
 }
@@ -2862,6 +3094,7 @@ async function vehRenderCalendar() {
     });
   });
 
+  // Tekil görevler (processId olmayan) — tarih takip takviminde de göster
   const db = _hrInitDb();
   if (db) {
     try {
@@ -2873,7 +3106,7 @@ async function vehRenderCalendar() {
         .get();
       tSnap.docs.forEach(d => {
         const t = d.data();
-        if (!t.due) return;
+        if (!t.due || t.processId) return; // sadece tekil görevler
         if (!events[t.due]) events[t.due] = [];
         const veh = _vehVehicles.find(x => x.id === t.vehicleId);
         events[t.due].push({ label: `${veh?.plate||'Araç'}: ${t.name}`, type: 'task' });
@@ -2908,6 +3141,99 @@ async function vehRenderCalendar() {
 
   html += '</div>';
   gridEl.innerHTML = html;
+}
+
+async function vehRenderProcessCalendar() {
+  const gridEl = document.getElementById('veh-cal-proc-grid');
+  if (!gridEl) return;
+  gridEl.innerHTML = '';
+
+  const monthNames = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+  const titleEl = document.getElementById('veh-cal-title');
+  if (titleEl) titleEl.textContent = `${monthNames[_vehCalMonth]} ${_vehCalYear}`;
+
+  const todayStr = new Date().toISOString().slice(0,10);
+  const lastDay  = new Date(_vehCalYear, _vehCalMonth + 1, 0);
+  let startDow   = new Date(_vehCalYear, _vehCalMonth, 1).getDay();
+  if (startDow === 0) startDow = 7; startDow--;
+
+  const m0 = `${_vehCalYear}-${String(_vehCalMonth+1).padStart(2,'0')}-01`;
+  const m1 = `${_vehCalYear}-${String(_vehCalMonth+1).padStart(2,'0')}-${String(lastDay.getDate()).padStart(2,'0')}`;
+
+  const events = {};
+  const db = _hrInitDb();
+  if (db) {
+    try {
+      const tSnap = await db.collection('vehicle_tasks')
+        .where('due', '>=', m0)
+        .where('due', '<=', m1)
+        .get();
+      tSnap.docs.forEach(d => {
+        const t = { id: d.id, ...d.data() };
+        if (!t.due || !t.processId || t.status === 'tamamlandi') return;
+        if (!events[t.due]) events[t.due] = [];
+        const veh = _vehVehicles.find(x => x.id === t.vehicleId);
+        const isOverdue = t.due < todayStr;
+        const isSoon    = !isOverdue && t.due <= addDays(todayStr, 7);
+        const bg = isOverdue ? '#e8637a' : (isSoon ? '#f59e0b' : '#5b7fe8');
+        events[t.due].push({ label: `${veh?.plate||'Araç'}: ${t.name}`, bg, taskId: t.id, processId: t.processId });
+      });
+    } catch(e) {}
+  }
+
+  const dayNames = ['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'];
+  let html = '<div class="cal-grid">';
+  html += dayNames.map(d => `<div class="cal-day-header">${d}</div>`).join('');
+  for (let i = 0; i < startDow; i++) html += `<div class="cal-cell other-month"><div class="cal-date"></div></div>`;
+
+  for (let d = 1; d <= lastDay.getDate(); d++) {
+    const ds = `${_vehCalYear}-${String(_vehCalMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dayEvents = events[ds] || [];
+    const isToday = ds === todayStr;
+    html += `<div class="cal-cell${isToday?' today':''}" onclick="vehShowProcCalDayDetail('${ds}')">
+      <div class="cal-date">${isToday ? `<span>${d}</span>` : d}</div>
+      ${dayEvents.slice(0,3).map(ev =>
+        `<span class="cal-event" style="background:${ev.bg}22;color:${ev.bg}" title="${ev.label}">${ev.label}</span>`
+      ).join('')}
+      ${dayEvents.length > 3 ? `<div style="font-size:9px;color:var(--hr-text3)">+${dayEvents.length-3} daha</div>` : ''}
+    </div>`;
+  }
+
+  const rem = (startDow + lastDay.getDate()) % 7;
+  if (rem) for (let i = 0; i < 7 - rem; i++) html += `<div class="cal-cell other-month"><div class="cal-date"></div></div>`;
+  html += '</div>';
+  gridEl.innerHTML = html;
+}
+
+function vehShowProcCalDayDetail(dateStr) {
+  if (!dateStr) return;
+  const tasks = _vehAllProcTasks.filter(t => t.due === dateStr && t.processId && t.status !== 'tamamlandi');
+  if (!tasks.length) return;
+  const existing = document.getElementById('veh-proc-day-modal');
+  if (existing) existing.remove();
+  const todayStr = today();
+  const rows = tasks.map(t => {
+    const veh = _vehVehicles.find(x => x.id === t.vehicleId);
+    const isOverdue = t.due < todayStr;
+    const color = isOverdue ? '#e8637a' : '#5b7fe8';
+    return `<div style="padding:8px 0;border-bottom:1px solid var(--hr-border)">
+      <div style="font-size:13px;font-weight:500;color:var(--hr-text)">${t.name}</div>
+      <div style="font-size:11px;color:${color};margin-top:2px">${veh?.plate||''} · ${isOverdue ? '⚠ Gecikmiş' : t.due}</div>
+    </div>`;
+  }).join('');
+  const modal = document.createElement('div');
+  modal.id = 'veh-proc-day-modal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);padding:16px';
+  modal.innerHTML = `<div style="background:#fff;border-radius:14px;padding:24px;max-width:380px;width:100%;box-shadow:0 16px 48px rgba(0,0,0,0.15);font-family:'DM Sans',sans-serif">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:#1e2342">Süreç Görevleri — ${dateStr}</div>
+      <button onclick="document.getElementById('veh-proc-day-modal').remove()" style="background:none;border:none;font-size:18px;cursor:pointer;color:#9da4c8">✕</button>
+    </div>
+    ${rows}
+    <button onclick="document.getElementById('veh-proc-day-modal').remove()" style="margin-top:14px;width:100%;padding:10px;background:#5b7fe8;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">Kapat</button>
+  </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -2986,13 +3312,15 @@ async function vehSaveFromTemplate(e) {
     const processId = procRef.id;
 
     // 2. Her alt görev için vehicle_tasks kaydı
-    for (const t of tmpl.tasks) {
+    for (let i = 0; i < tmpl.tasks.length; i++) {
+      const t = tmpl.tasks[i];
       await db.collection('vehicle_tasks').add({
         vehicleId,
         processId,
         templateId: tmplId,
         templateName: tmpl.name,
         name: t.name,
+        order: i,
         assignees: t.assignees || [],
         due: t.days ? addDays(startDate, t.days) : startDate,
         status: 'bekliyor',

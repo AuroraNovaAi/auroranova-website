@@ -147,6 +147,9 @@
       <div class="nav-item" data-page="vehicles-calendar" onclick="hrNavigate('vehicles-calendar')" style="padding-left:28px;font-size:12px">
         <span class="nav-icon"><svg viewBox="0 0 20 20" fill="none"><rect x="2" y="4" width="16" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M6 2v4M14 2v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M2 9h16" stroke="currentColor" stroke-width="1.5"/></svg></span> Takvim
       </div>
+      <div class="nav-item" data-page="vehicles-processes" onclick="hrNavigate('vehicles-processes')" style="padding-left:28px;font-size:12px">
+        <span class="nav-icon"><svg viewBox="0 0 20 20" fill="none"><path d="M5 10h10M5 6h10M5 14h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><rect x="2" y="2" width="16" height="16" rx="2.5" stroke="currentColor" stroke-width="1.5"/></svg></span> Süreçler
+      </div>
       <div class="nav-item" data-page="settings" onclick="hrNavigate('settings')"
            style="margin-top:auto;border-top:1px solid rgba(255,255,255,0.06);padding-top:12px">
         <span class="nav-icon">
@@ -403,14 +406,49 @@
               <div id="veh-cal-title" style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;min-width:160px;text-align:center"></div>
               <button class="btn btn-ghost btn-sm" onclick="vehCalNav(1)">&#8250;</button>
             </div>
-            <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-              <span style="font-size:12px;color:var(--hr-text3);display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:10px;height:10px;background:#e8637a;border-radius:2px"></span>Evrak Bitiş</span>
-              <span style="font-size:12px;color:var(--hr-text3);display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:10px;height:10px;background:#8b6be8;border-radius:2px"></span>Görev</span>
-              <button class="btn btn-primary btn-sm" onclick="vehCalDayClick('')">+ Görev Ekle</button>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <button class="btn btn-sm" id="veh-cal-tab-dates" style="background:var(--hr-accent);color:#fff" onclick="vehCalTab('dates')">Tarih Takip</button>
+              <button class="btn btn-ghost btn-sm" id="veh-cal-tab-processes" onclick="vehCalTab('processes')">Süreç Görevleri</button>
             </div>
           </div>
-          <div id="veh-cal-grid"></div>
+          <div id="veh-cal-dates-wrap">
+            <div style="padding:8px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--hr-border)">
+              <span style="font-size:12px;color:var(--hr-text3);display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:10px;height:10px;background:#e8637a;border-radius:2px"></span>Evrak Bitiş</span>
+              <span style="font-size:12px;color:var(--hr-text3);display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:10px;height:10px;background:#8b6be8;border-radius:2px"></span>Tekil Görev</span>
+              <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="vehCalDayClick('')">+ Tekil Görev Ekle</button>
+            </div>
+            <div id="veh-cal-grid"></div>
+          </div>
+          <div id="veh-cal-proc-wrap" style="display:none">
+            <div style="padding:8px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--hr-border)">
+              <span style="font-size:12px;color:var(--hr-text3);display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:10px;height:10px;background:#e8637a;border-radius:2px"></span>Gecikmiş</span>
+              <span style="font-size:12px;color:var(--hr-text3);display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:10px;height:10px;background:#f59e0b;border-radius:2px"></span>Yaklaşıyor</span>
+              <span style="font-size:12px;color:var(--hr-text3);display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:10px;height:10px;background:#5b7fe8;border-radius:2px"></span>Süreç Görevi</span>
+            </div>
+            <div id="veh-cal-proc-grid"></div>
+          </div>
         </div>
+      </section>
+
+      <!-- ======================================================
+           TAŞITLAR — Süreçler
+           ====================================================== -->
+      <section id="page-vehicles-processes" class="page-section">
+        <div class="filter-bar">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="veh-proc-search" placeholder="Şablon veya araç ara..." oninput="vehFilterProcesses()">
+          </div>
+          <select id="veh-proc-filter-vehicle" onchange="vehFilterProcesses()" style="height:36px;border:1px solid var(--hr-border);border-radius:var(--hr-radius-sm);padding:0 10px;font-size:13px;background:var(--hr-surface);color:var(--hr-text)">
+            <option value="">Tüm Araçlar</option>
+          </select>
+          <select id="veh-proc-filter-status" onchange="vehFilterProcesses()" style="height:36px;border:1px solid var(--hr-border);border-radius:var(--hr-radius-sm);padding:0 10px;font-size:13px;background:var(--hr-surface);color:var(--hr-text)">
+            <option value="">Tüm Durumlar</option>
+            <option value="devam">Devam Ediyor</option>
+            <option value="tamamlandi">Tamamlandı</option>
+          </select>
+        </div>
+        <div id="veh-processes-wrap"></div>
       </section>
 
       <!-- ======================================================
