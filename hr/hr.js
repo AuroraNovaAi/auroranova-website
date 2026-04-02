@@ -2516,7 +2516,7 @@ async function vehRenderDetailProcesses() {
   try {
     const [procSnap, taskSnap] = await Promise.all([
       db.collection('vehicle_processes').where('vehicleId','==',_vehCurrentVehicleId).orderBy('createdAt','desc').get(),
-      db.collection('vehicle_tasks').where('vehicleId','==',_vehCurrentVehicleId).where('processId','!=','').get()
+      db.collection('vehicle_tasks').where('vehicleId','==',_vehCurrentVehicleId).get()
     ]);
     const allTasks = taskSnap.docs.map(d => ({ id: d.id, ...d.data() }));
     const processes = procSnap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -2651,7 +2651,14 @@ function _vehRenderProcessList() {
     filtered.map(proc => {
       const procTasks = _vehAllProcTasks
         .filter(t => t.processId === proc.id)
-        .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+        .sort((a, b) => {
+          const aHasOrder = a.order !== undefined && a.order !== null;
+          const bHasOrder = b.order !== undefined && b.order !== null;
+          if (aHasOrder && bHasOrder) return a.order - b.order;
+          if (aHasOrder) return -1;
+          if (bHasOrder) return 1;
+          return (a.createdAt || '').localeCompare(b.createdAt || '');
+        });
       const total = procTasks.length;
       const done  = procTasks.filter(t => t.status === 'tamamlandi').length;
       const pct   = total ? Math.round(done / total * 100) : 0;
@@ -2732,7 +2739,15 @@ async function vehToggleTask(processId, taskId) {
       .where('processId','==',processId).get();
     const tasks = snap.docs
       .map(d => ({ id: d.id, ...d.data() }))
-      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+      .sort((a, b) => {
+        // order alanı varsa önce ona göre, yoksa createdAt'e göre sırala
+        const aHasOrder = a.order !== undefined && a.order !== null;
+        const bHasOrder = b.order !== undefined && b.order !== null;
+        if (aHasOrder && bHasOrder) return a.order - b.order;
+        if (aHasOrder) return -1;
+        if (bHasOrder) return 1;
+        return (a.createdAt || '').localeCompare(b.createdAt || '');
+      });
     const taskIdx = tasks.findIndex(t => t.id === taskId);
     if (taskIdx === -1) return;
     const task = tasks[taskIdx];
