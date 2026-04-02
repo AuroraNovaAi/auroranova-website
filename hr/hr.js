@@ -91,10 +91,20 @@ function renderDocCalendar() {
     eventMap[dateStr].push({ label, type, personId, isOverdue, isSoon });
   };
 
+  // Aktif personel süreçleri — fieldKey olan ve henüz tamamlanmamış
+  const activePersonKeys = new Set(); // 'personId_fieldKey'
+  hrState.processes.forEach(proc => {
+    if (!proc.fieldKey) return;
+    const allDone = proc.tasks.length > 0 && proc.tasks.every(t => t.done);
+    if (!allDone) activePersonKeys.add(`${proc.personId}_${proc.fieldKey}`);
+  });
+
   hrState.personnel.forEach(p => {
     if (p.status === 'passive') return;
-    if (p.permitExpiry)   addDocEvent(p.permitExpiry,   p.name + ': Çalışma İzni', 'permit',   p.id);
-    if (p.passportExpiry) addDocEvent(p.passportExpiry, p.name + ': Pasaport',      'passport', p.id);
+    if (p.permitExpiry   && !activePersonKeys.has(`${p.id}_permitExpiry`))
+      addDocEvent(p.permitExpiry,   p.name + ': Çalışma İzni', 'permit',   p.id);
+    if (p.passportExpiry && !activePersonKeys.has(`${p.id}_passportExpiry`))
+      addDocEvent(p.passportExpiry, p.name + ': Pasaport',      'passport', p.id);
   });
 
   const firstDay    = new Date(calYear, calMonth, 1).getDay();
@@ -204,7 +214,7 @@ function hrDocEventClick(personId, type) {
           ${templateOpts}
         </select>
         <input type="date" id="doc-modal-start" style="width:100%;padding:9px 12px;border:1px solid #dde1ee;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;box-sizing:border-box" placeholder="Başlangıç tarihi">
-        <button onclick="hrDocStartProcess('${personId}')" style="width:100%;margin-top:8px;padding:11px;background:#5b7fe8;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Süreci Başlat</button>
+        <button onclick="hrDocStartProcess('${personId}','${isPermit ? 'permitExpiry' : 'passportExpiry'}')" style="width:100%;margin-top:8px;padding:11px;background:#5b7fe8;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Süreci Başlat</button>
       </div>` : '<p style="font-size:12px;color:#9da4c8;margin-bottom:14px">Süreç başlatmak için önce Şablonlar bölümünden şablon oluşturun.</p>'}
 
       <button onclick="document.getElementById('hr-doc-event-modal').remove()" style="width:100%;padding:11px;background:#f5f6fb;color:#5b6080;border:1px solid #dde1ee;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Kapat</button>
@@ -213,7 +223,7 @@ function hrDocEventClick(personId, type) {
   modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
 }
 
-function hrDocStartProcess(personId) {
+function hrDocStartProcess(personId, fieldKey) {
   const templateId = document.getElementById('doc-modal-tmpl')?.value;
   const startDate  = document.getElementById('doc-modal-start')?.value;
   if (!templateId) { alert('Lütfen bir şablon seçin.'); return; }
@@ -228,6 +238,7 @@ function hrDocStartProcess(personId) {
     templateId,
     templateName: tmpl.name,
     templateType: tmpl.type,
+    fieldKey: fieldKey || null,
     personId,
     personName: person.name,
     startDate,
@@ -891,6 +902,14 @@ function toggleTask(processId, taskId) {
   renderProcesses();
   renderDashboard();
   if (typeof renderCalendar === 'function') renderCalendar();
+
+  // Son görev tamamlandıysa belge güncelleme modal'ı aç
+  if (task.done) {
+    const allDone = proc.tasks.every(t => t.done);
+    if (allDone && proc.fieldKey) {
+      hrShowDocUpdateModal(proc.personId, proc.fieldKey, proc.id);
+    }
+  }
 }
 
 function hrShowOrderWarning(proc, taskIdx) {
@@ -2791,17 +2810,129 @@ async function vehToggleTask(processId, taskId) {
       completedAt:  newStatus === 'tamamlandi' ? new Date().toISOString() : null,
     });
 
-    // Önbellekteki task'ı güncelle ve listeyi yeniden çiz
+    // Önbellekteki task'ı güncelle
     const cached = _vehAllProcTasks.find(t => t.id === taskId);
     if (cached) {
       cached.status      = newStatus;
       cached.completedBy = newStatus === 'tamamlandi' ? _currentUserUid : null;
       cached.completedAt = newStatus === 'tamamlandi' ? new Date().toISOString() : null;
     }
+
+    // Son görev tamamlandı mı?
+    if (newStatus === 'tamamlandi') {
+      const allDone = tasks.every(t => t.id === taskId ? true : t.status === 'tamamlandi');
+      if (allDone) {
+        await db.collection('vehicle_processes').doc(processId).update({ status: 'tamamlandi' });
+        // Önbellekteki süreci güncelle
+        const cachedProc = _vehAllProcesses.find(p => p.id === processId);
+        if (cachedProc) cachedProc.status = 'tamamlandi';
+        // fieldKey varsa belge güncelleme modalını aç
+        const procDoc = await db.collection('vehicle_processes').doc(processId).get();
+        const procData = procDoc.data();
+        if (procData?.fieldKey) {
+          _vehRenderProcessList();
+          vehShowDocUpdateModal(procData.vehicleId, procData.fieldKey, processId);
+          return;
+        }
+      }
+    }
+
     _vehRenderProcessList();
   } catch(e) {
     alert('Görev güncellenemedi: ' + e.message);
   }
+}
+
+function vehShowDocUpdateModal(vehicleId, fieldKey, processId) {
+  const veh = _vehVehicles.find(x => x.id === vehicleId);
+  if (!veh) return;
+  const fieldLabels = {
+    insurance: 'Sigorta', seyrusefer: 'Seyrüsefer İzni',
+    muayene: 'Muayene', gkry: 'GKRY İzni',
+    rumSigorta: 'Rum Sigorta', bIzni: 'B İzni',
+  };
+  const label = fieldLabels[fieldKey] || fieldKey;
+  const existing = document.getElementById('veh-doc-update-modal');
+  if (existing) existing.remove();
+  const modal = document.createElement('div');
+  modal.id = 'veh-doc-update-modal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:10001;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.55);padding:16px';
+  modal.innerHTML = `
+    <div style="background:#fff;border-radius:14px;padding:32px 28px;max-width:420px;width:100%;box-shadow:0 24px 64px rgba(0,0,0,0.18);font-family:'DM Sans',sans-serif">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+        <div style="width:40px;height:40px;border-radius:10px;background:#d1fae5;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">✓</div>
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:#1e2342">Süreç Tamamlandı!</div>
+          <div style="font-size:12px;color:#9da4c8;margin-top:2px">${veh.plate} · ${label}</div>
+        </div>
+      </div>
+      <p style="font-size:13px;color:#3d4466;line-height:1.6;margin:0 0 16px">
+        Yeni <strong style="color:#1e2342">${label}</strong> bitiş tarihini girin:
+      </p>
+      <input type="date" id="veh-doc-update-date" style="width:100%;padding:10px 12px;border:1.5px solid #dde1ee;border-radius:9px;font-size:13px;font-family:'DM Sans',sans-serif;box-sizing:border-box;margin-bottom:16px">
+      <div style="display:flex;gap:10px">
+        <button onclick="vehSaveDocUpdate('${vehicleId}','${fieldKey}')" style="flex:1;padding:11px;background:#5b7fe8;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Kaydet</button>
+        <button onclick="document.getElementById('veh-doc-update-modal').remove()" style="flex:1;padding:11px;background:#f5f6fb;color:#3d4466;border:1.5px solid #dde1ee;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Şimdi Değil</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+}
+
+async function vehSaveDocUpdate(vehicleId, fieldKey) {
+  const dateVal = document.getElementById('veh-doc-update-date')?.value;
+  if (!dateVal) { alert('Lütfen bir tarih girin.'); return; }
+  try {
+    await db.collection('vehicles').doc(vehicleId).update({ [fieldKey]: dateVal });
+    const veh = _vehVehicles.find(x => x.id === vehicleId);
+    if (veh) veh[fieldKey] = dateVal;
+    document.getElementById('veh-doc-update-modal')?.remove();
+    if (document.getElementById('veh-cal-wrap')?.style.display !== 'none') vehRenderCalendar();
+  } catch(e) {
+    alert('Kaydedilemedi: ' + e.message);
+  }
+}
+
+function hrShowDocUpdateModal(personId, fieldKey, processId) {
+  const person = hrState.personnel.find(x => x.id === personId);
+  if (!person) return;
+  const label = fieldKey === 'permitExpiry' ? 'Çalışma İzni' : 'Pasaport';
+  const existing = document.getElementById('hr-doc-update-modal');
+  if (existing) existing.remove();
+  const modal = document.createElement('div');
+  modal.id = 'hr-doc-update-modal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:10001;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.55);padding:16px';
+  modal.innerHTML = `
+    <div style="background:#fff;border-radius:14px;padding:32px 28px;max-width:420px;width:100%;box-shadow:0 24px 64px rgba(0,0,0,0.18);font-family:'DM Sans',sans-serif">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+        <div style="width:40px;height:40px;border-radius:10px;background:#d1fae5;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">✓</div>
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:#1e2342">Süreç Tamamlandı!</div>
+          <div style="font-size:12px;color:#9da4c8;margin-top:2px">${person.name} · ${label}</div>
+        </div>
+      </div>
+      <p style="font-size:13px;color:#3d4466;line-height:1.6;margin:0 0 16px">
+        Yeni <strong style="color:#1e2342">${label}</strong> bitiş tarihini girin:
+      </p>
+      <input type="date" id="hr-doc-update-date" style="width:100%;padding:10px 12px;border:1.5px solid #dde1ee;border-radius:9px;font-size:13px;font-family:'DM Sans',sans-serif;box-sizing:border-box;margin-bottom:16px">
+      <div style="display:flex;gap:10px">
+        <button onclick="hrSaveDocUpdate('${personId}','${fieldKey}')" style="flex:1;padding:11px;background:#5b7fe8;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Kaydet</button>
+        <button onclick="document.getElementById('hr-doc-update-modal').remove()" style="flex:1;padding:11px;background:#f5f6fb;color:#3d4466;border:1.5px solid #dde1ee;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Şimdi Değil</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+}
+
+function hrSaveDocUpdate(personId, fieldKey) {
+  const dateVal = document.getElementById('hr-doc-update-date')?.value;
+  if (!dateVal) { alert('Lütfen bir tarih girin.'); return; }
+  const person = hrState.personnel.find(x => x.id === personId);
+  if (!person) return;
+  person[fieldKey] = dateVal;
+  hrSaveState();
+  document.getElementById('hr-doc-update-modal')?.remove();
+  renderDocCalendar();
 }
 
 function vehShowOrderWarning(blockingTask, targetTask, allTasks) {
@@ -3148,7 +3279,7 @@ function vehCalExpiryClick(vehicleId, fieldKey) {
           ${templateOpts}
         </select>
         <input type="date" id="veh-expiry-modal-start" value="${today()}" style="width:100%;padding:9px 12px;border:1px solid #dde1ee;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;box-sizing:border-box">
-        <button onclick="vehCalExpiryStartProcess('${vehicleId}')" style="width:100%;margin-top:8px;padding:11px;background:#5b7fe8;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Süreci Başlat</button>
+        <button onclick="vehCalExpiryStartProcess('${vehicleId}','${fieldKey}')" style="width:100%;margin-top:8px;padding:11px;background:#5b7fe8;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Süreci Başlat</button>
       </div>` : '<p style="font-size:12px;color:#9da4c8;margin-bottom:14px">Süreç başlatmak için önce Şablonlar bölümünden araç şablonu oluşturun.</p>'}
 
       <button onclick="document.getElementById('veh-cal-expiry-modal').remove()" style="width:100%;padding:11px;background:#f5f6fb;color:#5b6080;border:1px solid #dde1ee;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Kapat</button>
@@ -3157,7 +3288,7 @@ function vehCalExpiryClick(vehicleId, fieldKey) {
   modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
 }
 
-async function vehCalExpiryStartProcess(vehicleId) {
+async function vehCalExpiryStartProcess(vehicleId, fieldKey) {
   const templateId = document.getElementById('veh-expiry-modal-tmpl')?.value;
   const startDate  = document.getElementById('veh-expiry-modal-start')?.value;
   if (!templateId) { alert('Lütfen bir şablon seçin.'); return; }
@@ -3171,6 +3302,7 @@ async function vehCalExpiryStartProcess(vehicleId) {
       templateId,
       templateName: tmpl.name,
       startDate,
+      fieldKey: fieldKey || null,
       status: 'devam',
       createdBy: _currentUserUid || '',
       createdAt: new Date().toISOString(),
@@ -3225,9 +3357,25 @@ async function vehRenderCalendar() {
     {key:'muayene',label:'Muayene'},{key:'gkry',label:'GKRY İzni'},
     {key:'rumSigorta',label:'Rum Sigorta'},{key:'bIzni',label:'B İzni'},
   ];
+
+  // Aktif süreçleri çek — aktif süreç olan evrak takvimde gizlenecek
+  const activeVehKeys = new Set(); // 'vehicleId_fieldKey'
+  const db0 = _hrInitDb();
+  if (db0) {
+    try {
+      const apSnap = await db0.collection('vehicle_processes').where('status','==','devam').get();
+      apSnap.docs.forEach(d => {
+        const p = d.data();
+        if (p.vehicleId && p.fieldKey) activeVehKeys.add(`${p.vehicleId}_${p.fieldKey}`);
+      });
+    } catch(e) {}
+  }
+
   _vehVehicles.forEach(v => {
     dateFields.forEach(f => {
       if (!v[f.key]) return;
+      // Aktif süreç varsa bu evrakı takvimde gösterme
+      if (activeVehKeys.has(`${v.id}_${f.key}`)) return;
       // Sadece bu aya ait tarihleri ekle
       const [fy, fm] = v[f.key].split('-').map(Number);
       if (fy !== _vehCalYear || fm !== _vehCalMonth + 1) return;
