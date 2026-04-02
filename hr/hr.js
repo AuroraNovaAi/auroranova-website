@@ -2515,11 +2515,12 @@ async function vehRenderDetailProcesses() {
   if (!db) return;
   try {
     const [procSnap, taskSnap] = await Promise.all([
-      db.collection('vehicle_processes').where('vehicleId','==',_vehCurrentVehicleId).orderBy('createdAt','desc').get(),
+      db.collection('vehicle_processes').where('vehicleId','==',_vehCurrentVehicleId).get(),
       db.collection('vehicle_tasks').where('vehicleId','==',_vehCurrentVehicleId).get()
     ]);
     const allTasks = taskSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-    const processes = procSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const processes = procSnap.docs.map(d => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
 
     const header = `<div class="veh-section-header">
       <span class="veh-section-title">Araç Süreçleri</span>
