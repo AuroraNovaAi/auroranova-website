@@ -2162,13 +2162,14 @@ async function vehDeleteVehicle(id) {
       if (sp) { try { await _vehStorage()?.ref(sp).delete(); } catch(e) {} }
       await d.ref.delete();
     }
-    // İlişkili servis, ödeme ve görevleri sil
-    const [svcSnap, paySnap, taskSnap] = await Promise.all([
+    // İlişkili servis, ödeme, görev ve süreçleri sil
+    const [svcSnap, paySnap, taskSnap, procSnap] = await Promise.all([
       db.collection('vehicle_services').where('vehicleId','==',id).get(),
       db.collection('vehicle_payments').where('vehicleId','==',id).get(),
-      db.collection('vehicle_tasks').where('vehicleId','==',id).get()
+      db.collection('vehicle_tasks').where('vehicleId','==',id).get(),
+      db.collection('vehicle_processes').where('vehicleId','==',id).get()
     ]);
-    const delAll = [...svcSnap.docs, ...paySnap.docs, ...taskSnap.docs];
+    const delAll = [...svcSnap.docs, ...paySnap.docs, ...taskSnap.docs, ...procSnap.docs];
     await Promise.all(delAll.map(d => d.ref.delete()));
     // Aracı sil
     await db.collection('vehicles').doc(id).delete();
@@ -2208,10 +2209,11 @@ function vehDetailTab(tab) {
   document.querySelectorAll('.veh-detail-pane').forEach(el => el.classList.remove('active'));
   document.getElementById('veh-detail-' + tab).classList.add('active');
 
-  if (tab === 'info')    vehRenderDetailInfo();
-  else if (tab === 'docs')    vehRenderDetailDocs();
-  else if (tab === 'service') vehRenderDetailService();
-  else if (tab === 'tasks')   vehRenderDetailTasks();
+  if (tab === 'info')         vehRenderDetailInfo();
+  else if (tab === 'docs')      vehRenderDetailDocs();
+  else if (tab === 'service')   vehRenderDetailService();
+  else if (tab === 'processes') vehRenderDetailProcesses();
+  else if (tab === 'tasks')     vehRenderDetailTasks();
 }
 
 function vehRenderDetailInfo() {
@@ -2506,6 +2508,98 @@ async function vehSaveKm(e) {
   } catch(err) { alert('Hata: ' + err.message); }
 }
 
+async function vehRenderDetailProcesses() {
+  const pane = document.getElementById('veh-detail-processes');
+  pane.innerHTML = '<p style="color:var(--hr-text3);font-size:13px">Yükleniyor…</p>';
+  const db = _hrInitDb();
+  if (!db) return;
+  try {
+    const [procSnap, taskSnap] = await Promise.all([
+      db.collection('vehicle_processes').where('vehicleId','==',_vehCurrentVehicleId).orderBy('createdAt','desc').get(),
+      db.collection('vehicle_tasks').where('vehicleId','==',_vehCurrentVehicleId).get()
+    ]);
+    const allTasks = taskSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const processes = procSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    const header = `<div class="veh-section-header">
+      <span class="veh-section-title">Araç Süreçleri</span>
+      ${canEdit('hr.vehicles') ? `<button class="btn btn-primary btn-sm" onclick="vehOpenStartFromTemplate('${_vehCurrentVehicleId}')">+ Süreç Başlat</button>` : ''}
+    </div>`;
+
+    if (!processes.length) {
+      pane.innerHTML = header + '<p style="color:var(--hr-text3);font-size:13px;padding:8px 0">Henüz süreç başlatılmadı.</p>';
+      return;
+    }
+
+    const cards = processes.map(proc => {
+      const procTasks = allTasks.filter(t => t.processId === proc.id);
+      const total = procTasks.length;
+      const done  = procTasks.filter(t => t.status === 'tamamlandi').length;
+      const pct   = total ? Math.round(done / total * 100) : 0;
+      const sLabel = { bekliyor:'Bekliyor', devam:'Devam Ediyor', tamamlandi:'Tamamlandı' };
+      const sBadge = { bekliyor:'badge-warning', devam:'', tamamlandi:'badge-success' };
+
+      const taskRows = procTasks.map(t => {
+        const assignees = t.assignees || [];
+        const canComplete = !assignees.length || assignees.includes(_currentUserUid);
+        const assigneeNames = assignees.length
+          ? assignees.map(uid => { const u = _settingsUsers.find(u => u.uid === uid); return u ? (u.name || u.email) : uid; }).join(', ')
+          : null;
+        return `<div style="display:flex;align-items:center;gap:10px;padding:7px 10px;border-bottom:1px solid var(--hr-border);${t.status==='tamamlandi'?'opacity:0.55':''}">
+          <div style="flex:1">
+            <div style="font-size:12px;font-weight:500;${t.status==='tamamlandi'?'text-decoration:line-through':''}">${t.name}</div>
+            ${t.due ? `<div style="font-size:11px;color:var(--hr-text3)">Son: ${vehFmtDate(t.due)}</div>` : ''}
+            ${assigneeNames ? `<div style="font-size:11px;color:var(--hr-text3)">👤 ${assigneeNames}</div>` : ''}
+          </div>
+          <div style="display:flex;align-items:center;gap:5px;flex-shrink:0">
+            <span class="badge ${sBadge[t.status]||'badge-neutral'}" style="${t.status==='devam'?'background:#e8f0fe;color:#3557c7';font-size:10px}">${sLabel[t.status]||t.status}</span>
+            ${canComplete ? `<select class="btn btn-ghost btn-sm" style="padding:3px 5px;font-size:10px" onchange="vehUpdateTaskStatus('${t.id}',this.value);vehRenderDetailProcesses()">
+              <option value="bekliyor" ${t.status==='bekliyor'?'selected':''}>Bekliyor</option>
+              <option value="devam"    ${t.status==='devam'?'selected':''}>Devam</option>
+              <option value="tamamlandi" ${t.status==='tamamlandi'?'selected':''}>Tamamlandı</option>
+            </select>` : ''}
+          </div>
+        </div>`;
+      }).join('');
+
+      const statusColor = proc.status === 'tamamlandi' ? 'var(--hr-success)' : pct === 100 ? 'var(--hr-success)' : 'var(--hr-accent)';
+      return `<div style="background:var(--hr-surface);border:1px solid var(--hr-border);border-radius:var(--hr-radius);margin-bottom:12px;overflow:hidden">
+        <div style="display:flex;align-items:center;gap:12px;padding:12px 14px">
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:600">${proc.templateName}</div>
+            <div style="font-size:11px;color:var(--hr-text3);margin-top:2px">Başlangıç: ${proc.startDate} · ${total} görev</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
+            <div style="font-size:12px;color:${statusColor};font-weight:600">${done}/${total} tamamlandı</div>
+            <div style="width:80px;height:6px;background:var(--hr-border);border-radius:3px;overflow:hidden">
+              <div style="width:${pct}%;height:100%;background:${statusColor};border-radius:3px;transition:width 0.3s"></div>
+            </div>
+            ${canAdmin('hr.vehicles') ? `<button class="btn btn-danger btn-sm" onclick="vehDeleteProcess('${proc.id}')">Sil</button>` : ''}
+          </div>
+        </div>
+        ${total ? `<div style="border-top:1px solid var(--hr-border)">${taskRows}</div>` : ''}
+      </div>`;
+    }).join('');
+
+    pane.innerHTML = header + cards;
+  } catch(e) {
+    pane.innerHTML = '<p style="color:var(--hr-danger);font-size:13px">Süreçler yüklenemedi: ' + e.message + '</p>';
+  }
+}
+
+async function vehDeleteProcess(processId) {
+  if (!confirm('Bu süreci ve tüm görevlerini silmek istiyor musunuz?')) return;
+  const db = _hrInitDb();
+  try {
+    const taskSnap = await db.collection('vehicle_tasks').where('processId','==',processId).get();
+    await Promise.all(taskSnap.docs.map(d => d.ref.delete()));
+    await db.collection('vehicle_processes').doc(processId).delete();
+    vehRenderDetailProcesses();
+  } catch(err) {
+    alert('Silme hatası: ' + err.message);
+  }
+}
+
 async function vehRenderDetailTasks() {
   const pane = document.getElementById('veh-detail-tasks');
   pane.innerHTML = '<p style="color:var(--hr-text3);font-size:13px">Yükleniyor…</p>';
@@ -2524,10 +2618,7 @@ async function vehRenderDetailTasks() {
     pane.innerHTML = `
       <div class="veh-section-header">
         <span class="veh-section-title">Açık Görevler</span>
-        <div style="display:flex;gap:8px">
-          ${canEdit('hr.vehicles') ? `<button class="btn btn-secondary btn-sm" onclick="vehOpenStartFromTemplate('${_vehCurrentVehicleId}')">📋 Şablondan Başlat</button>` : ''}
-          ${canEdit('hr.vehicles') ? `<button class="btn btn-primary btn-sm" onclick="vehOpenTaskModal('${_vehCurrentVehicleId}')">+ Görev Ekle</button>` : ''}
-        </div>
+        ${canEdit('hr.vehicles') ? `<button class="btn btn-primary btn-sm" onclick="vehOpenTaskModal('${_vehCurrentVehicleId}')">+ Tekil Görev Ekle</button>` : ''}
       </div>
       <div style="display:flex;flex-direction:column;gap:8px">
         ${open.length ? open.map(t => vehTaskHtml(t, sLabel, sBadge)).join('')
@@ -2734,8 +2825,8 @@ async function vehRenderDashboard() {
 
 /* ── Takvim ── */
 function vehCalDayClick(dateStr) {
-  vehOpenTaskModal(null);
-  document.getElementById('vt-due').value = dateStr;
+  vehOpenStartFromTemplate(null);
+  document.getElementById('vst-start').value = dateStr;
 }
 
 function vehCalNav(dir) {
@@ -2835,22 +2926,33 @@ document.addEventListener('DOMContentLoaded', () => {
    ARAÇ — ŞABLONDAN GÖREV BAŞLAT
    ============================================================ */
 
-function vehOpenStartFromTemplate(vehicleId) {
+function vehOpenStartFromTemplate(vehicleId = null) {
   const vehTypes = new Set(['arac-bakim', 'arac-muayene', 'arac-diger']);
   const vehTmpls = hrState.templates.filter(t => vehTypes.has(t.type));
-  const sel = document.getElementById('vst-template');
   if (!vehTmpls.length) {
     alert('Henüz araç şablonu oluşturulmadı. Önce Şablonlar sayfasından bir araç şablonu ekleyin.');
     return;
   }
-  sel.innerHTML = '<option value="">— Şablon seçin —</option>' +
+
+  // Araç dropdown
+  const vSel = document.getElementById('vst-vehicle');
+  vSel.innerHTML = _vehVehicles.map(v =>
+    `<option value="${v.id}">${v.plate}${v.brand ? ' — ' + v.brand + (v.model ? ' ' + v.model : '') : ''}</option>`
+  ).join('');
+  if (vehicleId) {
+    vSel.value = vehicleId;
+    vSel.disabled = true;
+  } else {
+    vSel.disabled = false;
+  }
+
+  // Şablon dropdown
+  const tSel = document.getElementById('vst-template');
+  tSel.innerHTML = '<option value="">— Şablon seçin —</option>' +
     vehTmpls.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
-  document.getElementById('vst-vehicle-id').value = vehicleId;
+
   document.getElementById('vst-start').value = today();
   document.getElementById('vst-preview').innerHTML = '';
-  document.getElementById('veh-form-start-template').reset();
-  document.getElementById('vst-vehicle-id').value = vehicleId;
-  document.getElementById('vst-start').value = today();
   hrOpenModal('veh-modal-start-template');
 }
 
@@ -2868,16 +2970,30 @@ function vehPreviewTemplateTask() {
 
 async function vehSaveFromTemplate(e) {
   e.preventDefault();
-  const tmplId = document.getElementById('vst-template').value;
+  const tmplId    = document.getElementById('vst-template').value;
   const startDate = document.getElementById('vst-start').value;
-  const vehicleId = document.getElementById('vst-vehicle-id').value;
+  const vehicleId = document.getElementById('vst-vehicle').value;
   const tmpl = hrState.templates.find(t => t.id === tmplId);
-  if (!tmpl || !vehicleId) return;
+  if (!tmpl || !vehicleId || !tmplId) return;
   const db = _hrInitDb();
   try {
+    // 1. Süreç dokümanı oluştur
+    const procRef = await db.collection('vehicle_processes').add({
+      vehicleId,
+      templateId: tmplId,
+      templateName: tmpl.name,
+      startDate,
+      status: 'devam',
+      createdBy: _currentUserUid || '',
+      createdAt: new Date().toISOString(),
+    });
+    const processId = procRef.id;
+
+    // 2. Her alt görev için vehicle_tasks kaydı
     for (const t of tmpl.tasks) {
       await db.collection('vehicle_tasks').add({
         vehicleId,
+        processId,
         templateId: tmplId,
         templateName: tmpl.name,
         name: t.name,
@@ -2888,9 +3004,9 @@ async function vehSaveFromTemplate(e) {
       });
     }
     hrCloseModal('veh-modal-start-template');
-    vehRenderDetailTasks();
+    if (vehicleId === _vehCurrentVehicleId) vehRenderDetailProcesses();
   } catch(err) {
-    alert('Görevler oluşturulamadı: ' + err.message);
+    alert('Süreç oluşturulamadı: ' + err.message);
   }
 }
 

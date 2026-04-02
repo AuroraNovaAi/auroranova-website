@@ -422,15 +422,17 @@
           <span id="veh-detail-plate" style="font-family:'Syne',sans-serif;font-weight:700;font-size:16px;color:var(--hr-text)"></span>
         </div>
         <div style="display:flex;gap:4px;margin-bottom:20px;border-bottom:2px solid var(--hr-border);padding-bottom:0" id="veh-detail-tabs">
-          <button class="veh-detail-tab active" data-tab="info"    onclick="vehDetailTab('info')">Genel Bilgiler</button>
-          <button class="veh-detail-tab"        data-tab="docs"    onclick="vehDetailTab('docs')">Evrak Arşivi</button>
-          <button class="veh-detail-tab"        data-tab="service" onclick="vehDetailTab('service')">Servis &amp; Bakım</button>
-          <button class="veh-detail-tab"        data-tab="tasks"   onclick="vehDetailTab('tasks')">Görevler</button>
+          <button class="veh-detail-tab active" data-tab="info"      onclick="vehDetailTab('info')">Genel Bilgiler</button>
+          <button class="veh-detail-tab"        data-tab="docs"      onclick="vehDetailTab('docs')">Evrak Arşivi</button>
+          <button class="veh-detail-tab"        data-tab="service"   onclick="vehDetailTab('service')">Servis &amp; Bakım</button>
+          <button class="veh-detail-tab"        data-tab="processes" onclick="vehDetailTab('processes')">Süreçler</button>
+          <button class="veh-detail-tab"        data-tab="tasks"     onclick="vehDetailTab('tasks')">Tekil Görevler</button>
         </div>
-        <div id="veh-detail-info"    class="veh-detail-pane active"></div>
-        <div id="veh-detail-docs"    class="veh-detail-pane"></div>
-        <div id="veh-detail-service" class="veh-detail-pane"></div>
-        <div id="veh-detail-tasks"   class="veh-detail-pane"></div>
+        <div id="veh-detail-info"      class="veh-detail-pane active"></div>
+        <div id="veh-detail-docs"      class="veh-detail-pane"></div>
+        <div id="veh-detail-service"   class="veh-detail-pane"></div>
+        <div id="veh-detail-processes" class="veh-detail-pane"></div>
+        <div id="veh-detail-tasks"     class="veh-detail-pane"></div>
       </section>
 
       <!-- ---- AYARLAR ---- -->
@@ -957,6 +959,10 @@
       </div>
       <div class="modal-body">
         <form id="veh-form-start-template" onsubmit="vehSaveFromTemplate(event)">
+          <div class="form-group" id="vst-vehicle-group">
+            <label class="form-label">Araç *</label>
+            <select id="vst-vehicle" required></select>
+          </div>
           <div class="form-group">
             <label class="form-label">Şablon *</label>
             <select id="vst-template" required onchange="vehPreviewTemplateTask()"></select>
@@ -966,7 +972,6 @@
             <input type="date" id="vst-start" required>
           </div>
           <div id="vst-preview" style="font-size:12px;color:var(--hr-text2);margin-top:4px"></div>
-          <input type="hidden" id="vst-vehicle-id">
           <div class="modal-footer" style="padding:0;margin-top:16px">
             <button type="button" class="btn btn-secondary" onclick="hrCloseModal('veh-modal-start-template')">İptal</button>
             <button type="submit" class="btn btn-primary">Başlat</button>
