@@ -8,8 +8,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>AuroraNova - Yaratıcılık Yenilikle Buluşuyor | İzmir Dijital Ajans</title>
     <meta name="description" content="AuroraNova — İzmir merkezli dijital ajans. Web geliştirme, marka tasarımı, SEO, dijital pazarlama ve yapay zeka entegrasyonu. Avrupa tasarım kalitesiyle dijital varlığınızı dönüştürüyoruz.">
-    <link rel="alternate" hreflang="tr" href="https://auroranovaai.com/">
-    <link rel="alternate" hreflang="en" href="https://auroranovaai.com/">
+    <link rel="alternate" hreflang="tr" href="https://auroranovaai.com/blog/tr">
+    <link rel="alternate" hreflang="en" href="https://auroranovaai.com/blog/en">
     <link rel="alternate" hreflang="x-default" href="https://auroranovaai.com/">
     <!-- Open Graph -->
     <meta property="og:type" content="website">
@@ -29,7 +29,7 @@
       "description": "Avrupa tasarım kalitesiyle yenilikçi dijital çözümler sunan ajans.",
       "url": "https://auroranovaai.com",
       "logo": "https://auroranovaai.com/android-chrome-512x512.png",
-      "email": "inanc.eser@auroranovaai.com",
+      "email": "tutku.eser@auroranovaai.com",
       "address": {
         "@type": "PostalAddress",
         "addressLocality": "İzmir",
@@ -51,6 +51,15 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
 <link rel="shortcut icon" href="/favicon.ico">
+<script>
+    (function() {
+        const lang = localStorage.getItem('auroranova_lang') || (navigator.language.startsWith('tr') ? 'tr' : 'en');
+        document.documentElement.lang = lang;
+        if (lang === 'tr') {
+            document.documentElement.style.visibility = 'hidden';
+        }
+    })();
+</script>
 
 <!-- Apple -->
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
@@ -146,7 +155,7 @@
             <p>Smart automation and AI-powered tools that enhance creativity and productivity without replacing human innovation.</p>
         </div>
 
-        <div class="scroll-indicator"></div>
+        <div class="scroll-indicator"><span data-translate="hero.scroll">Scroll to explore</span></div>
     </section>
 
     <!-- Story Section -->
@@ -262,180 +271,180 @@
 
             <div class="blog-grid">
                 <!-- BLOG_POST_01 -->
-                <article class="blog-card" onclick="openBlogPost('BLOG_POST_01')">
+                <a href="blog/blog-post-01.html" class="blog-card blog-card-link" style="display: block; text-decoration: none; color: inherit" onclick="event.preventDefault(); openBlogPost('BLOG_POST_01')">
                     <div class="blog-meta">
                         <span class="blog-category">Design Trends</span>
                         <span>January 25, 2025</span>
                     </div>
                     <h3>The Future of Digital Design: Aurora-Inspired Aesthetics</h3>
                     <p>Discover how natural phenomena like the Northern Lights are inspiring a new wave of digital design that combines organic beauty with technological precision.</p>
-                    <a href="#" onclick="event.stopPropagation(); openBlogPost('BLOG_POST_01')" class="read-more">Read more →</a>
-                </article>
+                    <span onclick="event.stopPropagation(); openBlogPost('BLOG_POST_01')" class="read-more">Read more →</span>
+                </a>
 
                 <!-- BLOG_POST_02 -->
-                <article class="blog-card" onclick="openBlogPost('BLOG_POST_02')">
+                <a href="blog/blog-post-02.html" class="blog-card blog-card-link" style="display: block; text-decoration: none; color: inherit" onclick="event.preventDefault(); openBlogPost('BLOG_POST_02')">
                     <div class="blog-meta">
                         <span class="blog-category">AI Innovation</span>
                         <span>January 20, 2025</span>
                     </div>
                     <h3>AI-Powered Creativity: Enhancing Human Design</h3>
                     <p>How artificial intelligence is revolutionizing the creative process while preserving the essential human touch that makes design truly meaningful.</p>
-                    <a href="#" onclick="event.stopPropagation(); openBlogPost('BLOG_POST_02')" class="read-more">Read more →</a>
-                </article>
+                    <span onclick="event.stopPropagation(); openBlogPost('BLOG_POST_02')" class="read-more">Read more →</span>
+                </a>
 
                 <!-- BLOG_POST_03 -->
-                <article class="blog-card" onclick="openBlogPost('BLOG_POST_03')">
+                <a href="blog/blog-post-03.html" class="blog-card blog-card-link" style="display: block; text-decoration: none; color: inherit" onclick="event.preventDefault(); openBlogPost('BLOG_POST_03')">
                     <div class="blog-meta">
                         <span class="blog-category">Web Development</span>
                         <span>January 15, 2025</span>
                     </div>
                     <h3>Building Immersive Web Experiences</h3>
                     <p>The technical and creative considerations behind crafting websites that captivate users and drive meaningful engagement in 2025.</p>
-                    <a href="#" onclick="event.stopPropagation(); openBlogPost('BLOG_POST_03')" class="read-more">Read more →</a>
-                </article>
+                    <span onclick="event.stopPropagation(); openBlogPost('BLOG_POST_03')" class="read-more">Read more →</span>
+                </a>
 
                 <!-- BLOG_POST_04 -->
-                <article class="blog-card" onclick="openBlogPost('BLOG_POST_04')">
+                <a href="blog/blog-post-04.html" class="blog-card blog-card-link" style="display: block; text-decoration: none; color: inherit" onclick="event.preventDefault(); openBlogPost('BLOG_POST_04')">
                     <div class="blog-meta">
                         <span class="blog-category">Brand Strategy</span>
                         <span>January 10, 2025</span>
                     </div>
                     <h3>European Design Philosophy in Digital Branding</h3>
                     <p>How centuries of European design tradition inform modern digital branding strategies that resonate across cultures and generations.</p>
-                    <a href="#" onclick="event.stopPropagation(); openBlogPost('BLOG_POST_04')" class="read-more">Read more →</a>
-                </article>
+                    <span onclick="event.stopPropagation(); openBlogPost('BLOG_POST_04')" class="read-more">Read more →</span>
+                </a>
 
                 <!-- BLOG_POST_05 -->
-                <article class="blog-card" onclick="openBlogPost('BLOG_POST_05')">
+                <a href="blog/blog-post-05.html" class="blog-card blog-card-link" style="display: block; text-decoration: none; color: inherit" onclick="event.preventDefault(); openBlogPost('BLOG_POST_05')">
                     <div class="blog-meta">
                         <span class="blog-category">Local SEO</span>
                         <span>March 15, 2025</span>
                     </div>
                     <h3>How Much Does a Website Cost in Izmir? (2025 Updated Prices)</h3>
                     <p>Website prices in Izmir vary greatly depending on scope, design complexity and desired features. What you need to know to set a realistic budget.</p>
-                    <a href="#" onclick="event.stopPropagation(); openBlogPost('BLOG_POST_05')" class="read-more">Read more →</a>
-                </article>
+                    <span onclick="event.stopPropagation(); openBlogPost('BLOG_POST_05')" class="read-more">Read more →</span>
+                </a>
 
                 <!-- BLOG_POST_06 -->
-                <article class="blog-card" onclick="openBlogPost('BLOG_POST_06')">
+                <a href="blog/blog-post-06.html" class="blog-card blog-card-link" style="display: block; text-decoration: none; color: inherit" onclick="event.preventDefault(); openBlogPost('BLOG_POST_06')">
                     <div class="blog-meta">
                         <span class="blog-category">Digital Marketing</span>
                         <span>March 10, 2025</span>
                     </div>
                     <h3>Digital Marketing Guide for Izmir Businesses</h3>
                     <p>Which sectors in Izmir benefit most from digital marketing, where to start, and how to avoid the most common costly mistakes.</p>
-                    <a href="#" onclick="event.stopPropagation(); openBlogPost('BLOG_POST_06')" class="read-more">Read more →</a>
-                </article>
+                    <span onclick="event.stopPropagation(); openBlogPost('BLOG_POST_06')" class="read-more">Read more →</span>
+                </a>
 
                 <!-- BLOG_POST_07 -->
-                <article class="blog-card" onclick="openBlogPost('BLOG_POST_07')">
+                <a href="blog/blog-post-07.html" class="blog-card blog-card-link" style="display: block; text-decoration: none; color: inherit" onclick="event.preventDefault(); openBlogPost('BLOG_POST_07')">
                     <div class="blog-meta">
                         <span class="blog-category">Web Design</span>
                         <span>March 5, 2025</span>
                     </div>
                     <h3>What Are Izmir Businesses Without a Website Losing?</h3>
                     <p>In 2025, not having a website is no longer just a missed opportunity — it means losing customers, credibility and competitive advantage.</p>
-                    <a href="#" onclick="event.stopPropagation(); openBlogPost('BLOG_POST_07')" class="read-more">Read more →</a>
-                </article>
+                    <span onclick="event.stopPropagation(); openBlogPost('BLOG_POST_07')" class="read-more">Read more →</span>
+                </a>
 
                 <!-- BLOG_POST_08 -->
-                <article class="blog-card" onclick="openBlogPost('BLOG_POST_08')">
+                <a href="blog/blog-post-08.html" class="blog-card blog-card-link" style="display: block; text-decoration: none; color: inherit" onclick="event.preventDefault(); openBlogPost('BLOG_POST_08')">
                     <div class="blog-meta">
                         <span class="blog-category">Brand Design</span>
                         <span>February 28, 2025</span>
                     </div>
                     <h3>Why Corporate Identity Design Is Not Just a Logo</h3>
                     <p>A logo is only the tip of the iceberg. True brand identity shows itself in every color, typeface, tone of voice and customer touchpoint.</p>
-                    <a href="#" onclick="event.stopPropagation(); openBlogPost('BLOG_POST_08')" class="read-more">Read more →</a>
-                </article>
+                    <span onclick="event.stopPropagation(); openBlogPost('BLOG_POST_08')" class="read-more">Read more →</span>
+                </a>
 
                 <!-- BLOG_POST_09 -->
-                <article class="blog-card" onclick="openBlogPost('BLOG_POST_09')">
+                <a href="blog/blog-post-09.html" class="blog-card blog-card-link" style="display: block; text-decoration: none; color: inherit" onclick="event.preventDefault(); openBlogPost('BLOG_POST_09')">
                     <div class="blog-meta">
                         <span class="blog-category">SEO</span>
                         <span>February 24, 2025</span>
                     </div>
                     <h3>What Is SEO? How Does an Izmir Business Rank Higher on Google?</h3>
                     <p>SEO is one of the highest-return digital investments a local business can make. How it works and tips for competing in Izmir.</p>
-                    <a href="#" onclick="event.stopPropagation(); openBlogPost('BLOG_POST_09')" class="read-more">Read more →</a>
-                </article>
+                    <span onclick="event.stopPropagation(); openBlogPost('BLOG_POST_09')" class="read-more">Read more →</span>
+                </a>
 
                 <!-- BLOG_POST_10 -->
-                <article class="blog-card" onclick="openBlogPost('BLOG_POST_10')">
+                <a href="blog/blog-post-10.html" class="blog-card blog-card-link" style="display: block; text-decoration: none; color: inherit" onclick="event.preventDefault(); openBlogPost('BLOG_POST_10')">
                     <div class="blog-meta">
                         <span class="blog-category">Web Design</span>
                         <span>February 20, 2025</span>
                     </div>
                     <h3>7 Things to Watch Out for When Getting a Website Built</h3>
                     <p>Most website projects go wrong not because of bad developers but because of a vague brief from the start. Ask these questions before signing.</p>
-                    <a href="#" onclick="event.stopPropagation(); openBlogPost('BLOG_POST_10')" class="read-more">Read more →</a>
-                </article>
+                    <span onclick="event.stopPropagation(); openBlogPost('BLOG_POST_10')" class="read-more">Read more →</span>
+                </a>
 
                 <!-- BLOG_POST_11 -->
-                <article class="blog-card" onclick="openBlogPost('BLOG_POST_11')">
+                <a href="blog/blog-post-11.html" class="blog-card blog-card-link" style="display: block; text-decoration: none; color: inherit" onclick="event.preventDefault(); openBlogPost('BLOG_POST_11')">
                     <div class="blog-meta">
                         <span class="blog-category">Digital Marketing</span>
                         <span>February 15, 2025</span>
                     </div>
                     <h3>Which Digital Marketing Channel Works, Which Is a Waste of Money?</h3>
                     <p>Google Ads, social media, SEO, email — each has its place, but the right mix depends on your sector, audience and budget.</p>
-                    <a href="#" onclick="event.stopPropagation(); openBlogPost('BLOG_POST_11')" class="read-more">Read more →</a>
-                </article>
+                    <span onclick="event.stopPropagation(); openBlogPost('BLOG_POST_11')" class="read-more">Read more →</span>
+                </a>
 
                 <!-- BLOG_POST_12 -->
-                <article class="blog-card" onclick="openBlogPost('BLOG_POST_12')">
+                <a href="blog/blog-post-12.html" class="blog-card blog-card-link" style="display: block; text-decoration: none; color: inherit" onclick="event.preventDefault(); openBlogPost('BLOG_POST_12')">
                     <div class="blog-meta">
                         <span class="blog-category">AI</span>
                         <span>February 10, 2025</span>
                     </div>
                     <h3>How Has AI Changed Web Design?</h3>
                     <p>AI tools have significantly accelerated design processes, but the gap between AI-generated and human design is still clearly visible.</p>
-                    <a href="#" onclick="event.stopPropagation(); openBlogPost('BLOG_POST_12')" class="read-more">Read more →</a>
-                </article>
+                    <span onclick="event.stopPropagation(); openBlogPost('BLOG_POST_12')" class="read-more">Read more →</span>
+                </a>
 
                 <!-- BLOG_POST_13 -->
-                <article class="blog-card" onclick="openBlogPost('BLOG_POST_13')">
+                <a href="blog/blog-post-13.html" class="blog-card blog-card-link" style="display: block; text-decoration: none; color: inherit" onclick="event.preventDefault(); openBlogPost('BLOG_POST_13')">
                     <div class="blog-meta">
                         <span class="blog-category">AI</span>
                         <span>February 5, 2025</span>
                     </div>
                     <h3>AI Tools for Your Business: Where Should You Start?</h3>
                     <p>You don't need a tech team to benefit from AI. Practical starting points for small and medium-sized businesses in 2025.</p>
-                    <a href="#" onclick="event.stopPropagation(); openBlogPost('BLOG_POST_13')" class="read-more">Read more →</a>
-                </article>
+                    <span onclick="event.stopPropagation(); openBlogPost('BLOG_POST_13')" class="read-more">Read more →</span>
+                </a>
 
                 <!-- BLOG_POST_14 -->
-                <article class="blog-card" onclick="openBlogPost('BLOG_POST_14')">
+                <a href="blog/blog-post-14.html" class="blog-card blog-card-link" style="display: block; text-decoration: none; color: inherit" onclick="event.preventDefault(); openBlogPost('BLOG_POST_14')">
                     <div class="blog-meta">
                         <span class="blog-category">Design Philosophy</span>
                         <span>January 30, 2025</span>
                     </div>
                     <h3>Why Does European Design Aesthetics Make a Difference?</h3>
                     <p>From Bauhaus to Scandinavian minimalism and Italian elegance — centuries of European design heritage shapes our perspective on every digital project.</p>
-                    <a href="#" onclick="event.stopPropagation(); openBlogPost('BLOG_POST_14')" class="read-more">Read more →</a>
-                </article>
+                    <span onclick="event.stopPropagation(); openBlogPost('BLOG_POST_14')" class="read-more">Read more →</span>
+                </a>
 
                 <!-- BLOG_POST_15 -->
-                <article class="blog-card" onclick="openBlogPost('BLOG_POST_15')">
+                <a href="blog/blog-post-15.html" class="blog-card blog-card-link" style="display: block; text-decoration: none; color: inherit" onclick="event.preventDefault(); openBlogPost('BLOG_POST_15')">
                     <div class="blog-meta">
                         <span class="blog-category">Brand</span>
                         <span>January 27, 2025</span>
                     </div>
                     <h3>Our Design Philosophy Inspired by the Northern Lights</h3>
                     <p>The name AuroraNova carries our entire visual philosophy. We explained why we chose Aurora as our creative north star and what it means in practice.</p>
-                    <a href="#" onclick="event.stopPropagation(); openBlogPost('BLOG_POST_15')" class="read-more">Read more →</a>
-                </article>
+                    <span onclick="event.stopPropagation(); openBlogPost('BLOG_POST_15')" class="read-more">Read more →</span>
+                </a>
 
                 <!-- BLOG_POST_16 -->
-                <article class="blog-card" onclick="openBlogPost('BLOG_POST_16')">
+                <a href="blog/blog-post-16.html" class="blog-card blog-card-link" style="display: block; text-decoration: none; color: inherit" onclick="event.preventDefault(); openBlogPost('BLOG_POST_16')">
                     <div class="blog-meta">
                         <span class="blog-category">Web Design</span>
                         <span>January 22, 2025</span>
                     </div>
                     <h3>What Is the Difference Between a Good and a Bad Website?</h3>
                     <p>Speed, mobile compatibility, user experience, visual consistency — a good website gets all of them right at the same time; most sites can't.</p>
-                    <a href="#" onclick="event.stopPropagation(); openBlogPost('BLOG_POST_16')" class="read-more">Read more →</a>
-                </article>
+                    <span onclick="event.stopPropagation(); openBlogPost('BLOG_POST_16')" class="read-more">Read more →</span>
+                </a>
             </div>
         </div>
     </section>

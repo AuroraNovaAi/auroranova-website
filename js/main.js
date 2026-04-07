@@ -61,52 +61,11 @@
         };
 
         // BLOG CONTENT DATABASE
-        const blogContent = {
-            BLOG_POST_01: {
-                category: "Design Trends",
-                date: "January 25, 2025",
-                title: "The Future of Digital Design: Aurora-Inspired Aesthetics",
-                excerpt: "Discover how natural phenomena like the Northern Lights are inspiring a new wave of digital design that combines organic beauty with technological precision.",
-                content: "The Northern Lights have captivated humanity for millennia, their ethereal dance across the polar skies representing nature's most spectacular light show. Today, forward-thinking designers are drawing inspiration from these celestial phenomena to create digital experiences that feel both otherworldly and deeply human. Aurora-inspired design represents more than just a visual trend—it's a philosophy that embraces fluidity, dynamism, and the seamless blend of natural beauty with technological innovation. This approach to design prioritizes organic movement, gradient transitions, and luminous effects that mirror the aurora's mystical qualities while serving modern usability requirements.",
-                author: "AuroraNova Design Team",
-                readTime: "5 min read",
-                tags: ["Design", "Trends", "Aurora", "Digital Art"]
-            },
-            BLOG_POST_02: {
-                category: "AI Innovation",
-                date: "January 20, 2025",
-                title: "AI-Powered Creativity: Enhancing Human Design",
-                excerpt: "How artificial intelligence is revolutionizing the creative process while preserving the essential human touch that makes design truly meaningful.",
-                content: "The relationship between artificial intelligence and human creativity is not one of replacement, but of enhancement and collaboration. At AuroraNova, we've witnessed firsthand how AI tools can amplify human creativity, providing designers with new capabilities while preserving the intuition, empathy, and cultural understanding that only humans can bring to the creative process. AI excels at pattern recognition, rapid iteration, and handling repetitive tasks, freeing human designers to focus on strategic thinking, emotional resonance, and innovative problem-solving. This symbiotic relationship is creating a new era of design where technology serves as an intelligent partner rather than a replacement for human creativity.",
-                author: "Tech Innovation Team",
-                readTime: "7 min read",
-                tags: ["AI", "Creativity", "Innovation", "Design Process"]
-            },
-            BLOG_POST_03: {
-                category: "Web Development",
-                date: "January 15, 2025",
-                title: "Building Immersive Web Experiences",
-                excerpt: "The technical and creative considerations behind crafting websites that captivate users and drive meaningful engagement in 2025.",
-                content: "Creating immersive web experiences in 2025 requires a delicate balance of cutting-edge technology and user-centered design principles. Modern web browsers now support advanced features like WebGL, WebXR, and sophisticated CSS animations that enable developers to create experiences that were once impossible on the web. However, the key to successful immersive design lies not in using every available technology, but in carefully selecting the right tools to enhance the user's journey. Performance optimization, accessibility considerations, and progressive enhancement ensure that these immersive experiences are inclusive and functional across diverse devices and connection speeds.",
-                author: "Development Team",
-                readTime: "6 min read",
-                tags: ["Web Development", "UX", "Performance", "Technology"]
-            },
-            BLOG_POST_04: {
-                category: "Brand Strategy",
-                date: "January 10, 2025",
-                title: "European Design Philosophy in Digital Branding",
-                excerpt: "How centuries of European design tradition inform modern digital branding strategies that resonate across cultures and generations.",
-                content: "European design philosophy has shaped aesthetic sensibilities for centuries, from the mathematical precision of classical architecture to the functional beauty of Bauhaus principles. In the digital age, these time-tested design philosophies provide a foundation for creating brand identities that feel both timeless and contemporary. The European approach to design emphasizes craftsmanship, attention to detail, and the belief that good design should be both beautiful and functional. When applied to digital branding, these principles result in visual identities that possess depth, sophistication, and enduring appeal across diverse global markets.",
-                author: "Brand Strategy Team",
-                readTime: "8 min read",
-                tags: ["Branding", "European Design", "Philosophy", "Strategy"]
-            }
-        };
+        let blogContent = Object.assign({}, blogContentEN);
 
         // CONTACT INFORMATION
         const contactInfo = {
-            email: "inanc.eser@auroranovaai.com",
+            email: "tutku.eser@auroranovaai.com",
             location: "Izmir, Turkey",
             phone: "+90 XXX XXX XXXX",
             linkedin: "https://linkedin.com/company/auroranova",
@@ -150,6 +109,7 @@
                         max-width: 800px;
                         max-height: 90vh;
                         overflow-y: auto;
+                        -webkit-overflow-scrolling: touch;
                         color: white;
                         text-align: center;
                     " onclick="event.stopPropagation()">
@@ -212,6 +172,7 @@
                         max-width: 900px;
                         max-height: 90vh;
                         overflow-y: auto;
+                        -webkit-overflow-scrolling: touch;
                         color: white;
                         text-align: left;
                     " onclick="event.stopPropagation()">
@@ -429,7 +390,10 @@
                 const service = e.target.dataset.service;
                 const serviceName = service.charAt(0).toUpperCase() + service.slice(1);
 
+                document.querySelectorAll('.star-notification').forEach(n => n.remove());
+
                 const notification = document.createElement('div');
+                notification.className = 'star-notification';
                 notification.innerHTML = `
                     <div style="
                         position: fixed;
@@ -462,11 +426,13 @@
                 `;
                 document.body.appendChild(notification);
 
-                setTimeout(() => {
-                    if (notification.parentElement) {
-                        notification.remove();
-                    }
-                }, 5000);
+                const removeNotif = () => {
+                    if (notification.parentElement) notification.remove();
+                    window.removeEventListener('scroll', removeNotif);
+                };
+                window.addEventListener('scroll', removeNotif, { once: true, passive: true });
+
+                setTimeout(removeNotif, 5000);
             });
         });
 
@@ -654,7 +620,7 @@
                     BLOG_POST_03: { category: "Web Development", date: "January 15, 2025", title: "Building Immersive Web Experiences", excerpt: "The technical and creative considerations behind crafting websites that captivate users and drive meaningful engagement in 2025.", content: "Creating immersive web experiences in 2025 requires a delicate balance of cutting-edge technology and user-centered design principles. Modern web browsers now support advanced features like WebGL, WebXR, and sophisticated CSS animations that enable developers to create experiences that were once impossible on the web.", author: "Development Team", readTime: "6 min read", tags: ["Web Development", "UX", "Performance", "Technology"] },
                     BLOG_POST_04: { category: "Brand Strategy", date: "January 10, 2025", title: "European Design Philosophy in Digital Branding", excerpt: "How centuries of European design tradition inform modern digital branding strategies that resonate across cultures and generations.", content: "European design philosophy has shaped aesthetic sensibilities for centuries, from the mathematical precision of classical architecture to the functional beauty of Bauhaus principles. In the digital age, these time-tested design philosophies provide a foundation for creating brand identities that feel both timeless and contemporary.", author: "Brand Strategy Team", readTime: "8 min read", tags: ["Branding", "European Design", "Philosophy", "Strategy"] }
                 });
-                Object.assign(blogContent, blogContentEN_new);
+                Object.assign(blogContent, blogContentEN);
             }
         }
 
@@ -668,7 +634,7 @@
         const servicesBtnEl = document.querySelector('.services-btn');
         if (servicesDropdown && servicesBtnEl) {
             servicesBtnEl.addEventListener('click', (e) => {
-                if (window.innerWidth <= 768) {
+                if (window.innerWidth <= 1024) {
                     e.stopPropagation();
                     servicesDropdown.classList.toggle('open');
                 }
@@ -711,7 +677,7 @@
         // Service stars: touch desteği (mobilde hover yok)
         stars.forEach(star => {
             star.addEventListener('touchstart', (e) => {
-                if (window.innerWidth > 768) return;
+                if (window.innerWidth > 1024) return;
                 e.preventDefault();
                 const service = star.dataset.service;
                 const info = document.getElementById(service + '-info');
@@ -734,7 +700,7 @@
 
         // Modallarda mobile padding düzeltmesi
         function applyMobileModalFix(container) {
-            if (window.innerWidth <= 768) {
+            if (window.innerWidth <= 1024) {
                 const inner = container.querySelector('[onclick="event.stopPropagation()"]');
                 if (inner) {
                     inner.style.padding = '20px';
@@ -759,3 +725,4 @@
 
         // Initialize language on page load
         setLanguage(currentLang);
+        document.documentElement.style.visibility = 'visible';

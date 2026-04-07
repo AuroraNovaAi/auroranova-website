@@ -15,7 +15,8 @@ const translations = {
         },
         hero: {
             subtitle: "Where Creativity Meets Innovation",
-            tagline: "Aurora-inspired digital excellence transforming visions into digital reality through European design excellence and cutting-edge technology"
+            tagline: "Aurora-inspired digital excellence transforming visions into digital reality through European design excellence and cutting-edge technology",
+            scroll: "Scroll to explore"
         },
         services: {
             branding: {
@@ -172,7 +173,8 @@ const translations = {
         },
         hero: {
             subtitle: "Yaratıcılık Yenilikle Buluşuyor",
-            tagline: "Aurora ilhamlı dijital mükemmellik; Avrupa tasarım kalitesi ve ileri teknoloji ile vizyonları dijital gerçeğe dönüştürüyor"
+            tagline: "Aurora ilhamlı dijital mükemmellik; Avrupa tasarım kalitesi ve ileri teknoloji ile vizyonları dijital gerçeğe dönüştürüyor",
+            scroll: "Keşfetmek için kaydırın"
         },
         services: {
             branding: {
@@ -382,7 +384,7 @@ const blogContentTR = {
         date: "25 Ocak 2025",
         title: "Dijital Tasarımın Geleceği: Aurora İlhamlı Estetik",
         excerpt: "Kuzey Işıkları gibi doğal fenomenlerin, organik güzelliği teknolojik hassasiyetle birleştiren yeni bir dijital tasarım dalgasına nasıl ilham verdiğini keşfedin.",
-        content: "Kuzey Işıkları, kutup semalarındaki büyüleyici dansıyla insanlığı bin yıllardır etkilemiştir. Bugün ileri görüşlü tasarımcılar, bu göksel fenomenlerden ilham alarak hem başka dünyalı hem de derinden insani hissettiren dijital deneyimler yaratıyor. Aurora ilhamlı tasarım, yalnızca görsel bir trendi değil; akışkanlığı, dinamizmi ve doğal güzelliğin teknolojik yenilikle kusursuz harmanını benimseyen bir felsefeyi temsil eder.",
+        content: "Kuzey Işıkları, kutup semalarındaki büyüleyici dansıyla insanlığı bin yıllardır etkilemiştir. Bugün ileri görüşlü tasarımcılar, bu göksel fenomenlerden ilham alarak hem başka dünyalı hem de derinden insani hissettiren dijital deneyimler yaratıyor. Aurora ilhamlı tasarım, yalnızca görsel bir trendi değil; akışkanlığı, dinamizmi ve doğal güzelliğin teknolojik yenilikle kusursuz harmanını benimseyen bir felsefeyi temsil eder. Renk geçişlerinin (gradient) yumuşaklığı, koyu arka planlar üzerinde öne çıkan parlak tipografi ve elementlerin ekranda adeta süzülürcesine hareket etmesi, bu akımın temel taşlarıdır. AuroraNova olarak biz de bu vizyonu benimsiyoruz; çünkü bir kurumsal kimlik veya web sitesi, dümdüz bir bilgi panosu olmaktan çıkıp ziyaretçiye estetik bir deneyim yaşatmalıdır. İnsan beyni, doğanın akışkan geometrisine ve ışık oyunlarına her zaman daha olumlu tepki verir. Bu felsefeyle tasarlanan modern arayüzler, kullanıcıyı yormadan saatlerce içerikte gezinmesini sağlayacak kadar zarif ve etkileyicidir.",
         author: "AuroraNova Tasarım Ekibi",
         readTime: "5 dk okuma",
         tags: ["Tasarım", "Trendler", "Aurora", "Dijital Sanat"]
@@ -392,7 +394,7 @@ const blogContentTR = {
         date: "20 Ocak 2025",
         title: "Yapay Zeka Destekli Yaratıcılık: İnsan Tasarımını Güçlendirmek",
         excerpt: "Yapay zekanın yaratıcı süreci nasıl devrimleştirdiğini ve tasarımı gerçekten anlamlı kılan temel insani dokunuşu nasıl koruduğunu öğrenin.",
-        content: "Yapay zeka ile insan yaratıcılığı arasındaki ilişki bir ikame değil; bir güçlendirme ve iş birliğidir. AuroraNova'da yapay zeka araçlarının, insanların yaratıcı sürece getirdiği sezgiyi, empatiyi ve kültürel anlayışı korurken insan yaratıcılığını nasıl yükseltebileceğine bizzat tanıklık ettik. Yapay zeka örüntü tanıma, hızlı yineleme ve tekrarlayan görevleri yönetmede mükemmeldir; bu da insan tasarımcıların stratejik düşünmeye, duygusal rezonansa ve yenilikçi problem çözmeye odaklanmasına olanak tanır.",
+        content: "Yapay zeka ile insan yaratıcılığı arasındaki ilişki bir ikame değil; bir güçlendirme ve iş birliğidir. AuroraNova'da yapay zeka araçlarının, insanların yaratıcı sürece getirdiği sezgiyi, empatiyi ve kültürel anlayışı korurken insan yaratıcılığını nasıl yükseltebileceğine bizzat tanıklık ettik. Yapay zeka örüntü tanıma, hızlı yineleme ve tekrarlayan görevleri yönetmede mükemmeldir; bu da insan tasarımcıların stratejik düşünmeye, duygusal rezonansa ve yenilikçi problem çözmeye odaklanmasına olanak tanır. Bir logo tasarımının konsept araştırması eskiden günler sürerken, bugün algoritmalar sayesinde dakikalar içinde onlarca güçlü varyasyon elde edilebiliyor. Ancak o varyasyonlar arasından hangisinin markanın ruhunu en iyi yansıttığını seçmek, o logoyu bir hikayeye dönüştürmek hâlâ tamamen insani bir beceridir. Midjourney veya ChatGPT gibi sistemler dijital fırçalarımızdır; fırça ne kadar gelişmiş olursa olsun asıl başyapıtı çıkaran sanatçının vizyonu ve tecrübesidir.",
         author: "Teknoloji ve Yenilik Ekibi",
         readTime: "7 dk okuma",
         tags: ["Yapay Zeka", "Yaratıcılık", "İnovasyon", "Tasarım Süreci"]
@@ -402,7 +404,7 @@ const blogContentTR = {
         date: "15 Ocak 2025",
         title: "Sürükleyici Web Deneyimleri Oluşturmak",
         excerpt: "2025'te kullanıcıları büyüleyen ve anlamlı etkileşim sağlayan web siteleri tasarlamanın teknik ve yaratıcı boyutları.",
-        content: "2025'te sürükleyici web deneyimleri oluşturmak, son teknoloji ile kullanıcı merkezli tasarım ilkeleri arasında hassas bir denge gerektirir. Modern web tarayıcıları artık WebGL, WebXR ve sofistike CSS animasyonları gibi gelişmiş özellikleri destekleyerek geliştiricilerin bir zamanlar imkânsız olan deneyimler yaratmasına olanak tanıyor. Ancak başarılı sürükleyici tasarımın anahtarı, mevcut her teknolojiyi kullanmak değil; kullanıcının yolculuğunu zenginleştirmek için doğru araçları dikkatle seçmektir.",
+        content: "2025'te sürükleyici web deneyimleri oluşturmak, son teknoloji ile kullanıcı merkezli tasarım ilkeleri arasında hassas bir denge gerektirir. Modern web tarayıcıları artık WebGL, WebXR ve sofistike CSS animasyonları gibi gelişmiş özellikleri destekleyerek geliştiricilerin bir zamanlar imkânsız olan deneyimler yaratmasına olanak tanıyor. Ancak başarılı sürükleyici tasarımın anahtarı, mevcut her teknolojiyi kullanmak değil; kullanıcının yolculuğunu zenginleştirmek için doğru araçları dikkatle seçmektir. Yalnızca havalı göründüğü için eklenen ağır animasyonlar, sayfa yüklenme sürelerini uzatarak ziyaretçinin siteyi terk etmesine (hemen çıkma oranının artmasına) neden olabilir. Gerçek bir Premium web deneyimi, mikro animasyonların kullanıcıyı yönlendirdiği, sayfa geçişlerinin pürüzsüz olduğu ve arka planda SEO ile hız optimizasyonunun kusursuz çalıştığı bir yapıdır. Dünyanın en iyi tasarımını bile yapsanız, Google algoritmaları sitenizin yavaş olduğunu tespit ettiğinde emeğinizin büyük kısmı boşa gidecektir. Bu yüzden kod mimarisi ve sanat, web geliştirmede asimetrik değil ayrılmaz bir bütündür.",
         author: "Geliştirme Ekibi",
         readTime: "6 dk okuma",
         tags: ["Web Geliştirme", "UX", "Performans", "Teknoloji"]
@@ -412,7 +414,7 @@ const blogContentTR = {
         date: "10 Ocak 2025",
         title: "Dijital Markalamada Avrupa Tasarım Felsefesi",
         excerpt: "Asırlık Avrupa tasarım geleneğinin kültürler ve nesiller arasında yankı bulan modern dijital marka stratejilerini nasıl şekillendirdiği.",
-        content: "Avrupa tasarım felsefesi, klasik mimarinin matematiksel hassasiyetinden Bauhaus ilkelerinin işlevsel güzelliğine kadar asırlardır estetik anlayışları şekillendirmiştir. Dijital çağda bu köklü tasarım felsefeleri, hem zamansız hem çağdaş hissettiren marka kimlikleri oluşturmak için temel sağlar. Avrupa'nın tasarıma yaklaşımı zanaatkârlığı, ayrıntıya özeni ve iyi tasarımın hem güzel hem işlevsel olması gerektiği inancını ön plana çıkarır.",
+        content: "Avrupa tasarım felsefesi, klasik mimarinin matematiksel hassasiyetinden Bauhaus ilkelerinin işlevsel güzelliğine kadar asırlardır estetik anlayışları şekillendirmiştir. Dijital çağda bu köklü tasarım felsefeleri, hem zamansız hem çağdaş hissettiren marka kimlikleri oluşturmak için temel sağlar. Avrupa'nın tasarıma yaklaşımı zanaatkârlığı, ayrıntıya özeni ve iyi tasarımın hem güzel hem işlevsel olması gerektiği inancını ön plana çıkarır. Günümüzün dijital branding süreçlerinde, bir markanın tipografisinden (yazı tiplerinden) paletine kadar her detayın markanın evrensel mesajıyla uyumu gözetilmelidir. Karmaşık logolar veya trendlere kurban giden geçici tasarımlar çok çabuk eskirken; minimalist, işlevsel ve evrensel estetiğe dayanan kimlikler on yıllar boyunca değerini korur. AuroraNova'da, yalnızca günümüzün dijital standartlarına uygun değil; beş yıl sonra bile markanızı en güçlü şekilde temsil edecek, zamansız (timeless) ve zarif marka sistemleri kuruyoruz.",
         author: "Marka Stratejisi Ekibi",
         readTime: "8 dk okuma",
         tags: ["Markalama", "Avrupa Tasarımı", "Felsefe", "Strateji"]
@@ -539,7 +541,47 @@ const blogContentTR = {
     }
 };
 
-const blogContentEN_new = {
+const blogContentEN = {
+    BLOG_POST_01: { 
+        category: "Design Trends", 
+        date: "January 25, 2025", 
+        title: "The Future of Digital Design: Aurora-Inspired Aesthetics", 
+        excerpt: "Discover how natural phenomena like the Northern Lights are inspiring a new wave of digital design that combines organic beauty with technological precision.", 
+        content: "The Northern Lights have captivated humanity for millennia, their ethereal dance across the polar skies representing nature's most spectacular light show. Today, forward-thinking designers are drawing inspiration from these celestial phenomena to create digital experiences that feel both otherworldly and deeply human. Aurora-inspired design represents more than just a visual trend—it's a philosophy that embraces fluidity, dynamism, and the seamless blend of natural beauty with technological innovation. The smoothness of color gradients, bright typography standing out against dark backgrounds, and elements seemingly floating on the screen are the cornerstones of this movement. At AuroraNova, we embrace this vision because a corporate identity or website must transcend being a flat information board to become an aesthetic experience for the visitor. The human brain always responds more positively to the fluid geometry and light play of nature. UI crafted with this philosophy is elegant and captivating enough to allow users to navigate content for hours without fatigue.", 
+        author: "AuroraNova Design Team", 
+        readTime: "5 min read", 
+        tags: ["Design", "Trends", "Aurora", "Digital Art"] 
+    },
+    BLOG_POST_02: { 
+        category: "AI Innovation", 
+        date: "January 20, 2025", 
+        title: "AI-Powered Creativity: Enhancing Human Design", 
+        excerpt: "How artificial intelligence is revolutionizing the creative process while preserving the essential human touch that makes design truly meaningful.", 
+        content: "The relationship between artificial intelligence and human creativity is not one of replacement, but of enhancement and collaboration. At AuroraNova, we've witnessed firsthand how AI tools can amplify human creativity, providing designers with new capabilities while preserving the intuition, empathy, and cultural understanding that only humans can bring to the creative process. AI excels at pattern recognition, rapid iteration, and handling repetitive tasks, freeing human designers to focus on strategic thinking, emotional resonance, and innovative problem-solving. While concept research for a logo design used to take days, algorithms today can generate dozens of strong variations in minutes. However, selecting which of those variations best reflects the brand's soul and weaving that logo into a narrative remains an entirely human skill. Systems like Midjourney or ChatGPT are our digital brushes; no matter how advanced the brush is, the true masterpiece emerges from the artist's vision and experience.", 
+        author: "Tech Innovation Team", 
+        readTime: "7 min read", 
+        tags: ["AI", "Creativity", "Innovation", "Design Process"] 
+    },
+    BLOG_POST_03: { 
+        category: "Web Development", 
+        date: "January 15, 2025", 
+        title: "Building Immersive Web Experiences", 
+        excerpt: "The technical and creative considerations behind crafting websites that captivate users and drive meaningful engagement in 2025.", 
+        content: "Creating immersive web experiences in 2025 requires a delicate balance of cutting-edge technology and user-centered design principles. Modern web browsers now support advanced features like WebGL, WebXR, and sophisticated CSS animations that enable developers to create experiences that were once impossible on the web. However, the key to successful immersive design lies not in using every available technology, but in carefully selecting the right tools to enhance the user's journey. Heavy animations added purely for aesthetics can increase page load times, prompting visitors to abandon the site. A genuinely Premium web experience is a structure where micro-animations subtly guide the user, page transitions are flawless, and foundational SEO and speed optimization operate perfectly in the background. Even if you craft the world's finest design, a significant portion of your effort is wasted when Google's algorithms detect slow performance. Therefore, code architecture and art are not asymmetrical elements in web development—they are an inseparable whole.", 
+        author: "Development Team", 
+        readTime: "6 min read", 
+        tags: ["Web Development", "UX", "Performance", "Technology"] 
+    },
+    BLOG_POST_04: { 
+        category: "Brand Strategy", 
+        date: "January 10, 2025", 
+        title: "European Design Philosophy in Digital Branding", 
+        excerpt: "How centuries of European design tradition inform modern digital branding strategies that resonate across cultures and generations.", 
+        content: "European design philosophy has shaped aesthetic sensibilities for centuries, from the mathematical precision of classical architecture to the functional beauty of Bauhaus principles. In the digital age, these time-tested design philosophies provide a foundation for creating brand identities that feel both timeless and contemporary. The European approach to design emphasizes craftsmanship, attention to detail, and the belief that good design should be both beautiful and functional. In today's digital branding processes, every detail—from a brand's typography to its palette—must align with its universal message. While overly complex logos or trend-chasing transient designs quickly become obsolete, identities grounded in minimalist, functional, and universal aesthetics hold their value for decades. At AuroraNova, we establish timeless and elegant brand systems that not only meet today's digital standards but will continue to powerfully represent your brand five or ten years into the future.", 
+        author: "Brand Strategy Team", 
+        readTime: "8 min read", 
+        tags: ["Branding", "European Design", "Philosophy", "Strategy"] 
+    },
     BLOG_POST_05: {
         category: "Local SEO",
         date: "March 15, 2025",
