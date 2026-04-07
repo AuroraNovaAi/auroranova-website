@@ -771,9 +771,7 @@
             /* Video background enabled on mobile */
 
             .hero {
-                background: linear-gradient(135deg, #001122, #002244, #003366);
-                background-size: 400% 400%;
-                animation: auroraGradient 8s ease-in-out infinite;
+                background: transparent;
                 min-height: 100vh;
                 min-height: -webkit-fill-available;
             }
