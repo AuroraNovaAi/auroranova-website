@@ -1008,16 +1008,12 @@ async function renderFinSettings() {
   }
 
   function userRow(u) {
-    const roles = (u.roles||[]).join(', ');
     const perms = u.permissions || {};
-    const hrP = Object.entries(perms).filter(([k])=>k.startsWith('hr.')).map(([k,v])=>`${k.replace('hr.','')}:${v}`).join(', ');
-    const finP = Object.entries(perms).filter(([k])=>k.startsWith('fin.')).map(([k,v])=>`${k.replace('fin.','')}:${v}`).join(', ');
+    const currP = Object.entries(perms).filter(([k])=>k.startsWith('fin.')).map(([k,v])=>`${k.replace('fin.','')}:${v}`).join(', ');
     return `<tr>
       <td><div style="font-weight:500">${u.name||'—'}</div><div style="font-size:12px;opacity:0.5">${u.email||u.uid}</div></td>
-      <td>${roles||'—'}</td>
-      <td style="font-size:12px">${hrP||'—'}</td>
-      <td style="font-size:12px">${finP||'—'}</td>
-      <td style="white-space:nowrap">
+      <td style="font-size:12px">${currP||'—'}</td>
+      <td style="white-space:nowrap;text-align:right">
         <button class="btn btn-sm" onclick="finSettingsEdit('${u.uid}')" style="margin-right:4px">Düzenle</button>
         <button class="btn btn-sm" style="color:#e55" onclick="finSettingsDelete('${u.uid}')">Sil</button>
       </td>
@@ -1034,9 +1030,7 @@ async function renderFinSettings() {
         <table style="width:100%;border-collapse:collapse;font-size:13px">
           <thead><tr style="border-bottom:1px solid var(--fin-border,#333)">
             <th style="text-align:left;padding:8px 12px">Ad / Email</th>
-            <th style="text-align:left;padding:8px 12px">Roller</th>
-            <th style="text-align:left;padding:8px 12px">HR İzinleri</th>
-            <th style="text-align:left;padding:8px 12px">Fin İzinleri</th>
+            <th style="text-align:left;padding:8px 12px">Finance İzinleri</th>
             <th></th>
           </tr></thead>
           <tbody>${users.map(userRow).join('')}</tbody>
@@ -1060,18 +1054,7 @@ async function renderFinSettings() {
             <input type="text" id="fsu-name" style="width:100%;box-sizing:border-box;padding:8px 12px;border-radius:8px;border:1px solid var(--fin-border,#333);background:var(--fin-surface2,#1a1a2e);color:inherit;font-size:13px">
           </div>
           <div>
-            <label style="font-size:12px;opacity:0.7;display:block;margin-bottom:6px">Uygulamalar</label>
-            <div style="display:flex;gap:16px">
-              <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="fsu-role-hr"> HR</label>
-              <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="fsu-role-fin"> Finance</label>
-            </div>
-          </div>
-          <div>
-            <label style="font-size:12px;opacity:0.7;display:block;margin-bottom:4px">HR İzinleri</label>
-            ${permRows('hr', ['personnel','processes','templates','calendar','vehicles','export','settings'])}
-          </div>
-          <div>
-            <label style="font-size:12px;opacity:0.7;display:block;margin-bottom:4px">Fin İzinleri</label>
+            <label style="font-size:12px;opacity:0.7;display:block;margin-bottom:4px">Finance İzinleri</label>
             ${permRows('fin', ['entry','history','compare','companies','export','settings'])}
           </div>
           <input type="hidden" id="fsu-uid">
@@ -1089,8 +1072,6 @@ function finSettingsOpenAdd() {
   document.getElementById('fsu-email').value = '';
   document.getElementById('fsu-name').value = '';
   document.getElementById('fsu-uid').value = '';
-  document.getElementById('fsu-role-hr').checked = false;
-  document.getElementById('fsu-role-fin').checked = false;
   document.querySelectorAll('[id^="fsu-perm-"]').forEach(s => s.value = '');
   document.getElementById('fin-modal-user').style.display = 'flex';
 }
@@ -1104,8 +1085,6 @@ async function finSettingsEdit(uid) {
   document.getElementById('fsu-email').value = u.email || '';
   document.getElementById('fsu-name').value = u.name || '';
   document.getElementById('fsu-uid').value = uid;
-  document.getElementById('fsu-role-hr').checked = (u.roles||[]).includes('hr');
-  document.getElementById('fsu-role-fin').checked = (u.roles||[]).includes('fin');
   const perms = u.permissions || {};
   document.querySelectorAll('[id^="fsu-perm-"]').forEach(s => {
     const key = s.id.replace('fsu-perm-', '').replace(/-(?=[^-]*$)/, '.');
@@ -1120,9 +1099,7 @@ async function finSettingsSave(e) {
   const uid = document.getElementById('fsu-uid').value;
   const email = document.getElementById('fsu-email').value.trim();
   const name = document.getElementById('fsu-name').value.trim();
-  const roles = [];
-  if (document.getElementById('fsu-role-hr').checked) roles.push('hr');
-  if (document.getElementById('fsu-role-fin').checked) roles.push('fin');
+  const roles = ['fin'];
   const permissions = {};
   document.querySelectorAll('[id^="fsu-perm-"]').forEach(s => {
     if (s.value) {
