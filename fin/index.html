@@ -722,6 +722,9 @@ function finSignOut() {
         if (appEl)   appEl.style.display   = 'block';
         if (infoEl)  infoEl.textContent    = user.displayName || user.email || '';
         applyPermissions();
+        if (typeof window.finAppStart === 'function') {
+          window.finAppStart();
+        }
       } catch(e) {
         if (errEl) errEl.textContent = 'Yetki kontrolü başarısız: ' + e.message;
         firebase.auth(_finGetApp()).signOut();

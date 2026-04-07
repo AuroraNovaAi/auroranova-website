@@ -953,7 +953,7 @@ function populateYearSelects() {
 
 // ── Initialise ──
 populateYearSelects();
-(async () => {
+window.finAppStart = async function() {
   await load();
   updateSelects();
   updateActivePill();
@@ -965,7 +965,7 @@ populateYearSelects();
     updateSelects(); updateActivePill();
     renderDash();
   }
-})();
+};
 
 /* ============================================================
    AYARLAR & KULLANICI YÖNETİMİ
