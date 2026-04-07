@@ -760,10 +760,7 @@
            MOBILE (max 768px)
         ============================================ */
         @media (max-width: 768px) {
-            /* Video: iOS Safari -webkit-fill-available fix */
-            .video-background {
-                display: none;
-            }
+            /* Video background enabled on mobile */
 
             .hero {
                 background: linear-gradient(135deg, #001122, #002244, #003366);
@@ -918,12 +915,12 @@
             .photo-card:nth-child(1),
             .photo-card:nth-child(2),
             .photo-card:nth-child(3) {
-                width: calc(100% - 32px) !important;
+                width: 100% !important;
                 height: auto !important;
                 aspect-ratio: 16/9;
-                margin: 0 16px;
+                margin: 0;
                 transform: translateY(60px) !important;
-                transition: all 1s ease;
+                transition: transform 1s cubic-bezier(0.16, 1, 0.3, 1), opacity 1s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
                 transition-delay: 0.3s;
             }
 
@@ -964,17 +961,13 @@
             .blog-card:nth-child(14),
             .blog-card:nth-child(15),
             .blog-card:nth-child(16) {
-                width: 90vw !important;
+                width: 100% !important;
                 min-height: unset !important;
                 transform: translateY(60px) rotate(0deg) !important;
                 transition-delay: 0.3s !important;
             }
 
             .blog-section.visible .blog-card {
-            width: 320px;
-            min-height: 280px;
-            flex: 1 1 300px;
-            max-width: 400px;
                 transform: translateY(0) rotate(0deg) !important;
                 opacity: 1;
             }
