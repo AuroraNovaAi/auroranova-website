@@ -348,33 +348,34 @@
             overflow: hidden;
             position: relative;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+            transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.8s ease-out, box-shadow 0.3s ease;
             opacity: 0;
             cursor: pointer;
             will-change: transform, opacity;
             backface-visibility: hidden;
+            -webkit-font-smoothing: subpixel-antialiased;
         }
 
         /* Original directional animations with varied sizes */
         .photo-card:nth-child(1) {
             width: 280px;
             height: 220px;
-            transform: translateX(-300px);
-            transition-delay: 0.6s;
+            transform: translateX(-150px);
+            transition-delay: 0.1s;
         }
 
         .photo-card:nth-child(2) {
             width: 350px;
             height: 180px;
-            transform: translateY(150px);
-            transition-delay: 1s;
+            transform: translateY(100px);
+            transition-delay: 0.3s;
         }
 
         .photo-card:nth-child(3) {
             width: 240px;
             height: 260px;
-            transform: translateX(300px);
-            transition-delay: 1.4s;
+            transform: translateX(150px);
+            transition-delay: 0.5s;
         }
 
         /* Different sizes for each section */
