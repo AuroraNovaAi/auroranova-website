@@ -648,6 +648,7 @@
             });
 
             // Footer
+            if (t.footer) {
                 const ftTagline  = document.getElementById('footerTagline');
                 const ftBuilt    = document.getElementById('footerBuiltWith');
                 const ftGdpr     = document.getElementById('footerGdpr');
