@@ -37,7 +37,7 @@
             PHOTO_METHOD_03: {
                 title: "Technical Excellence",
                 description: "Cutting-edge development and seamless AI integration",
-                fullContent: "Technical excellence is non-negotiable in our development process. We leverage the latest technologies, frameworks, and AI tools to build solutions that are not only visually stunning but also performant, scalable, and secure. Our code is clean, our architecture is robust, and our integrations are seamless.",
+                fullContent: "Technical excellence is non-negotiable in our development process. We leverage the latest technologies, frameworks, and AI tools to build solutions that are not only visually stunning but also performant, scalable, and secure. Our code is clean, our architecture is robust, and our integrations are seamless.\n\nAll our products run on Google Cloud infrastructure via Firebase — delivering enterprise-grade security, real-time data sync, and GDPR-compliant data handling from European data centres. This means your project benefits from the same reliability that powers millions of global applications, without the enterprise price tag.",
                 image: "https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?w=800&h=600&fit=crop"
             },
             PHOTO_WORK_01: {
@@ -53,10 +53,10 @@
                 image: "assets/yapay-zeka-0704.jpg"
             },
             PHOTO_WORK_03: {
-                title: "Digital Growth",
-                description: "AI-powered solutions for sustainable business growth",
-                fullContent: "Our digital growth strategies combine traditional marketing wisdom with cutting-edge AI technologies. We help businesses scale efficiently through data-driven decision making, automated processes, and intelligent optimization techniques.",
-                image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop"
+                title: "Software & SaaS",
+                description: "Scalable software products built for growth",
+                fullContent: "From custom web applications to fully-featured SaaS platforms, we design and develop software that scales with your business. Our end-to-end development process covers architecture, UX design, backend systems, and ongoing support — turning your product idea into a revenue-generating reality.\n\nBuilt on Google Cloud & Firebase infrastructure: real-time databases, secure authentication, scalable hosting, and GDPR-compliant data storage in European data centres. You get enterprise-level reliability from day one.",
+                image: "https://images.unsplash.com/photo-1555421689-d68471e189f2?w=800&h=600&fit=crop"
             }
         };
 
@@ -538,7 +538,7 @@
             if (heroTagline) heroTagline.textContent = t.hero.tagline;
 
             // Service info popups
-            const serviceMap = ['branding', 'web', 'seo', 'marketing', 'ai'];
+            const serviceMap = ['branding', 'web', 'seo', 'marketing', 'software'];
             serviceMap.forEach(key => {
                 const el = document.getElementById(key + '-info');
                 if (el && t.services[key]) {
@@ -607,10 +607,10 @@
                     PHOTO_STORY_03: { title: "Innovation at Core", description: "Where creative vision meets technological excellence", fullContent: "Innovation drives everything we do at AuroraNova. We're constantly exploring new technologies, design methodologies, and creative approaches to stay ahead of the curve. Our commitment to innovation ensures that your digital presence isn't just current—it's future-ready.", image: "https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?w=800&h=600&fit=crop" },
                     PHOTO_METHOD_01: { title: "Strategic Foundation", description: "Every project begins with deep strategic analysis and planning", fullContent: "Strategy is the foundation upon which all great digital experiences are built. Our strategic process involves comprehensive market research, user analysis, competitor evaluation, and business goal alignment. We don't just create beautiful designs—we create solutions that drive real business results.", image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&h=600&fit=crop" },
                     PHOTO_METHOD_02: { title: "Creative Mastery", description: "Beautiful, functional design that tells your story", fullContent: "Our creative process balances artistic vision with user-centered design principles. We craft visual narratives that not only capture attention but also guide users toward meaningful interactions. Every color, typography choice, and layout decision is made with intention and purpose.", image: "https://images.unsplash.com/photo-1626785774573-4b799315345d?w=800&h=600&fit=crop" },
-                    PHOTO_METHOD_03: { title: "Technical Excellence", description: "Cutting-edge development and seamless AI integration", fullContent: "Technical excellence is non-negotiable in our development process. We leverage the latest technologies, frameworks, and AI tools to build solutions that are not only visually stunning but also performant, scalable, and secure. Our code is clean, our architecture is robust, and our integrations are seamless.", image: "https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?w=800&h=600&fit=crop" },
+                    PHOTO_METHOD_03: { title: "Technical Excellence", description: "Cutting-edge development and seamless AI integration", fullContent: "Technical excellence is non-negotiable in our development process. We leverage the latest technologies, frameworks, and AI tools to build solutions that are not only visually stunning but also performant, scalable, and secure. Our code is clean, our architecture is robust, and our integrations are seamless.\n\nAll our products run on Google Cloud infrastructure via Firebase — delivering enterprise-grade security, real-time data sync, and GDPR-compliant data handling from European data centres. This means your project benefits from the same reliability that powers millions of global applications, without the enterprise price tag.", image: "https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?w=800&h=600&fit=crop" },
                     PHOTO_WORK_01: { title: "Web Development", description: "Modern, responsive websites that drive results", fullContent: "Our web development services encompass everything from simple landing pages to complex web applications. We specialize in creating responsive, fast-loading, and SEO-optimized websites that provide exceptional user experiences across all devices and browsers.", image: "https://images.unsplash.com/photo-1547658719-da2b51169166?w=800&h=600&fit=crop" },
                     PHOTO_WORK_02: { title: "Brand Identity", description: "Distinctive branding that sets you apart", fullContent: "Brand identity goes beyond just a logo—it's the complete visual and emotional expression of your company's values, personality, and promise. We create comprehensive brand systems that ensure consistency and recognition across all touchpoints.", image: "assets/yapay-zeka-0704.jpg" },
-                    PHOTO_WORK_03: { title: "Digital Growth", description: "AI-powered solutions for sustainable business growth", fullContent: "Our digital growth strategies combine traditional marketing wisdom with cutting-edge AI technologies. We help businesses scale efficiently through data-driven decision making, automated processes, and intelligent optimization techniques.", image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop" }
+                    PHOTO_WORK_03: { title: "Software & SaaS", description: "Scalable software products built for growth", fullContent: "From custom web applications to fully-featured SaaS platforms, we design and develop software that scales with your business. Our end-to-end development process covers architecture, UX design, backend systems, and ongoing support — turning your product idea into a revenue-generating reality.\n\nBuilt on Google Cloud & Firebase infrastructure: real-time databases, secure authentication, scalable hosting, and GDPR-compliant data storage in European data centres. You get enterprise-level reliability from day one.", image: "https://images.unsplash.com/photo-1555421689-d68471e189f2?w=800&h=600&fit=crop" }
                 });
                 Object.assign(blogContent, {
                     BLOG_POST_01: { category: "Design Trends", date: "January 25, 2025", title: "The Future of Digital Design: Aurora-Inspired Aesthetics", excerpt: "Discover how natural phenomena like the Northern Lights are inspiring a new wave of digital design that combines organic beauty with technological precision.", content: "The Northern Lights have captivated humanity for millennia, their ethereal dance across the polar skies representing nature's most spectacular light show. Today, forward-thinking designers are drawing inspiration from these celestial phenomena to create digital experiences that feel both otherworldly and deeply human.", author: "AuroraNova Design Team", readTime: "5 min read", tags: ["Design", "Trends", "Aurora", "Digital Art"] },
@@ -620,6 +620,54 @@
                 });
                 Object.assign(blogContent, blogContentEN);
             }
+
+            // Trust bar
+            if (t.trust) {
+                const trustMap = {
+                    trustGcloud: t.trust.gcloud,
+                    trustGdpr:   t.trust.gdpr,
+                    trustRealtime: t.trust.realtime,
+                    trustEurope: t.trust.europe
+                };
+                document.querySelectorAll('[data-i18n]').forEach(el => {
+                    const key = el.getAttribute('data-i18n');
+                    if (trustMap[key]) el.textContent = trustMap[key];
+                });
+            }
+
+            // Footer nav links
+            document.querySelectorAll('[data-i18n-nav]').forEach(el => {
+                const key = el.getAttribute('data-i18n-nav');
+                if (t.nav[key]) el.textContent = t.nav[key];
+            });
+
+            // Footer service links
+            document.querySelectorAll('[data-i18n-service-footer]').forEach(el => {
+                const key = el.getAttribute('data-i18n-service-footer');
+                if (t.services[key]) el.textContent = t.services[key].title;
+            });
+
+            // Footer
+                const ftTagline  = document.getElementById('footerTagline');
+                const ftBuilt    = document.getElementById('footerBuiltWith');
+                const ftGdpr     = document.getElementById('footerGdpr');
+                const ftSsl      = document.getElementById('footerSsl');
+                const ftCopy     = document.getElementById('footerCopyright');
+                const ftPrivacy  = document.getElementById('footerPrivacyLink');
+                const ftQLinks   = document.getElementById('footerQuickLinksTitle');
+                const ftServices = document.getElementById('footerServicesTitle');
+                if (ftTagline)  ftTagline.textContent  = t.footer.tagline;
+                if (ftBuilt)    ftBuilt.textContent    = t.footer.builtWith;
+                if (ftGdpr)     ftGdpr.textContent     = t.footer.gdpr;
+                if (ftSsl)      ftSsl.textContent      = t.footer.ssl;
+                if (ftCopy)     ftCopy.textContent     = t.footer.copyright;
+                if (ftPrivacy)  ftPrivacy.textContent  = t.footer.privacy;
+                if (ftQLinks)   ftQLinks.textContent   = t.footer.quickLinks;
+                if (ftServices) ftServices.textContent = t.footer.services;
+            }
+
+            // Notify auth.js (and any other listeners) of language change
+            window.dispatchEvent(new CustomEvent('languageChanged', { detail: lang }));
         }
 
         // Language button click handler

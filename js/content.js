@@ -13,6 +13,16 @@ const translations = {
             contact: "Contact",
             services: "Services"
         },
+        auth: {
+            navLogin: "Member Login",
+            authTitle: "Welcome to AuroraNova",
+            authDesc: "Sign in to access your products and services",
+            googleBtn: "Sign in with Google",
+            signOut: "Sign Out",
+            myProducts: "My Products",
+            noProducts: "You don't have any products yet.",
+            authPrivacy: "By signing in, you agree to our privacy policy."
+        },
         hero: {
             subtitle: "Where Creativity Meets Innovation",
             tagline: "Aurora-inspired digital excellence transforming visions into digital reality through European design excellence and cutting-edge technology",
@@ -35,9 +45,9 @@ const translations = {
                 title: "Digital Marketing",
                 desc: "Data-driven campaigns that generate qualified leads and build lasting customer relationships across all digital channels."
             },
-            ai: {
-                title: "AI-Integrated Solutions",
-                desc: "Smart automation and AI-powered tools that enhance creativity and productivity without replacing human innovation."
+            software: {
+                title: "Software / SaaS",
+                desc: "Custom SaaS products and scalable software solutions built to grow with your business."
             }
         },
         story: {
@@ -67,8 +77,8 @@ const translations = {
             photo1_desc: "Modern, responsive websites that drive results",
             photo2_title: "Brand Identity",
             photo2_desc: "Distinctive branding that sets you apart",
-            photo3_title: "Digital Growth",
-            photo3_desc: "AI-powered solutions for sustainable business growth"
+            photo3_title: "Software & SaaS",
+            photo3_desc: "Scalable software products built for growth"
         },
         blog: {
             heading: "Insights & Innovation",
@@ -159,6 +169,23 @@ const translations = {
             emailUs: "Email us at:",
             serviceUnderDev: "services page is currently under development. We're crafting something extraordinary!",
             by: "By"
+        },
+        trust: {
+            gcloud: "Google Cloud Infrastructure",
+            gdpr: "GDPR Compliant",
+            realtime: "Real-time Data",
+            europe: "European Data Centres"
+        },
+        footer: {
+            tagline: "European design excellence meets innovative digital solutions. We build experiences that inspire.",
+            quickLinks: "Quick Links",
+            services: "Services",
+            builtWith: "Built on Google Cloud & Firebase",
+            gdpr: "GDPR compliant · European data centres",
+            ssl: "SSL secured · 99.9% uptime SLA",
+            copyright: "© 2025 AuroraNova. All rights reserved.",
+            privacy: "Privacy Policy",
+            contact: "Contact"
         }
     },
     tr: {
@@ -170,6 +197,16 @@ const translations = {
             insights: "Makaleler",
             contact: "İletişim",
             services: "Hizmetler"
+        },
+        auth: {
+            navLogin: "Üye Girişi",
+            authTitle: "AuroraNova'ya Hoş Geldiniz",
+            authDesc: "Ürün ve hizmetlerinize erişmek için giriş yapın",
+            googleBtn: "Google ile Giriş Yap",
+            signOut: "Çıkış Yap",
+            myProducts: "Ürünlerim",
+            noProducts: "Henüz bir ürününüz bulunmuyor.",
+            authPrivacy: "Giriş yaparak gizlilik politikamızı kabul etmiş olursunuz."
         },
         hero: {
             subtitle: "Yaratıcılık Yenilikle Buluşuyor",
@@ -193,9 +230,9 @@ const translations = {
                 title: "Dijital Pazarlama",
                 desc: "Nitelikli müşteri adayları oluşturan ve tüm dijital kanallarda kalıcı müşteri ilişkileri kuran veri odaklı kampanyalar."
             },
-            ai: {
-                title: "Yapay Zeka Entegrasyonu",
-                desc: "İnsan inovasyonunun yerini almadan yaratıcılığı ve verimliliği artıran akıllı otomasyon ve yapay zeka destekli araçlar."
+            software: {
+                title: "Yazılım / SaaS",
+                desc: "İşletmenizle birlikte büyüyen özel SaaS ürünleri ve ölçeklenebilir yazılım çözümleri."
             }
         },
         story: {
@@ -225,8 +262,8 @@ const translations = {
             photo1_desc: "Sonuç odaklı modern ve duyarlı web siteleri",
             photo2_title: "Marka Kimliği",
             photo2_desc: "Sizi farklı kılan özgün markalama",
-            photo3_title: "Dijital Büyüme",
-            photo3_desc: "Sürdürülebilir iş büyümesi için yapay zeka destekli çözümler"
+            photo3_title: "Yazılım & SaaS",
+            photo3_desc: "Büyüme için inşa edilmiş ölçeklenebilir yazılım ürünleri"
         },
         blog: {
             heading: "Makaleler & İnovasyon",
@@ -317,6 +354,23 @@ const translations = {
             emailUs: "Bize e-posta gönderin:",
             serviceUnderDev: "hizmetleri sayfamız şu anda geliştirme aşamasındadır. Olağanüstü bir şeyler hazırlıyoruz!",
             by: "Yazan"
+        },
+        trust: {
+            gcloud: "Google Cloud Altyapısı",
+            gdpr: "GDPR Uyumlu",
+            realtime: "Gerçek Zamanlı Veri",
+            europe: "Avrupa Veri Merkezleri"
+        },
+        footer: {
+            tagline: "Avrupa tasarım mükemmelliği yenilikçi dijital çözümlerle buluşuyor. İlham veren deneyimler inşa ediyoruz.",
+            quickLinks: "Hızlı Bağlantılar",
+            services: "Hizmetler",
+            builtWith: "Google Cloud & Firebase altyapısı",
+            gdpr: "GDPR uyumlu · Avrupa veri merkezleri",
+            ssl: "SSL güvenli · %99,9 çalışma süresi",
+            copyright: "© 2025 AuroraNova. Tüm hakları saklıdır.",
+            privacy: "Gizlilik Politikası",
+            contact: "İletişim"
         }
     }
 };
@@ -355,7 +409,7 @@ const photoContentTR = {
     PHOTO_METHOD_03: {
         title: "Teknik Mükemmellik",
         description: "Kesintisiz yapay zeka entegrasyonuyla son teknoloji geliştirme",
-        fullContent: "Geliştirme sürecimizde teknik mükemmellik tartışılmaz. Görsel açıdan etkileyici olmakla kalmayıp performanslı, ölçeklenebilir ve güvenli çözümler oluşturmak için en son teknolojileri, çerçeveleri ve yapay zeka araçlarını kullanıyoruz.",
+        fullContent: "Geliştirme sürecimizde teknik mükemmellik tartışılmaz. Görsel açıdan etkileyici olmakla kalmayıp performanslı, ölçeklenebilir ve güvenli çözümler oluşturmak için en son teknolojileri, çerçeveleri ve yapay zeka araçlarını kullanıyoruz.\n\nTüm ürünlerimiz Google Cloud altyapısı üzerinde Firebase aracılığıyla çalışır; kurumsal düzeyde güvenlik, gerçek zamanlı veri senkronizasyonu ve Avrupa veri merkezlerinde GDPR uyumlu depolama sunar. Projeniz, milyonlarca küresel uygulamayı destekleyen güvenilirlikten kurumsal fiyat etiketi olmadan yararlanır.",
         image: "https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?w=800&h=600&fit=crop"
     },
     PHOTO_WORK_01: {
@@ -371,10 +425,10 @@ const photoContentTR = {
         image: "assets/yapay-zeka-0704.jpg"
     },
     PHOTO_WORK_03: {
-        title: "Dijital Büyüme",
-        description: "Sürdürülebilir iş büyümesi için yapay zeka destekli çözümler",
-        fullContent: "Dijital büyüme stratejilerimiz geleneksel pazarlama bilgeliğini son teknoloji yapay zeka teknolojileriyle birleştirir. Veri odaklı karar verme, otomatik süreçler ve akıllı optimizasyon teknikleri aracılığıyla işletmelerin verimli ölçeklenmesine yardımcı oluyoruz.",
-        image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop"
+        title: "Yazılım & SaaS",
+        description: "Büyüme için inşa edilmiş ölçeklenebilir yazılım ürünleri",
+        fullContent: "Özel web uygulamalarından tam özellikli SaaS platformlarına kadar, işletmenizle birlikte büyüyen yazılımlar tasarlıyor ve geliştiriyoruz. Mimari, UX tasarımı, backend sistemleri ve süregelen destek dahil uçtan uca geliştirme sürecimizle ürün fikrinizi gelire dönüştürüyoruz.\n\nGoogle Cloud & Firebase altyapısı üzerine kurulu: gerçek zamanlı veritabanları, güvenli kimlik doğrulama, ölçeklenebilir hosting ve Avrupa veri merkezlerinde GDPR uyumlu depolama. İlk günden itibaren kurumsal düzeyde güvenilirlik elde edersiniz.",
+        image: "https://images.unsplash.com/photo-1555421689-d68471e189f2?w=800&h=600&fit=crop"
     }
 };
 

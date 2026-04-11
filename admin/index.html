@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>AuroraNova Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="admin.css">
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+
+<!-- Login Screen -->
+<div id="admin-login-screen">
+    <div class="adm-lbox">
+        <div class="adm-llogo"><em>Aurora</em><span>Nova</span></div>
+        <div class="adm-lsub">Admin Panel</div>
+        <div class="adm-ltitle">Yönetici Girişi</div>
+        <div class="adm-ldesc">Bu alan yalnızca yetkili yöneticilere açıktır.</div>
+        <button class="adm-google-btn" onclick="admGoogleSignIn()">
+            <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+                <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
+                <path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/>
+                <path d="M3.964 10.706A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.706V4.962H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.038l3.007-2.332z" fill="#FBBC05"/>
+                <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.962L3.964 7.294C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+            </svg>
+            Google ile Giriş Yap
+        </button>
+        <div id="adm-login-error" class="adm-lerror"></div>
+    </div>
+</div>
+
+<!-- Admin App Shell -->
+<div class="admin-app" id="adminApp">
+
+    <!-- Topbar -->
+    <header class="adm-topbar">
+        <div class="adm-topbar-logo"><em>Aurora</em><span>Nova</span></div>
+        <span class="adm-topbar-badge">Admin</span>
+        <div class="adm-topbar-spacer"></div>
+        <span class="adm-topbar-user" id="admTopbarUser"></span>
+        <a href="../index.html" class="adm-topbar-btn">&#x2190; Siteye Dön</a>
+        <button class="adm-topbar-btn danger" onclick="admSignOut()">Çıkış</button>
+    </header>
+
+    <div class="adm-layout">
+
+        <!-- Sidebar -->
+        <nav class="adm-sidebar">
+            <button class="adm-nav-btn active" onclick="admShowPage('dashboard', this)">
+                <span class="adm-nav-icon">&#x1F4CA;</span> Dashboard
+            </button>
+            <button class="adm-nav-btn" onclick="admShowPage('members', this)">
+                <span class="adm-nav-icon">&#x1F465;</span> Üyeler
+            </button>
+            <button class="adm-nav-btn" onclick="admShowPage('products', this)">
+                <span class="adm-nav-icon">&#x1F4E6;</span> Ürünler
+            </button>
+            <button class="adm-nav-btn" onclick="admShowPage('submissions', this)">
+                <span class="adm-nav-icon">&#x1F4E8;</span> Başvurular
+            </button>
+            <button class="adm-nav-btn" onclick="admShowPage('settings', this)">
+                <span class="adm-nav-icon">&#x2699;&#xFE0F;</span> Ayarlar
+            </button>
+        </nav>
+
+        <!-- Content -->
+        <main class="adm-content">
+
+            <!-- Dashboard Page -->
+            <div class="adm-page active" id="page-dashboard">
+                <h1 class="adm-page-title">Dashboard</h1>
+                <p class="adm-page-sub">Genel bakış ve istatistikler</p>
+
+                <div class="adm-kpi-grid" id="admKpiGrid">
+                    <div class="adm-kpi-card">
+                        <div class="adm-kpi-label">Toplam Üye</div>
+                        <div class="adm-kpi-value blue" id="kpiTotalMembers">—</div>
+                    </div>
+                    <div class="adm-kpi-card">
+                        <div class="adm-kpi-label">Bu Hafta Yeni</div>
+                        <div class="adm-kpi-value green" id="kpiNewWeek">—</div>
+                    </div>
+                    <div class="adm-kpi-card">
+                        <div class="adm-kpi-label">Bugün Görüntüleme</div>
+                        <div class="adm-kpi-value gold" id="kpiTodayViews">—</div>
+                    </div>
+                    <div class="adm-kpi-card">
+                        <div class="adm-kpi-label">Okunmamış Başvuru</div>
+                        <div class="adm-kpi-value" id="kpiUnreadSubs">—</div>
+                    </div>
+                </div>
+
+                <div class="adm-chart-section">
+                    <div class="adm-chart-title">Son 14 Gün — Sayfa Görüntülemesi</div>
+                    <div class="adm-chart-bars" id="admChartBars">
+                        <div class="adm-loading">Yükleniyor...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Members Page -->
+            <div class="adm-page" id="page-members">
+                <h1 class="adm-page-title">Üyeler</h1>
+                <p class="adm-page-sub">Kayıtlı kullanıcıları yönetin</p>
+
+                <div class="adm-toolbar">
+                    <input class="adm-search" type="text" id="memberSearch"
+                           placeholder="Email veya isimle ara..." oninput="admFilterMembers()">
+                </div>
+
+                <div class="adm-table-wrap">
+                    <table class="adm-table">
+                        <thead>
+                            <tr>
+                                <th>Ad Soyad</th>
+                                <th>Email</th>
+                                <th>Kayıt Tarihi</th>
+                                <th>Roller</th>
+                                <th>İşlem</th>
+                            </tr>
+                        </thead>
+                        <tbody id="membersTableBody">
+                            <tr><td colspan="5" class="adm-loading">Yükleniyor...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Products Page -->
+            <div class="adm-page" id="page-products">
+                <h1 class="adm-page-title">Ürünler</h1>
+                <p class="adm-page-sub">SaaS ürünlerinizi yönetin</p>
+
+                <div class="adm-toolbar">
+                    <button class="adm-btn" onclick="admToggleProductForm()">+ Yeni Ürün</button>
+                </div>
+
+                <div class="adm-form-panel" id="productFormPanel">
+                    <div class="adm-form-grid">
+                        <div class="adm-form-group">
+                            <label class="adm-label">Ürün Adı (TR)</label>
+                            <input class="adm-input" type="text" id="pNameTR" placeholder="Ürün adı...">
+                        </div>
+                        <div class="adm-form-group">
+                            <label class="adm-label">Product Name (EN)</label>
+                            <input class="adm-input" type="text" id="pNameEN" placeholder="Product name...">
+                        </div>
+                        <div class="adm-form-group">
+                            <label class="adm-label">Açıklama (TR)</label>
+                            <textarea class="adm-textarea" id="pDescTR" placeholder="Ürün açıklaması..."></textarea>
+                        </div>
+                        <div class="adm-form-group">
+                            <label class="adm-label">Description (EN)</label>
+                            <textarea class="adm-textarea" id="pDescEN" placeholder="Product description..."></textarea>
+                        </div>
+                        <div class="adm-form-group">
+                            <label class="adm-label">Fiyat (₺)</label>
+                            <input class="adm-input" type="number" id="pPrice" placeholder="0">
+                        </div>
+                        <div class="adm-form-group">
+                            <label class="adm-label">Lisans Tipi</label>
+                            <select class="adm-select" id="pLicense">
+                                <option value="monthly">Aylık</option>
+                                <option value="yearly">Yıllık</option>
+                                <option value="lifetime">Tek Seferlik</option>
+                            </select>
+                        </div>
+                        <div class="adm-form-group">
+                            <label class="adm-label">Durum</label>
+                            <label class="adm-toggle-wrap">
+                                <input class="adm-toggle" type="checkbox" id="pActive" checked>
+                                Aktif
+                            </label>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:8px;">
+                        <button class="adm-btn" onclick="admSaveProduct()">Kaydet</button>
+                        <button class="adm-btn secondary" onclick="admToggleProductForm()">İptal</button>
+                    </div>
+                    <div id="productFormMsg" style="margin-top:10px;font-size:12px;color:#55efc4;"></div>
+                </div>
+
+                <div class="adm-table-wrap">
+                    <table class="adm-table">
+                        <thead>
+                            <tr>
+                                <th>Ürün Adı</th>
+                                <th>Fiyat</th>
+                                <th>Lisans</th>
+                                <th>Durum</th>
+                                <th>İşlem</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productsTableBody">
+                            <tr><td colspan="5" class="adm-loading">Yükleniyor...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Submissions Page -->
+            <div class="adm-page" id="page-submissions">
+                <h1 class="adm-page-title">Başvurular</h1>
+                <p class="adm-page-sub">İletişim formu başvurularını yönetin</p>
+
+                <div class="adm-table-wrap">
+                    <table class="adm-table" id="submissionsTable">
+                        <thead>
+                            <tr>
+                                <th>İsim</th>
+                                <th>Email</th>
+                                <th>Hizmet</th>
+                                <th>Tarih</th>
+                                <th>Durum</th>
+                                <th>İşlem</th>
+                            </tr>
+                        </thead>
+                        <tbody id="submissionsTableBody">
+                            <tr><td colspan="6" class="adm-loading">Yükleniyor...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Settings Page -->
+            <div class="adm-page" id="page-settings">
+                <h1 class="adm-page-title">Ayarlar</h1>
+                <p class="adm-page-sub">Site ayarlarını yönetin</p>
+
+                <div class="adm-form-panel open" style="max-width:560px;">
+                    <div class="adm-form-grid">
+                        <div class="adm-form-group full">
+                            <label class="adm-label">Duyuru Metni (TR)</label>
+                            <input class="adm-input" type="text" id="settAnnounceTR" placeholder="Duyuru metni...">
+                        </div>
+                        <div class="adm-form-group full">
+                            <label class="adm-label">Announcement Text (EN)</label>
+                            <input class="adm-input" type="text" id="settAnnounceEN" placeholder="Announcement text...">
+                        </div>
+                        <div class="adm-form-group">
+                            <label class="adm-label">Duyuru Aktif</label>
+                            <label class="adm-toggle-wrap">
+                                <input class="adm-toggle" type="checkbox" id="settAnnounceActive">
+                                Aktif
+                            </label>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:8px;">
+                        <button class="adm-btn" onclick="admSaveSettings()">Ayarları Kaydet</button>
+                    </div>
+                    <div id="settingsMsg" style="margin-top:10px;font-size:12px;color:#55efc4;"></div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<script src="admin.js"></script>
+</body>
+</html>
