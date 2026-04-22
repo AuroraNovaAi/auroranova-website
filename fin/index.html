@@ -12,91 +12,19 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-  <style>
-    #fin-login-screen {
-      position: fixed; inset: 0; z-index: 9999;
-      background: #0a0a0f;
-      display: flex; align-items: center; justify-content: center;
-      font-family: 'Inter', sans-serif;
-    }
-    #fin-login-screen .lbox {
-      width: 360px;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.09);
-      border-radius: 18px;
-      padding: 40px 36px;
-      box-shadow: 0 24px 64px rgba(0,0,0,0.7);
-      text-align: center;
-    }
-    #fin-login-screen .llogo { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 6px; }
-    #fin-login-screen .llogo em { color: #6366f1; font-style: normal; }
-    #fin-login-screen .llogo span { color: #fff; }
-    #fin-login-screen .lsub { font-size: 11px; letter-spacing: 2.5px; text-transform: uppercase; color: #f59e0b; margin-bottom: 32px; }
-    #fin-login-screen .ltitle { font-size: 15px; font-weight: 600; color: #f0f0f8; margin-bottom: 6px; }
-    #fin-login-screen .ldesc { font-size: 12px; color: #606080; margin-bottom: 24px; }
-    #fin-login-screen .linput-wrap { position: relative; margin-bottom: 14px; }
-    #fin-login-screen input {
-      box-sizing: border-box;
-      width: 100%; padding: 12px 44px 12px 16px;
-      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 10px; color: #f0f0f8; font-size: 14px;
-      font-family: 'Inter', sans-serif;
-      -webkit-text-security: none;
-      outline: none; transition: border-color 0.2s, box-shadow 0.2s;
-    }
-    #fin-login-screen input[type="password"] {
-      -webkit-text-security: disc;
-      font-family: Verdana, sans-serif;
-      letter-spacing: 2px;
-    }
-    #fin-login-screen input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.2); }
-    #fin-login-screen input::placeholder { color: #404060; }
-    #fin-login-screen .ltoggle {
-      position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
-      background: none; border: none; cursor: pointer; color: #606080; font-size: 16px; padding: 4px;
-    }
-    #fin-login-screen .ltoggle:hover { color: #a0a0c0; }
-    #fin-login-screen .lbtn {
-      width: 100%; padding: 12px; border: none; border-radius: 10px; cursor: pointer;
-      background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff;
-      font-size: 14px; font-weight: 600; font-family: 'Inter', sans-serif;
-      box-shadow: 0 4px 16px rgba(99,102,241,0.4);
-      transition: opacity 0.15s, transform 0.15s;
-    }
-    #fin-login-screen .lbtn:hover { opacity: 0.9; transform: translateY(-1px); }
-    #fin-login-screen .lbtn:active { transform: translateY(0); }
-    #fin-login-screen .lerr {
-      font-size: 12px; color: #ef4444; margin-top: 10px;
-      min-height: 18px; transition: opacity 0.2s;
-    }
-    #fin-login-screen .lshake { animation: lshake 0.35s ease; }
-    @keyframes lshake {
-      0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 60%{transform:translateX(6px)}
-    }
-    @media (max-width: 420px) {
-      #fin-login-screen .lbox {
-        width: 100%; max-width: 100%;
-        margin: 16px; padding: 32px 24px;
-        border-radius: 14px;
-        box-sizing: border-box;
-      }
-    }
-  </style>
 </head>
 <body class="fin-page">
 
 <!-- ══ LOGIN SCREEN ══ -->
-<div id="fin-login-screen">
-  <div class="lbox">
-    <div class="llogo"><em>Aurora</em><span>Nova</span></div>
-    <div class="lsub">Finance</div>
-    <div class="ltitle">Giriş Yap</div>
-    <div class="ldesc">Bu sayfa yetkili kullanıcılara özeldir.</div>
-    <button class="lbtn" onclick="finGoogleSignIn()" style="display:flex;align-items:center;justify-content:center;gap:10px">
+<div id="fin-login-screen" style="position:fixed;inset:0;z-index:9999;background:#0a0a0f;display:flex;align-items:center;justify-content:center;font-family:'Inter',sans-serif">
+  <div style="width:360px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:18px;padding:40px 36px;box-shadow:0 24px 64px rgba(0,0,0,0.7);text-align:center">
+    <div style="font-size:22px;font-weight:700;letter-spacing:-0.5px;margin-bottom:6px"><span style="color:#6366f1">Aurora</span><span style="color:#fff">Nova</span></div>
+    <div style="font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:#f59e0b;margin-bottom:32px">Finance</div>
+    <button onclick="finGoogleSignIn()" style="width:100%;padding:12px;border:none;border-radius:10px;cursor:pointer;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;font-size:14px;font-weight:600;font-family:'Inter',sans-serif;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 4px 16px rgba(99,102,241,0.4)">
       <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" height="18" alt="">
       Google ile Giriş Yap
     </button>
-    <div class="lerr" id="fin-pw-err"></div>
+    <div id="fin-pw-err" style="font-size:12px;color:#ef4444;margin-top:12px;min-height:18px"></div>
   </div>
 </div>
 
@@ -286,39 +214,39 @@
                 <div class="fields-grid">
                   <div class="form-group">
                     <label class="form-label" for="f_baslik">Başlık</label>
-                    <input type="number" id="f_baslik" placeholder="0" oninput="liveCalc()">
+                    <input type="text" inputmode="decimal" class="fin-amount-input" id="f_baslik" placeholder="0,00" oninput="liveCalc()" onblur="finFmtBlur(this)" onfocus="finFmtFocus(this)">
                   </div>
                   <div class="form-group">
                     <label class="form-label" for="f_baza">Baza</label>
-                    <input type="number" id="f_baza" placeholder="0" oninput="liveCalc()">
+                    <input type="text" inputmode="decimal" class="fin-amount-input" id="f_baza" placeholder="0,00" oninput="liveCalc()" onblur="finFmtBlur(this)" onfocus="finFmtFocus(this)">
                   </div>
                   <div class="form-group">
                     <label class="form-label" for="f_cekyat">Çekyat</label>
-                    <input type="number" id="f_cekyat" placeholder="0" oninput="liveCalc()">
+                    <input type="text" inputmode="decimal" class="fin-amount-input" id="f_cekyat" placeholder="0,00" oninput="liveCalc()" onblur="finFmtBlur(this)" onfocus="finFmtFocus(this)">
                   </div>
                   <div class="form-group">
                     <label class="form-label" for="f_metal">Metal</label>
-                    <input type="number" id="f_metal" placeholder="0" oninput="liveCalc()">
+                    <input type="text" inputmode="decimal" class="fin-amount-input" id="f_metal" placeholder="0,00" oninput="liveCalc()" onblur="finFmtBlur(this)" onfocus="finFmtFocus(this)">
                   </div>
                   <div class="form-group">
                     <label class="form-label" for="f_oturma">Oturma</label>
-                    <input type="number" id="f_oturma" placeholder="0" oninput="liveCalc()">
+                    <input type="text" inputmode="decimal" class="fin-amount-input" id="f_oturma" placeholder="0,00" oninput="liveCalc()" onblur="finFmtBlur(this)" onfocus="finFmtFocus(this)">
                   </div>
                   <div class="form-group">
                     <label class="form-label" for="f_sandalye">Sandalye</label>
-                    <input type="number" id="f_sandalye" placeholder="0" oninput="liveCalc()">
+                    <input type="text" inputmode="decimal" class="fin-amount-input" id="f_sandalye" placeholder="0,00" oninput="liveCalc()" onblur="finFmtBlur(this)" onfocus="finFmtFocus(this)">
                   </div>
                   <div class="form-group">
                     <label class="form-label" for="f_mobilya">Mobilya</label>
-                    <input type="number" id="f_mobilya" placeholder="0" oninput="liveCalc()">
+                    <input type="text" inputmode="decimal" class="fin-amount-input" id="f_mobilya" placeholder="0,00" oninput="liveCalc()" onblur="finFmtBlur(this)" onfocus="finFmtFocus(this)">
                   </div>
                   <div class="form-group">
                     <label class="form-label" for="f_silte">Silte</label>
-                    <input type="number" id="f_silte" placeholder="0" oninput="liveCalc()">
+                    <input type="text" inputmode="decimal" class="fin-amount-input" id="f_silte" placeholder="0,00" oninput="liveCalc()" onblur="finFmtBlur(this)" onfocus="finFmtFocus(this)">
                   </div>
                   <div class="form-group">
                     <label class="form-label" for="f_alis_iade">Alış İade</label>
-                    <input type="number" id="f_alis_iade" placeholder="0" oninput="liveCalc()">
+                    <input type="text" inputmode="decimal" class="fin-amount-input" id="f_alis_iade" placeholder="0,00" oninput="liveCalc()" onblur="finFmtBlur(this)" onfocus="finFmtFocus(this)">
                   </div>
                 </div>
               </div>
@@ -329,35 +257,35 @@
                 <div class="fields-grid">
                   <div class="form-group">
                     <label class="form-label" for="f_faaliyet">Faaliyet</label>
-                    <input type="number" id="f_faaliyet" placeholder="0" oninput="liveCalc()">
+                    <input type="text" inputmode="decimal" class="fin-amount-input" id="f_faaliyet" placeholder="0,00" oninput="liveCalc()" onblur="finFmtBlur(this)" onfocus="finFmtFocus(this)">
                   </div>
                   <div class="form-group">
                     <label class="form-label" for="f_finansman">Finansman</label>
-                    <input type="number" id="f_finansman" placeholder="0" oninput="liveCalc()">
+                    <input type="text" inputmode="decimal" class="fin-amount-input" id="f_finansman" placeholder="0,00" oninput="liveCalc()" onblur="finFmtBlur(this)" onfocus="finFmtFocus(this)">
                   </div>
                   <div class="form-group">
                     <label class="form-label" for="f_hmm_alim">HMM Alım</label>
-                    <input type="number" id="f_hmm_alim" placeholder="0" oninput="liveCalc()">
+                    <input type="text" inputmode="decimal" class="fin-amount-input" id="f_hmm_alim" placeholder="0,00" oninput="liveCalc()" onblur="finFmtBlur(this)" onfocus="finFmtFocus(this)">
                   </div>
                   <div class="form-group">
                     <label class="form-label" for="f_satis_iade">Satış İade</label>
-                    <input type="number" id="f_satis_iade" placeholder="0" oninput="liveCalc()">
+                    <input type="text" inputmode="decimal" class="fin-amount-input" id="f_satis_iade" placeholder="0,00" oninput="liveCalc()" onblur="finFmtBlur(this)" onfocus="finFmtFocus(this)">
                   </div>
                   <div class="form-group">
                     <label class="form-label" for="f_insaat">İnşaat</label>
-                    <input type="number" id="f_insaat" placeholder="0" oninput="liveCalc()">
+                    <input type="text" inputmode="decimal" class="fin-amount-input" id="f_insaat" placeholder="0,00" oninput="liveCalc()" onblur="finFmtBlur(this)" onfocus="finFmtFocus(this)">
                   </div>
                   <div class="form-group">
                     <label class="form-label" for="f_personel">Personel</label>
-                    <input type="number" id="f_personel" placeholder="0" oninput="liveCalc()">
+                    <input type="text" inputmode="decimal" class="fin-amount-input" id="f_personel" placeholder="0,00" oninput="liveCalc()" onblur="finFmtBlur(this)" onfocus="finFmtFocus(this)">
                   </div>
                   <div class="form-group">
                     <label class="form-label" for="f_vergi">Vergi</label>
-                    <input type="number" id="f_vergi" placeholder="0" oninput="liveCalc()">
+                    <input type="text" inputmode="decimal" class="fin-amount-input" id="f_vergi" placeholder="0,00" oninput="liveCalc()" onblur="finFmtBlur(this)" onfocus="finFmtFocus(this)">
                   </div>
                   <div class="form-group">
                     <label class="form-label" for="f_hmm_sarf">HMM Sarf</label>
-                    <input type="number" id="f_hmm_sarf" placeholder="0" oninput="liveCalc()">
+                    <input type="text" inputmode="decimal" class="fin-amount-input" id="f_hmm_sarf" placeholder="0,00" oninput="liveCalc()" onblur="finFmtBlur(this)" onfocus="finFmtFocus(this)">
                   </div>
                 </div>
               </div>
@@ -368,15 +296,15 @@
                 <div class="fields-grid">
                   <div class="form-group">
                     <label class="form-label" for="f_dos_maas">Döşeme Maaş</label>
-                    <input type="number" id="f_dos_maas" placeholder="0" oninput="liveCalc()">
+                    <input type="text" inputmode="decimal" class="fin-amount-input" id="f_dos_maas" placeholder="0,00" oninput="liveCalc()" onblur="finFmtBlur(this)" onfocus="finFmtFocus(this)">
                   </div>
                   <div class="form-group">
                     <label class="form-label" for="f_mob_maas">Mobilya Maaş</label>
-                    <input type="number" id="f_mob_maas" placeholder="0" oninput="liveCalc()">
+                    <input type="text" inputmode="decimal" class="fin-amount-input" id="f_mob_maas" placeholder="0,00" oninput="liveCalc()" onblur="finFmtBlur(this)" onfocus="finFmtFocus(this)">
                   </div>
                   <div class="form-group">
                     <label class="form-label" for="f_slt_maas">Silte Maaş</label>
-                    <input type="number" id="f_slt_maas" placeholder="0" oninput="liveCalc()">
+                    <input type="text" inputmode="decimal" class="fin-amount-input" id="f_slt_maas" placeholder="0,00" oninput="liveCalc()" onblur="finFmtBlur(this)" onfocus="finFmtFocus(this)">
                   </div>
                 </div>
               </div>
@@ -624,7 +552,7 @@
 </div><!-- /.fin-app -->
 
 <script>
-// ── Firebase Config (auth için erken tanımlanıyor) ──
+// ── Firebase Config ──
 const FIN_FB_CONFIG = {
   apiKey: "AIzaSyD8fYMMpfVQlykMoKVDBJh0IP2Wc9A9WPY",
   authDomain: "auroranova-website.firebaseapp.com",
@@ -635,105 +563,80 @@ const FIN_FB_CONFIG = {
 };
 </script>
 <script>
-// ── İzin Sistemi ──
+// ── Sabitler ──
+const FIN_OWNER_EMAIL = 'inanc.eser@auroranovaai.com';
+
+// ── İzin Sistemi (herkes tam admin) ──
 let _appPerms = {};
+function canView(module)  { return true; }
+function canEdit(module)  { return true; }
+function canAdmin(module) { return true; }
+function applyPermissions() {}
 
-function canView(module)  { return !!_appPerms[module]; }
-function canEdit(module)  { return ['edit','admin'].includes(_appPerms[module]); }
-function canAdmin(module) { return _appPerms[module] === 'admin'; }
-
-function applyPermissions() {
-  // Excel butonları
-  if (!canAdmin('fin.export')) {
-    document.querySelectorAll('[onclick*="finOpenImport"],[onclick*="finExportAll"]')
-      .forEach(el => el.style.display = 'none');
-  }
-  // Veri girişi — kaydet
-  if (!canEdit('fin.entry')) {
-    const saveBtn = document.querySelector('[onclick*="saveEntry"]');
-    if (saveBtn) saveBtn.style.display = 'none';
-  }
-  // Veri girişi — sil (zaten JS tarafından kontrol ediliyor ama ek güvenlik)
-  if (!canAdmin('fin.entry')) {
-    const delBtn = document.getElementById('del-btn');
-    if (delBtn) delBtn.style.display = 'none !important';
-  }
-  // Şirketler — yeni şirket ekle
-  if (!canEdit('fin.companies')) {
-    document.querySelectorAll('[onclick*="toggleAddForm"]')
-      .forEach(el => el.style.display = 'none');
-  }
-  // History edit butonu — fin.js render eder, canEdit kontrolü fin.js'de yapılacak
-  const settingsBtn = document.getElementById('fin-settings-btn');
-  if (settingsBtn) settingsBtn.style.display = canAdmin('fin.settings') ? '' : 'none';
-}
-
-// ── Google Auth ──
+// ── Firebase Auth ──
 function _finGetApp() {
   return firebase.apps.find(a => a.name === 'fin') ||
          firebase.initializeApp(FIN_FB_CONFIG, 'fin');
 }
 
 function finGoogleSignIn() {
-  const errEl = document.getElementById('fin-pw-err');
-  errEl.textContent = '';
+  document.getElementById('fin-pw-err').textContent = '';
   firebase.auth(_finGetApp())
     .signInWithPopup(new firebase.auth.GoogleAuthProvider())
-    .catch(() => { errEl.textContent = 'Giriş başarısız. Lütfen tekrar deneyin.'; });
+    .catch(function(e) {
+      document.getElementById('fin-pw-err').textContent = 'Giriş başarısız: ' + e.message;
+    });
 }
 
 function finSignOut() {
   firebase.auth(_finGetApp()).signOut();
 }
 
-(function() {
-  // fin.js yüklenmeden önce app init olmuş olabilir, DOMContentLoaded'ı bekle
-  function setupAuth() {
-    firebase.auth(_finGetApp()).onAuthStateChanged(async function(user) {
-      const loginEl = document.getElementById('fin-login-screen');
-      const appEl   = document.getElementById('fin-app-wrap');
-      const errEl   = document.getElementById('fin-pw-err');
-      const infoEl  = document.getElementById('fin-user-info');
-      if (!user) {
-        if (loginEl) loginEl.style.display = 'flex';
-        if (appEl)   appEl.style.display   = 'none';
-        return;
-      }
-      try {
-        const db = _finInitDb();
-        let snap = await db.collection('users').doc(user.uid).get();
-        if (!snap.exists) {
-          const emailSnap = await db.collection('users')
-            .where('email', '==', user.email).limit(1).get();
-          if (!emailSnap.empty) {
-            snap = emailSnap.docs[0];
-            await emailSnap.docs[0].ref.update({ uid: user.uid });
-          }
-        }
-        const data  = snap.exists ? snap.data() : {};
-        const roles = data.roles || [];
-        if (!roles.includes('fin')) {
-          firebase.auth(_finGetApp()).signOut();
-          if (errEl) errEl.textContent = 'Bu uygulamaya erişim yetkiniz yok.';
-          return;
-        }
-        _appPerms = data.permissions || {};
-        if (loginEl) loginEl.style.display = 'none';
-        if (appEl)   appEl.style.display   = 'block';
-        if (infoEl)  infoEl.textContent    = user.displayName || user.email || '';
-        applyPermissions();
-        if (typeof window.finAppStart === 'function') {
-          window.finAppStart();
-        }
-      } catch(e) {
-        if (errEl) errEl.textContent = 'Yetki kontrolü başarısız: ' + e.message;
+function _openApp(user, loginEl, appEl, infoEl) {
+  if (loginEl) loginEl.style.display = 'none';
+  if (appEl)   appEl.style.display   = 'block';
+  if (infoEl)  infoEl.textContent    = user.displayName || user.email || '';
+  if (typeof window.finAppStart === 'function') window.finAppStart();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  firebase.auth(_finGetApp()).onAuthStateChanged(async function(user) {
+    const loginEl = document.getElementById('fin-login-screen');
+    const appEl   = document.getElementById('fin-app-wrap');
+    const errEl   = document.getElementById('fin-pw-err');
+    const infoEl  = document.getElementById('fin-user-info');
+
+    if (!user) {
+      if (loginEl) loginEl.style.display = 'flex';
+      if (appEl)   appEl.style.display   = 'none';
+      return;
+    }
+
+    // Owner her zaman geçer
+    if (user.email === FIN_OWNER_EMAIL) {
+      window._finIsOwner = true;
+      _openApp(user, loginEl, appEl, infoEl);
+      return;
+    }
+
+    // Whitelist kontrolü
+    try {
+      const db = _finInitDb();
+      const snap = await db.collection('fin_settings').doc('access').get();
+      const allowed = (snap.exists && snap.data().allowedEmails) || [];
+      if (allowed.includes(user.email)) {
+        window._finIsOwner = false;
+        _openApp(user, loginEl, appEl, infoEl);
+      } else {
         firebase.auth(_finGetApp()).signOut();
+        if (errEl) errEl.textContent = 'Erişim yetkiniz yok. Lütfen yöneticinizle iletişime geçin.';
       }
-    });
-  }
-  // fin.js defer yükleniyor; FIN_FB_CONFIG oradan geliyor — script yüklendikten sonra auth kur
-  document.addEventListener('DOMContentLoaded', setupAuth);
-})();
+    } catch(e) {
+      firebase.auth(_finGetApp()).signOut();
+      if (errEl) errEl.textContent = 'Yetki kontrolü başarısız: ' + e.message;
+    }
+  });
+});
 </script>
 <script defer src="fin.js"></script>
 </body>

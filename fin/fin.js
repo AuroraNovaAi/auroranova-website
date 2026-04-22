@@ -74,11 +74,33 @@ async function load() {
   }
 }
 
-function fmt(n, dec=0) {
+function fmt(n, dec=2) {
   if (n===null||n===undefined||n===''||isNaN(+n)) return '—';
   return (+n).toLocaleString('tr-TR',{minimumFractionDigits:dec,maximumFractionDigits:dec});
 }
-function fmtM(n) { return isNaN(+n) ? '—' : (+n).toFixed(2)+'%'; }
+function fmtM(n) {
+  if (isNaN(+n)) return '—';
+  return (+n).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})+'%';
+}
+// Tutar input alanları için yardımcı fonksiyonlar
+function parseFinInput(s) {
+  if (s === null || s === undefined || s === '') return 0;
+  return parseFloat(String(s).replace(/\./g,'').replace(',','.')) || 0;
+}
+function fmtInput(n) {
+  if (!n && n !== 0) return '';
+  const v = Math.round(+n * 100) / 100;
+  if (!v) return '';
+  return v.toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function finFmtBlur(el) {
+  const v = parseFinInput(el.value);
+  el.value = v ? fmtInput(v) : '';
+}
+function finFmtFocus(el) {
+  const v = parseFinInput(el.value);
+  el.value = v || '';
+}
 function curr(coId) {
   const c = finS.companies[coId||finS.activeCo];
   if (!c) return '₺';
@@ -290,14 +312,14 @@ function loadForm() {
   document.getElementById('del-btn').style.display = ex ? 'inline-flex' : 'none';
   FIELDS.forEach(f => {
     const el = document.getElementById('f_'+f);
-    if (el) el.value = ex ? (ex[f]||'') : '';
+    if (el) el.value = ex ? fmtInput(ex[f]) : '';
   });
   liveCalc();
 }
 
 function liveCalc() {
   const d = {};
-  FIELDS.forEach(f => { const el=document.getElementById('f_'+f); d[f]=el?parseFloat(el.value)||0:0; });
+  FIELDS.forEach(f => { const el=document.getElementById('f_'+f); d[f]=el?parseFinInput(el.value):0; });
   const c = finCalc(d);
   const cr = curr();
   const pos = c.AT>=0;
@@ -338,7 +360,7 @@ function saveEntry() {
   const y = document.getElementById('ey').value;
   if (!m||!finS.activeCo) { toast('Dönem seçin.','error'); return; }
   const d = {};
-  FIELDS.forEach(f => { const el=document.getElementById('f_'+f); d[f]=parseFloat(el?.value)||0; });
+  FIELDS.forEach(f => { const el=document.getElementById('f_'+f); d[f]=parseFinInput(el?.value); });
   if (!finS.data[finS.activeCo]) finS.data[finS.activeCo]={};
   finS.data[finS.activeCo][dkey(y,m)] = d;
   save(); renderCal();
@@ -359,7 +381,7 @@ function delEntry() {
 }
 
 function clearForm() {
-  document.querySelectorAll('#entry-form input[type=number]').forEach(el=>el.value='');
+  document.querySelectorAll('#entry-form .fin-amount-input').forEach(el=>el.value='');
   liveCalc();
 }
 
@@ -968,165 +990,92 @@ window.finAppStart = async function() {
 };
 
 /* ============================================================
-   AYARLAR & KULLANICI YÖNETİMİ
+   AYARLAR & ERİŞİM YÖNETİMİ
    ============================================================ */
+
+async function finAccessLoad() {
+  const db = _finInitDb();
+  if (!db) return [];
+  const snap = await db.collection('fin_settings').doc('access').get();
+  return (snap.exists && snap.data().allowedEmails) || [];
+}
+
+async function finAccessSave(emails) {
+  const db = _finInitDb();
+  await db.collection('fin_settings').doc('access').set({ allowedEmails: emails });
+}
+
+async function finAccessAddEmail(email) {
+  const emails = await finAccessLoad();
+  const clean = email.trim().toLowerCase();
+  if (!clean || emails.includes(clean)) return;
+  emails.push(clean);
+  await finAccessSave(emails);
+  renderFinSettings();
+}
+
+async function finAccessRemoveEmail(email) {
+  if (!confirm(email + ' adresinin erişimi kaldırılacak. Emin misiniz?')) return;
+  const emails = await finAccessLoad();
+  await finAccessSave(emails.filter(e => e !== email));
+  renderFinSettings();
+}
 
 async function renderFinSettings() {
   const root = document.getElementById('fin-settings-root');
   if (!root) return;
-  root.innerHTML = '<p style="color:var(--fin-text3,#888)">Yükleniyor…</p>';
-  const db = typeof _finInitDb === 'function' ? _finInitDb() : null;
-  if (!db) return;
-  let users = [];
-  try {
-    const snap = await db.collection('users').get();
-    users = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
-  } catch(e) {
-    root.innerHTML = '<p style="color:#e55">Kullanıcılar yüklenemedi: ' + e.message + '</p>';
+
+  if (!window._finIsOwner) {
+    root.innerHTML = '<p style="color:var(--fin-text3,#888);padding:20px 0">Bu bölüme erişim yetkiniz yok.</p>';
     return;
   }
 
-  const permLabels = {
-    personnel:'Personel', processes:'Süreçler', templates:'Şablonlar',
-    calendar:'Takvim', vehicles:'Taşıtlar', export:'Excel/Dışa Aktar',
-    settings:'Ayarlar', entry:'Veri Girişi', history:'Geçmiş',
-    compare:'Karşılaştırma', companies:'Şirketler'
-  };
+  root.innerHTML = '<p style="color:var(--fin-text3,#888)">Yükleniyor…</p>';
 
-  function permRows(app, modules) {
-    return `<div style="display:flex;flex-direction:column;gap:4px;margin-top:4px">` +
-      modules.map(m => `
-      <div style="display:flex;align-items:center;gap:8px">
-        <span style="width:120px;font-size:12px;opacity:0.7">${permLabels[m]||m}</span>
-        <select id="fsu-perm-${app}-${m}" style="font-size:12px;padding:3px 8px;border-radius:6px;border:1px solid var(--fin-border,#333);background:var(--fin-surface2,#1a1a2e);color:inherit">
-          <option value="">— Erişim Yok —</option>
-          <option value="view">Görüntüle</option>
-          <option value="edit">Düzenle</option>
-          <option value="admin">Tam Yetki</option>
-        </select>
-      </div>`).join('') + `</div>`;
+  let emails = [];
+  try {
+    emails = await finAccessLoad();
+  } catch(e) {
+    root.innerHTML = '<p style="color:#e55">Yüklenemedi: ' + e.message + '</p>';
+    return;
   }
 
-  function userRow(u) {
-    const perms = u.permissions || {};
-    const currP = Object.entries(perms).filter(([k])=>k.startsWith('fin.')).map(([k,v])=>`${k.replace('fin.','')}:${v}`).join(', ');
-    return `<tr>
-      <td><div style="font-weight:500">${u.name||'—'}</div><div style="font-size:12px;opacity:0.5">${u.email||u.uid}</div></td>
-      <td style="font-size:12px">${currP||'—'}</td>
-      <td style="white-space:nowrap;text-align:right">
-        <button class="btn btn-sm" onclick="finSettingsEdit('${u.uid}')" style="margin-right:4px">Düzenle</button>
-        <button class="btn btn-sm" style="color:#e55" onclick="finSettingsDelete('${u.uid}')">Sil</button>
-      </td>
-    </tr>`;
-  }
+  const ownerEmail = typeof FIN_OWNER_EMAIL !== 'undefined' ? FIN_OWNER_EMAIL : '';
+
+  const rows = emails.length
+    ? emails.map(em => `
+        <tr>
+          <td style="padding:10px 12px;font-size:13px">${em}</td>
+          <td style="padding:10px 12px;text-align:right">
+            <button class="btn btn-sm" style="color:#e55" onclick="finAccessRemoveEmail('${em}')">Kaldır</button>
+          </td>
+        </tr>`).join('')
+    : `<tr><td colspan="2" style="padding:12px;font-size:13px;color:var(--fin-text3,#888);text-align:center">Henüz kullanıcı eklenmedi.</td></tr>`;
 
   root.innerHTML = `
-    <div class="card" style="margin-bottom:20px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-        <h3 style="margin:0;font-size:15px">Kullanıcı Yönetimi</h3>
-        <button class="btn btn-primary btn-sm" onclick="finSettingsOpenAdd()">+ Kullanıcı Ekle</button>
-      </div>
-      <div style="overflow-x:auto">
-        <table style="width:100%;border-collapse:collapse;font-size:13px">
-          <thead><tr style="border-bottom:1px solid var(--fin-border,#333)">
-            <th style="text-align:left;padding:8px 12px">Ad / Email</th>
-            <th style="text-align:left;padding:8px 12px">Finance İzinleri</th>
+    <div class="card" style="max-width:560px">
+      <h3 style="margin:0 0 6px;font-size:15px">Yetkili Kullanıcılar</h3>
+      <p style="font-size:12px;color:var(--fin-text3,#888);margin:0 0 16px">
+        Aşağıdaki Google hesapları uygulamaya giriş yapabilir.
+        Sahip hesabı (<strong>${ownerEmail}</strong>) her zaman yetkilidir.
+      </p>
+      <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:16px">
+        <thead>
+          <tr style="border-bottom:1px solid var(--fin-border,#333)">
+            <th style="text-align:left;padding:8px 12px">Email</th>
             <th></th>
-          </tr></thead>
-          <tbody>${users.map(userRow).join('')}</tbody>
-        </table>
-      </div>
-    </div>
-
-    <div id="fin-modal-user" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.6);align-items:center;justify-content:center">
-      <div class="card" style="width:100%;max-width:520px;max-height:90vh;overflow-y:auto">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-          <h3 id="fin-modal-user-title" style="margin:0;font-size:15px">Kullanıcı Ekle</h3>
-          <button onclick="document.getElementById('fin-modal-user').style.display='none'" style="background:none;border:none;font-size:18px;cursor:pointer;color:inherit">✕</button>
-        </div>
-        <form onsubmit="finSettingsSave(event)" style="display:flex;flex-direction:column;gap:14px">
-          <div>
-            <label style="font-size:12px;opacity:0.7;display:block;margin-bottom:4px">Email (Google hesabı)</label>
-            <input type="email" id="fsu-email" required style="width:100%;box-sizing:border-box;padding:8px 12px;border-radius:8px;border:1px solid var(--fin-border,#333);background:var(--fin-surface2,#1a1a2e);color:inherit;font-size:13px">
-          </div>
-          <div>
-            <label style="font-size:12px;opacity:0.7;display:block;margin-bottom:4px">Ad Soyad</label>
-            <input type="text" id="fsu-name" style="width:100%;box-sizing:border-box;padding:8px 12px;border-radius:8px;border:1px solid var(--fin-border,#333);background:var(--fin-surface2,#1a1a2e);color:inherit;font-size:13px">
-          </div>
-          <div>
-            <label style="font-size:12px;opacity:0.7;display:block;margin-bottom:4px">Finance İzinleri</label>
-            ${permRows('fin', ['entry','history','compare','companies','export','settings'])}
-          </div>
-          <input type="hidden" id="fsu-uid">
-          <div style="display:flex;gap:8px;padding-top:4px">
-            <button type="submit" class="btn btn-primary btn-sm">Kaydet</button>
-            <button type="button" class="btn btn-sm" onclick="document.getElementById('fin-modal-user').style.display='none'">İptal</button>
-          </div>
-        </form>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="email" id="fin-access-input" placeholder="yeni@email.com"
+          style="flex:1;padding:8px 12px;border-radius:8px;border:1px solid var(--fin-border,#333);background:var(--fin-surface2,#1a1a2e);color:inherit;font-size:13px;font-family:inherit"
+          onkeydown="if(event.key==='Enter'){event.preventDefault();finAccessAddEmail(this.value).then(()=>this.value='')}">
+        <button class="btn btn-primary btn-sm"
+          onclick="const i=document.getElementById('fin-access-input');finAccessAddEmail(i.value).then(()=>i.value='')">
+          + Ekle
+        </button>
       </div>
     </div>`;
-}
-
-function finSettingsOpenAdd() {
-  document.getElementById('fin-modal-user-title').textContent = 'Kullanıcı Ekle';
-  document.getElementById('fsu-email').value = '';
-  document.getElementById('fsu-name').value = '';
-  document.getElementById('fsu-uid').value = '';
-  document.querySelectorAll('[id^="fsu-perm-"]').forEach(s => s.value = '');
-  document.getElementById('fin-modal-user').style.display = 'flex';
-}
-
-async function finSettingsEdit(uid) {
-  const db = _finInitDb();
-  const snap = await db.collection('users').doc(uid).get();
-  if (!snap.exists) return;
-  const u = snap.data();
-  document.getElementById('fin-modal-user-title').textContent = 'Kullanıcıyı Düzenle';
-  document.getElementById('fsu-email').value = u.email || '';
-  document.getElementById('fsu-name').value = u.name || '';
-  document.getElementById('fsu-uid').value = uid;
-  const perms = u.permissions || {};
-  document.querySelectorAll('[id^="fsu-perm-"]').forEach(s => {
-    const key = s.id.replace('fsu-perm-', '').replace(/-(?=[^-]*$)/, '.');
-    s.value = perms[key] || '';
-  });
-  document.getElementById('fin-modal-user').style.display = 'flex';
-}
-
-async function finSettingsSave(e) {
-  e.preventDefault();
-  const db = _finInitDb();
-  const uid = document.getElementById('fsu-uid').value;
-  const email = document.getElementById('fsu-email').value.trim();
-  const name = document.getElementById('fsu-name').value.trim();
-  const roles = ['fin'];
-  const permissions = {};
-  document.querySelectorAll('[id^="fsu-perm-"]').forEach(s => {
-    if (s.value) {
-      const key = s.id.replace('fsu-perm-', '').replace(/-(?=[^-]*$)/, '.');
-      permissions[key] = s.value;
-    }
-  });
-  const data = { email, name, roles, permissions };
-  try {
-    if (uid) {
-      await db.collection('users').doc(uid).update(data);
-    } else {
-      await db.collection('users').add({ ...data, createdAt: new Date().toISOString() });
-    }
-    document.getElementById('fin-modal-user').style.display = 'none';
-    renderFinSettings();
-  } catch(err) {
-    alert('Kayıt hatası: ' + err.message);
-  }
-}
-
-async function finSettingsDelete(uid) {
-  if (!confirm('Bu kullanıcının erişimi kaldırılacak. Emin misiniz?')) return;
-  try {
-    await _finInitDb().collection('users').doc(uid).delete();
-    renderFinSettings();
-  } catch(err) {
-    alert('Silme hatası: ' + err.message);
-  }
 }
