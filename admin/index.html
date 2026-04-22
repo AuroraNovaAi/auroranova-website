@@ -67,6 +67,16 @@
             <button class="adm-nav-btn" onclick="admShowPage('settings', this)">
                 <span class="adm-nav-icon">&#x2699;&#xFE0F;</span> Ayarlar
             </button>
+            <div class="adm-nav-divider"></div>
+            <button class="adm-nav-btn" onclick="admShowPage('content', this)">
+                <span class="adm-nav-icon">&#x270F;</span> Site İçeriği
+            </button>
+            <button class="adm-nav-btn" onclick="admShowPage('blog', this)">
+                <span class="adm-nav-icon">&#x1F4DD;</span> Blog
+            </button>
+            <button class="adm-nav-btn" onclick="admShowPage('gallery', this)">
+                <span class="adm-nav-icon">&#x1F5BC;</span> Galeri
+            </button>
         </nav>
 
         <!-- Content -->
@@ -255,6 +265,261 @@
                         <button class="adm-btn" onclick="admSaveSettings()">Ayarları Kaydet</button>
                     </div>
                     <div id="settingsMsg" style="margin-top:10px;font-size:12px;color:#55efc4;"></div>
+                </div>
+            </div>
+
+
+            <!-- Blog Page -->
+            <div class="adm-page" id="page-blog">
+                <h1 class="adm-page-title">Blog Yazıları</h1>
+                <p class="adm-page-sub">Blog içeriklerini yönetin — Türkçe & İngilizce</p>
+                <div class="adm-toolbar">
+                    <button class="adm-btn" onclick="admToggleBlogForm()">+ Yeni Yazı</button>
+                </div>
+                <div class="adm-form-panel" id="blogFormPanel">
+                    <div class="adm-lang-tabs">
+                        <button class="adm-lang-tab active" onclick="admSwitchLangTab('TR', this)">&#x1F1F9;&#x1F1F7; Türkçe</button>
+                        <button class="adm-lang-tab" onclick="admSwitchLangTab('EN', this)">&#x1F1EC;&#x1F1E7; English</button>
+                    </div>
+                    <div class="adm-form-grid">
+                        <div class="adm-form-group">
+                            <label class="adm-label">Sıra No</label>
+                            <input class="adm-input" type="number" id="bOrder" value="1" min="1">
+                        </div>
+                        <div class="adm-form-group">
+                            <label class="adm-label">Tarih</label>
+                            <input class="adm-input" type="text" id="bDate" placeholder="25 Ocak 2025">
+                        </div>
+                        <div class="adm-form-group">
+                            <label class="adm-label">Yazar</label>
+                            <input class="adm-input" type="text" id="bAuthor" value="AuroraNova Team">
+                        </div>
+                        <div class="adm-form-group">
+                            <label class="adm-label">Okuma Süresi</label>
+                            <input class="adm-input" type="text" id="bReadTime" placeholder="5 min read">
+                        </div>
+                        <div class="adm-form-group">
+                            <label class="adm-label">Durum</label>
+                            <label class="adm-toggle-wrap">
+                                <input class="adm-toggle" type="checkbox" id="bActive" checked> Aktif
+                            </label>
+                        </div>
+                    </div>
+                    <div id="blogFieldsTR">
+                        <div class="adm-form-grid">
+                            <div class="adm-form-group">
+                                <label class="adm-label">Kategori (TR)</label>
+                                <input class="adm-input" type="text" id="bCatTR" placeholder="Tasarım Trendleri">
+                            </div>
+                            <div class="adm-form-group full">
+                                <label class="adm-label">Başlık (TR)</label>
+                                <input class="adm-input" type="text" id="bTitleTR" placeholder="Blog başlığı...">
+                            </div>
+                            <div class="adm-form-group full">
+                                <label class="adm-label">Özet (TR)</label>
+                                <textarea class="adm-textarea" id="bExcerptTR" rows="3" placeholder="Kısa özet..."></textarea>
+                            </div>
+                            <div class="adm-form-group full">
+                                <label class="adm-label">İçerik (TR)</label>
+                                <textarea class="adm-textarea adm-textarea-lg" id="bContentTR" rows="14" placeholder="Tam makale içeriği..."></textarea>
+                            </div>
+                            <div class="adm-form-group full">
+                                <label class="adm-label">Etiketler TR (virgülle ayır)</label>
+                                <input class="adm-input" type="text" id="bTagsTR" placeholder="tasarım, dijital, teknoloji">
+                            </div>
+                        </div>
+                    </div>
+                    <div id="blogFieldsEN" style="display:none;">
+                        <div class="adm-form-grid">
+                            <div class="adm-form-group">
+                                <label class="adm-label">Category (EN)</label>
+                                <input class="adm-input" type="text" id="bCatEN" placeholder="Design Trends">
+                            </div>
+                            <div class="adm-form-group full">
+                                <label class="adm-label">Title (EN)</label>
+                                <input class="adm-input" type="text" id="bTitleEN" placeholder="Blog title...">
+                            </div>
+                            <div class="adm-form-group full">
+                                <label class="adm-label">Excerpt (EN)</label>
+                                <textarea class="adm-textarea" id="bExcerptEN" rows="3" placeholder="Short excerpt..."></textarea>
+                            </div>
+                            <div class="adm-form-group full">
+                                <label class="adm-label">Content (EN)</label>
+                                <textarea class="adm-textarea adm-textarea-lg" id="bContentEN" rows="14" placeholder="Full article content..."></textarea>
+                            </div>
+                            <div class="adm-form-group full">
+                                <label class="adm-label">Tags EN (comma separated)</label>
+                                <input class="adm-input" type="text" id="bTagsEN" placeholder="design, digital, technology">
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:8px;margin-top:16px;">
+                        <button class="adm-btn" onclick="admSaveBlog()">Kaydet</button>
+                        <button class="adm-btn secondary" onclick="admToggleBlogForm()">İptal</button>
+                    </div>
+                    <div id="blogFormMsg" class="adm-form-msg"></div>
+                </div>
+                <div class="adm-table-wrap">
+                    <table class="adm-table">
+                        <thead>
+                            <tr>
+                                <th>#</th><th>Başlık</th><th>Kategori</th><th>Tarih</th><th>Durum</th><th>İşlem</th>
+                            </tr>
+                        </thead>
+                        <tbody id="blogTableBody">
+                            <tr><td colspan="6" class="adm-loading">Yükleniyor...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Gallery Page -->
+            <div class="adm-page" id="page-gallery">
+                <h1 class="adm-page-title">Galeri</h1>
+                <p class="adm-page-sub">Foto kartlarını ve modal içeriklerini düzenleyin — Story, Method, Work</p>
+                <div id="galleryContent">
+                    <div class="adm-loading">Yükleniyor...</div>
+                </div>
+            </div>
+
+            <!-- Site Content Page -->
+            <div class="adm-page" id="page-content">
+                <h1 class="adm-page-title">Site İçeriği</h1>
+                <p class="adm-page-sub">Sayfa metinlerini, başlıkları ve linkleri düzenleyin</p>
+                <div class="adm-content-tabs">
+                    <button class="adm-ctab active" onclick="admShowContentTab('hero', this)">Hero</button>
+                    <button class="adm-ctab" onclick="admShowContentTab('story', this)">Story</button>
+                    <button class="adm-ctab" onclick="admShowContentTab('method', this)">Method</button>
+                    <button class="adm-ctab" onclick="admShowContentTab('work', this)">Work</button>
+                    <button class="adm-ctab" onclick="admShowContentTab('blog_section', this)">Blog</button>
+                    <button class="adm-ctab" onclick="admShowContentTab('contact', this)">İletişim</button>
+                    <button class="adm-ctab" onclick="admShowContentTab('footer', this)">Footer</button>
+                    <button class="adm-ctab" onclick="admShowContentTab('services', this)">Servisler</button>
+                </div>
+
+                <!-- Hero -->
+                <div class="adm-ctab-content active" id="ctab-hero">
+                    <div class="adm-form-panel open" style="max-width:720px;">
+                        <div class="adm-form-grid">
+                            <div class="adm-form-group full"><label class="adm-label">Subtitle (TR)</label><input class="adm-input" type="text" id="heroSubtitleTR"></div>
+                            <div class="adm-form-group full"><label class="adm-label">Subtitle (EN)</label><input class="adm-input" type="text" id="heroSubtitleEN"></div>
+                            <div class="adm-form-group full"><label class="adm-label">Tagline (TR)</label><textarea class="adm-textarea" id="heroTaglineTR" rows="3"></textarea></div>
+                            <div class="adm-form-group full"><label class="adm-label">Tagline (EN)</label><textarea class="adm-textarea" id="heroTaglineEN" rows="3"></textarea></div>
+                        </div>
+                        <button class="adm-btn" onclick="admSaveContent('hero')">Kaydet</button>
+                        <div id="contentMsg-hero" class="adm-form-msg"></div>
+                    </div>
+                </div>
+
+                <!-- Story -->
+                <div class="adm-ctab-content" id="ctab-story">
+                    <div class="adm-form-panel open" style="max-width:720px;">
+                        <div class="adm-form-grid">
+                            <div class="adm-form-group full"><label class="adm-label">Başlık (TR)</label><input class="adm-input" type="text" id="storyHeadingTR"></div>
+                            <div class="adm-form-group full"><label class="adm-label">Heading (EN)</label><input class="adm-input" type="text" id="storyHeadingEN"></div>
+                            <div class="adm-form-group full"><label class="adm-label">Açıklama (TR)</label><textarea class="adm-textarea" id="storyDescTR" rows="3"></textarea></div>
+                            <div class="adm-form-group full"><label class="adm-label">Description (EN)</label><textarea class="adm-textarea" id="storyDescEN" rows="3"></textarea></div>
+                        </div>
+                        <button class="adm-btn" onclick="admSaveContent('story')">Kaydet</button>
+                        <div id="contentMsg-story" class="adm-form-msg"></div>
+                    </div>
+                </div>
+
+                <!-- Method -->
+                <div class="adm-ctab-content" id="ctab-method">
+                    <div class="adm-form-panel open" style="max-width:720px;">
+                        <div class="adm-form-grid">
+                            <div class="adm-form-group full"><label class="adm-label">Başlık (TR)</label><input class="adm-input" type="text" id="methodHeadingTR"></div>
+                            <div class="adm-form-group full"><label class="adm-label">Heading (EN)</label><input class="adm-input" type="text" id="methodHeadingEN"></div>
+                            <div class="adm-form-group full"><label class="adm-label">Açıklama (TR)</label><textarea class="adm-textarea" id="methodDescTR" rows="3"></textarea></div>
+                            <div class="adm-form-group full"><label class="adm-label">Description (EN)</label><textarea class="adm-textarea" id="methodDescEN" rows="3"></textarea></div>
+                        </div>
+                        <button class="adm-btn" onclick="admSaveContent('method')">Kaydet</button>
+                        <div id="contentMsg-method" class="adm-form-msg"></div>
+                    </div>
+                </div>
+
+                <!-- Work -->
+                <div class="adm-ctab-content" id="ctab-work">
+                    <div class="adm-form-panel open" style="max-width:720px;">
+                        <div class="adm-form-grid">
+                            <div class="adm-form-group full"><label class="adm-label">Başlık (TR)</label><input class="adm-input" type="text" id="workHeadingTR"></div>
+                            <div class="adm-form-group full"><label class="adm-label">Heading (EN)</label><input class="adm-input" type="text" id="workHeadingEN"></div>
+                            <div class="adm-form-group full"><label class="adm-label">Açıklama (TR)</label><textarea class="adm-textarea" id="workDescTR" rows="3"></textarea></div>
+                            <div class="adm-form-group full"><label class="adm-label">Description (EN)</label><textarea class="adm-textarea" id="workDescEN" rows="3"></textarea></div>
+                        </div>
+                        <button class="adm-btn" onclick="admSaveContent('work')">Kaydet</button>
+                        <div id="contentMsg-work" class="adm-form-msg"></div>
+                    </div>
+                </div>
+
+                <!-- Blog Section -->
+                <div class="adm-ctab-content" id="ctab-blog_section">
+                    <div class="adm-form-panel open" style="max-width:720px;">
+                        <div class="adm-form-grid">
+                            <div class="adm-form-group full"><label class="adm-label">Başlık (TR)</label><input class="adm-input" type="text" id="blogSecHeadingTR"></div>
+                            <div class="adm-form-group full"><label class="adm-label">Heading (EN)</label><input class="adm-input" type="text" id="blogSecHeadingEN"></div>
+                            <div class="adm-form-group full"><label class="adm-label">Açıklama (TR)</label><textarea class="adm-textarea" id="blogSecDescTR" rows="2"></textarea></div>
+                            <div class="adm-form-group full"><label class="adm-label">Description (EN)</label><textarea class="adm-textarea" id="blogSecDescEN" rows="2"></textarea></div>
+                        </div>
+                        <button class="adm-btn" onclick="admSaveContent('blog_section')">Kaydet</button>
+                        <div id="contentMsg-blog_section" class="adm-form-msg"></div>
+                    </div>
+                </div>
+
+                <!-- Contact -->
+                <div class="adm-ctab-content" id="ctab-contact">
+                    <div class="adm-form-panel open" style="max-width:720px;">
+                        <div class="adm-form-grid">
+                            <div class="adm-form-group full"><label class="adm-label">Başlık (TR)</label><input class="adm-input" type="text" id="contactHeadingTR"></div>
+                            <div class="adm-form-group full"><label class="adm-label">Heading (EN)</label><input class="adm-input" type="text" id="contactHeadingEN"></div>
+                            <div class="adm-form-group full"><label class="adm-label">E-posta Adresi</label><input class="adm-input" type="email" id="contactEmail"></div>
+                            <div class="adm-form-group full"><label class="adm-label">Calendly / Toplantı Linki</label><input class="adm-input" type="url" id="contactMeetingLink"></div>
+                            <div class="adm-form-group full"><label class="adm-label">Konum (TR)</label><input class="adm-input" type="text" id="contactLocationTR"></div>
+                            <div class="adm-form-group full"><label class="adm-label">Location (EN)</label><input class="adm-input" type="text" id="contactLocationEN"></div>
+                        </div>
+                        <button class="adm-btn" onclick="admSaveContent('contact')">Kaydet</button>
+                        <div id="contentMsg-contact" class="adm-form-msg"></div>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="adm-ctab-content" id="ctab-footer">
+                    <div class="adm-form-panel open" style="max-width:720px;">
+                        <div class="adm-form-grid">
+                            <div class="adm-form-group full"><label class="adm-label">Tagline (TR)</label><textarea class="adm-textarea" id="footerTaglineTR" rows="2"></textarea></div>
+                            <div class="adm-form-group full"><label class="adm-label">Tagline (EN)</label><textarea class="adm-textarea" id="footerTaglineEN" rows="2"></textarea></div>
+                            <div class="adm-form-group full"><label class="adm-label">Telif Hakkı Metni</label><input class="adm-input" type="text" id="footerCopyright"></div>
+                            <div class="adm-form-group full"><label class="adm-label">Gizlilik Politikası Linki</label><input class="adm-input" type="url" id="footerPrivacyLink"></div>
+                        </div>
+                        <button class="adm-btn" onclick="admSaveContent('footer')">Kaydet</button>
+                        <div id="contentMsg-footer" class="adm-form-msg"></div>
+                    </div>
+                </div>
+
+                <!-- Services -->
+                <div class="adm-ctab-content" id="ctab-services">
+                    <div class="adm-form-panel open" style="max-width:720px;">
+                        <p style="color:rgba(255,255,255,0.4);font-size:12px;margin-bottom:16px;">5 servis kartının başlık ve açıklamaları</p>
+                        <div class="adm-form-grid">
+                            <div class="adm-form-group"><label class="adm-label">Branding Başlık TR</label><input class="adm-input" type="text" id="svcBrandingTitleTR"></div>
+                            <div class="adm-form-group"><label class="adm-label">Branding Title EN</label><input class="adm-input" type="text" id="svcBrandingTitleEN"></div>
+                            <div class="adm-form-group full"><label class="adm-label">Branding Açıklama TR</label><textarea class="adm-textarea" id="svcBrandingDescTR" rows="2"></textarea></div>
+                            <div class="adm-form-group full"><label class="adm-label">Branding Description EN</label><textarea class="adm-textarea" id="svcBrandingDescEN" rows="2"></textarea></div>
+                            <div class="adm-form-group"><label class="adm-label">Web Başlık TR</label><input class="adm-input" type="text" id="svcWebTitleTR"></div>
+                            <div class="adm-form-group"><label class="adm-label">Web Title EN</label><input class="adm-input" type="text" id="svcWebTitleEN"></div>
+                            <div class="adm-form-group full"><label class="adm-label">Web Açıklama TR</label><textarea class="adm-textarea" id="svcWebDescTR" rows="2"></textarea></div>
+                            <div class="adm-form-group full"><label class="adm-label">Web Description EN</label><textarea class="adm-textarea" id="svcWebDescEN" rows="2"></textarea></div>
+                            <div class="adm-form-group"><label class="adm-label">SEO Başlık TR</label><input class="adm-input" type="text" id="svcSeoTitleTR"></div>
+                            <div class="adm-form-group"><label class="adm-label">SEO Title EN</label><input class="adm-input" type="text" id="svcSeoTitleEN"></div>
+                            <div class="adm-form-group"><label class="adm-label">Marketing Başlık TR</label><input class="adm-input" type="text" id="svcMarketingTitleTR"></div>
+                            <div class="adm-form-group"><label class="adm-label">Marketing Title EN</label><input class="adm-input" type="text" id="svcMarketingTitleEN"></div>
+                            <div class="adm-form-group"><label class="adm-label">Software Başlık TR</label><input class="adm-input" type="text" id="svcSoftwareTitleTR"></div>
+                            <div class="adm-form-group"><label class="adm-label">Software Title EN</label><input class="adm-input" type="text" id="svcSoftwareTitleEN"></div>
+                        </div>
+                        <button class="adm-btn" onclick="admSaveContent('services')">Kaydet</button>
+                        <div id="contentMsg-services" class="adm-form-msg"></div>
+                    </div>
                 </div>
             </div>
 
