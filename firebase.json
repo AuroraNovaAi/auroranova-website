@@ -1,0 +1,34 @@
+{
+  "hosting": {
+    "site": "auroranova-website",
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      "firestore.rules",
+      "firestore.indexes.json",
+      ".firebaserc",
+      ".git",
+      ".gitignore",
+      "node_modules",
+      "README.md",
+      "GUNCELLEMELER.md",
+      "CNAME"
+    ],
+    "rewrites": [],
+    "headers": [
+      {
+        "source": "**",
+        "headers": [
+          {
+            "key": "Cross-Origin-Opener-Policy",
+            "value": "same-origin-allow-popups"
+          }
+        ]
+      }
+    ]
+  },
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  }
+}
