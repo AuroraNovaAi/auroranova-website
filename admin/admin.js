@@ -823,6 +823,36 @@ async function admFetchModels(selectId, mode = 'text') {
     }
 }
 
+function admTranslateAiError(statusCode, originalMessage) {
+    let trMsg = '';
+    
+    if (!statusCode && !originalMessage) return 'Bilinmeyen bir hata oluştu.';
+    
+    // Status code bazlı çeviriler
+    if (statusCode === 400) trMsg = 'Geçersiz istek. Girdiğiniz metin veya parametreler hatalı olabilir (Güvenlik filtresine takılmış olabilir).';
+    else if (statusCode === 403) trMsg = 'API yetkisiz. Lütfen API anahtarınızın doğru olduğunu ve bu model için izniniz olduğunu kontrol edin.';
+    else if (statusCode === 404) trMsg = 'Seçilen model bulunamadı veya bu API anahtarına kapatılmış.';
+    else if (statusCode === 429) trMsg = 'API kullanım limitiniz doldu veya çok hızlı istek gönderiyorsunuz. Lütfen biraz bekleyip tekrar deneyin.';
+    else if (statusCode === 500) trMsg = 'Google sunucularında bir iç hata oluştu. Lütfen daha sonra tekrar deneyin.';
+    else if (statusCode === 503) trMsg = 'Model şu anda aşırı yüklü veya bakıma alınmış. Lütfen başka bir model seçin.';
+    
+    // Mesaj içeriği bazlı çeviriler (Status Code yoksa veya spesifik hata ise)
+    const lowerMsg = (originalMessage || '').toLowerCase();
+    if (lowerMsg.includes('safety') || lowerMsg.includes('block')) {
+        trMsg = 'İçerik Google güvenlik filtrelerine takıldı (Şiddet, nefret söylemi, müstehcenlik vb. içeremez).';
+    } else if (lowerMsg.includes('fetch') || lowerMsg.includes('network')) {
+        trMsg = 'Bağlantı koptu veya zaman aşımına uğradı. İnternet bağlantınızı kontrol edin.';
+    } else if (lowerMsg.includes('not supported for predict')) {
+        trMsg = 'Bu model görsel üretimi (predict) desteklemiyor. Lütfen menüden başka bir model seçin.';
+    }
+
+    if (trMsg) {
+        return `Hata: ${trMsg} \n(Detay: ${originalMessage || statusCode})`;
+    }
+    
+    return `Hata: ${originalMessage || 'Beklenmeyen bir hata oluştu (Kodu: ' + statusCode + ')'}`;
+}
+
 async function admGenerateText() {
     const promptEl = document.getElementById('aiTextPrompt');
     const resultEl = document.getElementById('aiTextResult');
@@ -862,7 +892,7 @@ async function admGenerateText() {
 
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(errorData.error?.message || `Gemini API Hatası (${selectedModel})`);
+            throw new Error(admTranslateAiError(response.status, errorData.error?.message));
         }
 
         const data = await response.json();
@@ -968,7 +998,7 @@ async function admGenerateImage() {
 
                 if (!response.ok) {
                     const errorData = await response.json();
-                    throw new Error(errorData.error?.message || `API Hatası (${selectedModel})`);
+                    throw new Error(admTranslateAiError(response.status, errorData.error?.message));
                 }
                 const data = await response.json();
                 
