@@ -1148,8 +1148,8 @@ window.admHandleVideoSelect = function(event) {
     const file = event.target.files[0];
     if (!file) return;
     
-    // 100 MB Limit Kontrolü
-    const MAX_SIZE_MB = 100;
+    // Limit Kontrolü
+    const MAX_SIZE_MB = 250;
     if (file.size > MAX_SIZE_MB * 1024 * 1024) {
         alert(`HATA: Dosya boyutu çok büyük! Maksimum ${MAX_SIZE_MB}MB büyüklüğünde bir video yükleyebilirsiniz.\n\nSeçtiğiniz dosya boyutu: ${(file.size / 1024 / 1024).toFixed(1)}MB.`);
         event.target.value = ''; // Input'u temizle
