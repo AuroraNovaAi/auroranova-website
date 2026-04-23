@@ -783,27 +783,22 @@ async function admFetchModels(selectId, mode = 'text') {
                 const modelName = model.name.replace('models/', '');
                 const methods = model.supportedGenerationMethods || [];
                 
-                let isText = methods.includes('generateContent') && !modelName.includes('embedding') && !modelName.includes('aqa') && !modelName.includes('bison');
-                let isImage = methods.includes('predict') || (methods.includes('generateContent') && (modelName.includes('flash') || modelName.includes('pro') || modelName.includes('vision') || modelName.includes('imagen')));
+                let isText = methods.includes('generateContent') && !modelName.includes('embedding') && !modelName.includes('aqa') && !modelName.includes('bison') && !modelName.includes('audio');
+                let isImage = methods.includes('predict') && (modelName.includes('imagen') || modelName.includes('vision'));
 
                 let include = false;
                 let emoji = '';
 
                 if (mode === 'text' && isText) { include = true; emoji = '📝 '; }
-                if (mode === 'image' && isImage) { include = true; emoji = '🎨 '; }
-
-                // Always allow if we aren't sure but it looks like a main gemini model
-                if (modelName.startsWith('gemini-') && !include) {
-                    include = true;
-                    emoji = '✨ ';
-                }
+                // Also allow some gemini models that might do images if they have specific keywords, or just rely on predict.
+                if (mode === 'image' && (isImage || modelName.includes('imagen'))) { include = true; emoji = '🎨 '; }
 
                 if (include) {
                     const opt = document.createElement('option');
                     opt.value = modelName;
                     opt.textContent = `${emoji}${model.displayName || modelName} (${modelName})`;
                     // Select a default good model if found
-                    if (modelName === 'gemini-2.5-flash' || modelName === 'gemini-3.0-flash') {
+                    if (modelName === 'gemini-2.5-flash' || modelName === 'gemini-3.0-flash' || modelName.includes('imagen')) {
                         opt.selected = true;
                     }
                     selectEl.appendChild(opt);
@@ -812,10 +807,11 @@ async function admFetchModels(selectId, mode = 'text') {
             });
 
             if (addedCount === 0) {
-                selectEl.innerHTML = '<option value="">Uygun model bulunamadı</option>';
+                // Fallback if filter is too strict
+                selectEl.innerHTML = '<option value="gemini-2.5-flash">gemini-2.5-flash (Varsayılan)</option>';
             }
         } else {
-            selectEl.innerHTML = '<option value="">Model bulunamadı</option>';
+            selectEl.innerHTML = '<option value="gemini-2.5-flash">Model bulunamadı (Varsayılan eklendi)</option>';
         }
 
     } catch (e) {
@@ -933,35 +929,59 @@ async function admGenerateImage() {
             throw new Error('API Anahtarı bulunamadı! Lütfen Ayarlar sekmesinden kaydedin.');
         }
 
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`;
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: {
-                    responseMimeType: "image/jpeg"
-                }
-            })
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error?.message || `Gemini Image API Hatası (${selectedModel})`);
-        }
-
-        const data = await response.json();
-        
+        let response;
         let base64Image = null;
-        if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts[0]) {
-            const part = data.candidates[0].content.parts[0];
-            if (part.inlineData && part.inlineData.data) {
-                base64Image = part.inlineData.data;
+
+        if (selectedModel.includes('imagen')) {
+            // Imagen models use the predict endpoint
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:predict?key=${apiKey}`;
+            response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    instances: [ { prompt: prompt } ],
+                    parameters: { sampleCount: 1, aspectRatio: "1:1" }
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error?.message || `Imagen API Hatası (${selectedModel})`);
+            }
+            const data = await response.json();
+            if (data.predictions && data.predictions[0]) {
+                base64Image = data.predictions[0].bytesBase64Encoded || data.predictions[0].image?.bytesBase64Encoded;
+            }
+        } else {
+            // Experimental/other models using generateContent
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`;
+            response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }],
+                    // Remove responseMimeType as standard models reject it. 
+                    // We just hope the model natively outputs an image part.
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error?.message || `Gemini API Hatası (${selectedModel})`);
+            }
+            const data = await response.json();
+            if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts[0]) {
+                const part = data.candidates[0].content.parts[0];
+                if (part.inlineData && part.inlineData.data) {
+                    base64Image = part.inlineData.data;
+                } else if (part.text) {
+                    throw new Error("Seçtiğiniz model resim yerine metin döndürdü. Lütfen bir Imagen modeli seçin.");
+                }
             }
         }
         
         if (!base64Image) {
-            throw new Error('API yanıtından görsel verisi okunamadı. (Seçtiğiniz model görsel oluşturmayı desteklemiyor olabilir)');
+            throw new Error('API yanıtından görsel verisi okunamadı. Lütfen model menüsünden bir "Imagen" modeli seçtiğinizden emin olun.');
         }
 
         _lastGeneratedImageBase64 = base64Image;
