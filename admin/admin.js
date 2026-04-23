@@ -932,52 +932,72 @@ async function admGenerateImage() {
         let response;
         let base64Image = null;
 
-        if (selectedModel.includes('imagen')) {
-            // Imagen models use the predict endpoint
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:predict?key=${apiKey}`;
-            response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    instances: [ { prompt: prompt } ],
-                    parameters: { sampleCount: 1, aspectRatio: "1:1" }
-                })
-            });
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 seconds timeout
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error?.message || `Imagen API Hatası (${selectedModel})`);
-            }
-            const data = await response.json();
-            if (data.predictions && data.predictions[0]) {
-                base64Image = data.predictions[0].bytesBase64Encoded || data.predictions[0].image?.bytesBase64Encoded;
-            }
-        } else {
-            // Experimental/other models using generateContent
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`;
-            response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: prompt }] }],
-                    // Remove responseMimeType as standard models reject it. 
-                    // We just hope the model natively outputs an image part.
-                })
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error?.message || `Gemini API Hatası (${selectedModel})`);
-            }
-            const data = await response.json();
-            if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts[0]) {
-                const part = data.candidates[0].content.parts[0];
-                if (part.inlineData && part.inlineData.data) {
-                    base64Image = part.inlineData.data;
-                } else if (part.text) {
-                    throw new Error("Seçtiğiniz model resim yerine metin döndürdü. Lütfen bir Imagen modeli seçin.");
+        try {
+            if (selectedModel.includes('imagen') || selectedModel.includes('image')) {
+                // Imagen models use the predict endpoint
+                // Note: Even if it's gemini-3.1-flash-image-preview, if it has 'image' we should probably try predict.
+                // But let's check specifically for 'imagen' for predict, and use generateContent for others.
+                
+                if (selectedModel.includes('imagen')) {
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:predict?key=${apiKey}`;
+                    response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            instances: [ { prompt: prompt } ],
+                            parameters: { sampleCount: 1, aspectRatio: "1:1" }
+                        }),
+                        signal: controller.signal
+                    });
+                } else {
+                    // It's a gemini model that supports images, like gemini-3.1-flash-image-preview
+                    // It likely requires predict endpoint too if it's purely for images, but wait, gemini is generateContent.
+                    // Let's use generateContent for gemini models.
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`;
+                    response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: prompt }] }]
+                        }),
+                        signal: controller.signal
+                    });
                 }
+
+                clearTimeout(timeoutId);
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error?.message || `API Hatası (${selectedModel})`);
+                }
+                const data = await response.json();
+                
+                if (selectedModel.includes('imagen')) {
+                    if (data.predictions && data.predictions[0]) {
+                        base64Image = data.predictions[0].bytesBase64Encoded || data.predictions[0].image?.bytesBase64Encoded;
+                    }
+                } else {
+                    if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts[0]) {
+                        const part = data.candidates[0].content.parts[0];
+                        if (part.inlineData && part.inlineData.data) {
+                            base64Image = part.inlineData.data;
+                        } else if (part.text) {
+                            throw new Error("Seçtiğiniz model resim yerine metin döndürdü. Lütfen menüden 'imagen' içeren bir model seçin.");
+                        }
+                    }
+                }
+            } else {
+                throw new Error("Lütfen listeden görsel üretebilen bir model seçin (örn: imagen-3.0-generate-001).");
             }
+        } catch (fetchErr) {
+            clearTimeout(timeoutId);
+            if (fetchErr.name === 'AbortError') {
+                throw new Error("İstek zaman aşımına uğradı (Google sunucuları yanıt vermiyor). Lütfen başka bir model seçin.");
+            }
+            throw fetchErr;
         }
         
         if (!base64Image) {
