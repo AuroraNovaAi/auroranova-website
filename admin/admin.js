@@ -1148,6 +1148,17 @@ window.admHandleVideoSelect = function(event) {
     const file = event.target.files[0];
     if (!file) return;
     
+    // 100 MB Limit Kontrolü
+    const MAX_SIZE_MB = 100;
+    if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+        alert(`HATA: Dosya boyutu çok büyük! Maksimum ${MAX_SIZE_MB}MB büyüklüğünde bir video yükleyebilirsiniz.\n\nSeçtiğiniz dosya boyutu: ${(file.size / 1024 / 1024).toFixed(1)}MB.`);
+        event.target.value = ''; // Input'u temizle
+        document.getElementById('videoEditorControls').style.display = 'none';
+        document.getElementById('videoEditorResult').innerHTML = '<span style="color: rgba(255,255,255,0.3); font-size: 13px;">Videoyu seçip bir işleme tıkladığınızda sonuç burada belirecek.</span>';
+        currentVideoFile = null;
+        return;
+    }
+    
     currentVideoFile = file;
     document.getElementById('videoEditorControls').style.display = 'block';
     
