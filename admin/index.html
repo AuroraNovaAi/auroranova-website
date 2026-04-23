@@ -77,6 +77,19 @@
             <button class="adm-nav-btn" onclick="admShowPage('gallery', this)">
                 <span class="adm-nav-icon">&#x1F5BC;</span> Galeri
             </button>
+            <div class="adm-nav-divider"></div>
+            <button class="adm-nav-btn" onclick="admShowPage('ai-text', this)">
+                <span class="adm-nav-icon">&#x1F9E0;</span> AI Metin
+            </button>
+            <button class="adm-nav-btn" onclick="admShowPage('ai-image', this)">
+                <span class="adm-nav-icon">&#x1F3A8;</span> AI Görsel
+            </button>
+            <button class="adm-nav-btn" onclick="admShowPage('ai-video', this)">
+                <span class="adm-nav-icon">&#x1F3AC;</span> AI Video
+            </button>
+            <button class="adm-nav-btn" onclick="admShowPage('video-editor', this)">
+                <span class="adm-nav-icon">&#x2702;&#xFE0F;</span> Video Editör
+            </button>
         </nav>
 
         <!-- Content -->
@@ -259,6 +272,13 @@
                                 <input class="adm-toggle" type="checkbox" id="settAnnounceActive">
                                 Aktif
                             </label>
+                        </div>
+                    </div>
+                    <div class="adm-form-grid" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+                        <div class="adm-form-group full">
+                            <label class="adm-label">Google AI Studio API Key (Nano Banana / Gemini)</label>
+                            <input class="adm-input" type="password" id="settApiKey" placeholder="AI Studio API anahtarınızı buraya girin...">
+                            <p style="font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 6px;">Bu anahtar yalnızca sizin tarayıcınızdan AI modellerine bağlanmak için kullanılır.</p>
                         </div>
                     </div>
                     <div style="display:flex;gap:8px;">
@@ -520,6 +540,46 @@
                         <button class="adm-btn" onclick="admSaveContent('services')">Kaydet</button>
                         <div id="contentMsg-services" class="adm-form-msg"></div>
                     </div>
+                </div>
+            </div>
+
+            <!-- AI Text Page -->
+            <div class="adm-page" id="page-ai-text">
+                <h1 class="adm-page-title">AI Metin Asistanı</h1>
+                <p class="adm-page-sub">Gemini (Nano Banana) ile blog ve içerik üretin.</p>
+                <div class="adm-empty">
+                    <span class="adm-empty-icon">&#x1F9E0;</span>
+                    <p>AI Modülü yükleniyor... (API Bağlantısı Bekleniyor)</p>
+                </div>
+            </div>
+
+            <!-- AI Image Page -->
+            <div class="adm-page" id="page-ai-image">
+                <h1 class="adm-page-title">AI Görsel Stüdyosu</h1>
+                <p class="adm-page-sub">Nano Banana ile yüksek kaliteli görseller oluşturun.</p>
+                <div class="adm-empty">
+                    <span class="adm-empty-icon">&#x1F3A8;</span>
+                    <p>AI Modülü yükleniyor... (API Bağlantısı Bekleniyor)</p>
+                </div>
+            </div>
+
+            <!-- AI Video Page -->
+            <div class="adm-page" id="page-ai-video">
+                <h1 class="adm-page-title">AI Video Üretici</h1>
+                <p class="adm-page-sub">Metinden harika sinematik videolar yaratın.</p>
+                <div class="adm-empty">
+                    <span class="adm-empty-icon">&#x1F3AC;</span>
+                    <p>AI Modülü yükleniyor... (API Bağlantısı Bekleniyor)</p>
+                </div>
+            </div>
+
+            <!-- Video Editor Page -->
+            <div class="adm-page" id="page-video-editor">
+                <h1 class="adm-page-title">Klasik Video Editör</h1>
+                <p class="adm-page-sub">Videoları kesin, terse çevirin, klonlayın ve birleştirin (Sınırsız & Ücretsiz).</p>
+                <div class="adm-empty">
+                    <span class="adm-empty-icon">&#x2702;&#xFE0F;</span>
+                    <p>FFmpeg.wasm tabanlı yerel editör yükleniyor...</p>
                 </div>
             </div>
 
