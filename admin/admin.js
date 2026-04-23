@@ -1183,7 +1183,10 @@ window.admVideoAction = async function(action) {
         await ff.writeFile(inputName, await fetchFile(currentVideoFile));
         
         let args = [];
-        if (action === 'reverse') {
+        if (action === 'boomerang') {
+            // İleri oynat, sonra geriye oynat (Kusursuz döngü). Hata olmaması için sesi siliyoruz.
+            args = ['-i', inputName, '-filter_complex', '[0:v]reverse[r];[0:v][r]concat=n=2:v=1[outv]', '-map', '[outv]', '-an', outputName];
+        } else if (action === 'reverse') {
             // Görüntüyü ve sesi terse çevir
             args = ['-i', inputName, '-vf', 'reverse', '-af', 'areverse', outputName];
         } else if (action === 'clone2x') {
