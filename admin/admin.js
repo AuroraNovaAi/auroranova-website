@@ -863,41 +863,47 @@ async function admGenerateImage() {
             throw new Error('API Anahtarı bulunamadı! Lütfen Ayarlar sekmesinden kaydedin.');
         }
 
-        // Try the stable Imagen 3 API from Google AI Studio
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key=${apiKey}`;
-        
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                instances: [
-                    { prompt: prompt }
-                ],
-                parameters: {
-                    sampleCount: 1,
-                    aspectRatio: "1:1"
-                }
-            })
-        });
+        let data;
+        let response;
+        const modelsToTry = ['gemini-2.5-flash', 'gemini-3.0-flash', 'gemini-pro'];
+        let lastError = null;
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error?.message || 'Gemini Image API Hatası');
+        for (const model of modelsToTry) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+            response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: {
+                        responseMimeType: "image/jpeg"
+                    }
+                })
+            });
+
+            if (response.ok) {
+                data = await response.json();
+                lastError = null;
+                break;
+            } else {
+                const errorData = await response.json();
+                lastError = new Error(errorData.error?.message || `Gemini Image API Hatası (${model})`);
+                if (response.status !== 404) break; 
+            }
         }
 
-        const data = await response.json();
+        if (lastError) throw lastError;
         
         let base64Image = null;
-        if (data.predictions && data.predictions[0]) {
-            if (data.predictions[0].bytesBase64Encoded) {
-                base64Image = data.predictions[0].bytesBase64Encoded;
-            } else if (data.predictions[0].image?.bytesBase64Encoded) {
-                base64Image = data.predictions[0].image.bytesBase64Encoded;
+        if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts[0]) {
+            const part = data.candidates[0].content.parts[0];
+            if (part.inlineData && part.inlineData.data) {
+                base64Image = part.inlineData.data;
             }
         }
         
         if (!base64Image) {
-            throw new Error('API yanıtından görsel verisi okunamadı.');
+            throw new Error('API yanıtından görsel verisi okunamadı. (Mevcut model görsel oluşturmayı desteklemiyor olabilir)');
         }
 
         _lastGeneratedImageBase64 = base64Image;
