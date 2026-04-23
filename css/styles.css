@@ -35,6 +35,16 @@
             line-height: 1.6;
             background: #000;
             color: var(--text-primary);
+            -webkit-user-select: none; /* Safari */
+            -ms-user-select: none; /* IE 10+ and Edge */
+            user-select: none; /* Standard syntax */
+        }
+
+        /* Re-enable text selection for form inputs and textareas */
+        input, textarea, [contenteditable], .selectable-text {
+            -webkit-user-select: text;
+            -ms-user-select: text;
+            user-select: text;
         }
 
         /* Performance Optimizations */
