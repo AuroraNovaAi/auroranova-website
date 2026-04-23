@@ -839,10 +839,11 @@ function admUpdateModelGuide(selectId, guideBoxId) {
     }
 
     let guideHtml = '';
+    const isImageTab = guideBoxId === 'aiImageGuideBox';
 
-    if (modelName.includes('imagen')) {
+    if (isImageTab || modelName.includes('imagen')) {
         guideHtml = `
-            <strong style="color:#fff;">Açıklama:</strong> Google'ın en güçlü görsel üretim (Diffusion) modelidir. Fotogerçekçi ve sanatsal görseller üretir.<br><br>
+            <strong style="color:#fff;">Açıklama:</strong> Seçtiğiniz bu model görsel üretim (Image Generation) için optimize edilmiştir.<br><br>
             <strong style="color:#fff;">En İyi Sonuç İçin Prompt İpuçları (Resmi Kılavuz):</strong>
             <ul style="margin:8px 0 0 20px; padding:0;">
                 <li><strong>Özne (Subject):</strong> Ana objeyi net belirtin (Örn: <em>Siyah bir kedi</em>).</li>
@@ -853,7 +854,7 @@ function admUpdateModelGuide(selectId, guideBoxId) {
         `;
     } else if (modelName.includes('flash')) {
         guideHtml = `
-            <strong style="color:#fff;">Açıklama:</strong> Google'ın hız ve verimlilik odaklı en güncel modelidir. Günlük içerikler ve hızlı blog yazıları için mükemmeldir.<br><br>
+            <strong style="color:#fff;">Açıklama:</strong> Google'ın hız ve verimlilik odaklı en güncel metin modelidir. Günlük içerikler ve hızlı blog yazıları için mükemmeldir.<br><br>
             <strong style="color:#fff;">En İyi Sonuç İçin Prompt İpuçları (Resmi Kılavuz):</strong>
             <ul style="margin:8px 0 0 20px; padding:0;">
                 <li><strong>Rol Atayın:</strong> Cümleye <em>'Sen 10 yıllık uzman bir SEO yazarısın...'</em> diyerek başlayın.</li>
@@ -863,7 +864,7 @@ function admUpdateModelGuide(selectId, guideBoxId) {
         `;
     } else if (modelName.includes('pro')) {
         guideHtml = `
-            <strong style="color:#fff;">Açıklama:</strong> Karmaşık akıl yürütme, kodlama ve detaylı analiz gerektiren zorlu görevler için tasarlanmış profesyonel modeldir.<br><br>
+            <strong style="color:#fff;">Açıklama:</strong> Karmaşık akıl yürütme, kodlama ve detaylı analiz gerektiren zorlu görevler için tasarlanmış profesyonel metin modelidir.<br><br>
             <strong style="color:#fff;">En İyi Sonuç İçin Prompt İpuçları (Resmi Kılavuz):</strong>
             <ul style="margin:8px 0 0 20px; padding:0;">
                 <li><strong>Adım Adım:</strong> <em>'Düşünce sürecini adım adım açıkla'</em> diyerek matematik/analiz hatalarını sıfıra indirin.</li>
