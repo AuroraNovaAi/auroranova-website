@@ -757,7 +757,7 @@ async function getAiApiKey() {
     return null;
 }
 
-async function admFetchModels(selectId) {
+async function admFetchModels(selectId, mode = 'text') {
     const selectEl = document.getElementById(selectId);
     if (!selectEl) return;
     
@@ -778,17 +778,42 @@ async function admFetchModels(selectId) {
         
         selectEl.innerHTML = '';
         if (data.models && data.models.length > 0) {
+            let addedCount = 0;
             data.models.forEach(model => {
                 const modelName = model.name.replace('models/', '');
-                const opt = document.createElement('option');
-                opt.value = modelName;
-                opt.textContent = `${model.displayName || modelName} (${modelName})`;
-                // Select a default good model if found
-                if (modelName === 'gemini-2.5-flash' || modelName === 'gemini-3.0-flash') {
-                    opt.selected = true;
+                const methods = model.supportedGenerationMethods || [];
+                
+                let isText = methods.includes('generateContent') && !modelName.includes('embedding') && !modelName.includes('aqa') && !modelName.includes('bison');
+                let isImage = methods.includes('predict') || (methods.includes('generateContent') && (modelName.includes('flash') || modelName.includes('pro') || modelName.includes('vision') || modelName.includes('imagen')));
+
+                let include = false;
+                let emoji = '';
+
+                if (mode === 'text' && isText) { include = true; emoji = '📝 '; }
+                if (mode === 'image' && isImage) { include = true; emoji = '🎨 '; }
+
+                // Always allow if we aren't sure but it looks like a main gemini model
+                if (modelName.startsWith('gemini-') && !include) {
+                    include = true;
+                    emoji = '✨ ';
                 }
-                selectEl.appendChild(opt);
+
+                if (include) {
+                    const opt = document.createElement('option');
+                    opt.value = modelName;
+                    opt.textContent = `${emoji}${model.displayName || modelName} (${modelName})`;
+                    // Select a default good model if found
+                    if (modelName === 'gemini-2.5-flash' || modelName === 'gemini-3.0-flash') {
+                        opt.selected = true;
+                    }
+                    selectEl.appendChild(opt);
+                    addedCount++;
+                }
             });
+
+            if (addedCount === 0) {
+                selectEl.innerHTML = '<option value="">Uygun model bulunamadı</option>';
+            }
         } else {
             selectEl.innerHTML = '<option value="">Model bulunamadı</option>';
         }
