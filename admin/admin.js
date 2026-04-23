@@ -1221,11 +1221,12 @@ window.admVideoAction = async function(action) {
             // Sadece belirtilen aralığı kes (copy)
             args = [...baseArgs, '-c', 'copy', outputName];
         } else if (action === 'boomerang') {
-            // İleri oynat, sonra geriye oynat (Kusursuz döngü). Hata olmaması için sesi siliyoruz.
-            args = [...baseArgs, '-filter_complex', '[0:v]reverse[r];[0:v][r]concat=n=2:v=1[outv]', '-map', '[outv]', '-an', '-preset', 'ultrafast', outputName];
+            // İleri oynat, sonra geriye oynat. Çok yavaş olmaması için yüksek çözünürlükleri 720p'ye scale ediyoruz.
+            // Hız ve kalite dengesi için preset: fast, crf: 24
+            args = [...baseArgs, '-filter_complex', '[0:v]scale=-2:\'min(720,ih)\'[scaled];[scaled]reverse[r];[scaled][r]concat=n=2:v=1[outv]', '-map', '[outv]', '-an', '-preset', 'fast', '-crf', '24', outputName];
         } else if (action === 'reverse') {
-            // Görüntüyü ve sesi terse çevir
-            args = [...baseArgs, '-vf', 'reverse', '-af', 'areverse', '-preset', 'ultrafast', outputName];
+            // Görüntüyü terse çevir. Yüksek çözünürlükleri 720p'ye scale ediyoruz.
+            args = [...baseArgs, '-vf', 'scale=-2:\'min(720,ih)\',reverse', '-af', 'areverse', '-preset', 'fast', '-crf', '24', outputName];
         } else if (action === 'clone2x') {
             // Videoyu ard arda 2 kez oynat (-stream_loop input'tan önce gelmeli)
             args = ['-stream_loop', '1', ...baseArgs, '-c', 'copy', outputName];
