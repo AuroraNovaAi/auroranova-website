@@ -932,15 +932,16 @@ async function admGenerateImage() {
         let response;
         let base64Image = null;
 
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 seconds timeout
+        // Start a stopwatch so the user knows it's still working
+        let secondsElapsed = 0;
+        const timerId = setInterval(() => {
+            secondsElapsed++;
+            msgEl.textContent = `Görsel üretiliyor, lütfen bekleyin... (Geçen süre: ${secondsElapsed} saniye. Yüksek kalite olduğu için uzun sürebilir)`;
+            resultBox.innerHTML = `<div class="adm-loading">Üretiliyor... (${secondsElapsed}s)</div>`;
+        }, 1000);
 
         try {
             if (selectedModel.includes('imagen') || selectedModel.includes('image')) {
-                // Imagen models use the predict endpoint
-                // Note: Even if it's gemini-3.1-flash-image-preview, if it has 'image' we should probably try predict.
-                // But let's check specifically for 'imagen' for predict, and use generateContent for others.
-                
                 if (selectedModel.includes('imagen')) {
                     const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:predict?key=${apiKey}`;
                     response = await fetch(url, {
@@ -949,25 +950,21 @@ async function admGenerateImage() {
                         body: JSON.stringify({
                             instances: [ { prompt: prompt } ],
                             parameters: { sampleCount: 1, aspectRatio: "1:1" }
-                        }),
-                        signal: controller.signal
+                        })
                     });
                 } else {
-                    // It's a gemini model that supports images, like gemini-3.1-flash-image-preview
-                    // It likely requires predict endpoint too if it's purely for images, but wait, gemini is generateContent.
-                    // Let's use generateContent for gemini models.
+                    // Experimental gemini image models using generateContent
                     const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`;
                     response = await fetch(url, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             contents: [{ parts: [{ text: prompt }] }]
-                        }),
-                        signal: controller.signal
+                        })
                     });
                 }
 
-                clearTimeout(timeoutId);
+                clearInterval(timerId);
 
                 if (!response.ok) {
                     const errorData = await response.json();
@@ -993,10 +990,7 @@ async function admGenerateImage() {
                 throw new Error("Lütfen listeden görsel üretebilen bir model seçin (örn: imagen-3.0-generate-001).");
             }
         } catch (fetchErr) {
-            clearTimeout(timeoutId);
-            if (fetchErr.name === 'AbortError') {
-                throw new Error("İstek zaman aşımına uğradı (Google sunucuları yanıt vermiyor). Lütfen başka bir model seçin.");
-            }
+            clearInterval(timerId);
             throw fetchErr;
         }
         
@@ -1009,8 +1003,8 @@ async function admGenerateImage() {
         
         resultBox.innerHTML = `<img src="${imgSrc}" style="max-width:100%; max-height:400px; border-radius:4px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);">`;
         actionsBox.style.display = 'flex';
-        msgEl.textContent = 'Görsel başarıyla üretildi!';
-        setTimeout(() => { msgEl.textContent = ''; }, 3000);
+        msgEl.textContent = `Görsel başarıyla üretildi! (${secondsElapsed} saniye sürdü)`;
+        setTimeout(() => { msgEl.textContent = ''; }, 5000);
 
     } catch (e) {
         msgEl.style.color = '#ff7675';
