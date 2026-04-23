@@ -557,12 +557,13 @@
                         <div class="adm-form-group full">
                             <label class="adm-label">Kullanılacak AI Modeli</label>
                             <div style="display:flex;gap:8px;">
-                                <select class="adm-select" id="aiTextModelSelect" style="flex:1;">
+                                <select class="adm-select" id="aiTextModelSelect" style="flex:1;" onchange="admUpdateModelGuide('aiTextModelSelect', 'aiTextGuideBox')">
                                     <option value="gemini-2.5-flash">gemini-2.5-flash (Varsayılan)</option>
                                     <option value="gemini-pro">gemini-pro</option>
                                 </select>
-                                <button class="adm-btn secondary" onclick="admFetchModels('aiTextModelSelect')" style="white-space:nowrap;">Modelleri Tarayıp Getir</button>
+                                <button class="adm-btn secondary" onclick="admFetchModels('aiTextModelSelect', 'text')" style="white-space:nowrap;">Modelleri Tarayıp Getir</button>
                             </div>
+                            <div id="aiTextGuideBox" style="display:none; margin-top:12px; padding:12px; background:rgba(85,239,196,0.05); border-left:3px solid #55efc4; border-radius:4px; font-size:13px; color:#ccc; line-height:1.5;"></div>
                         </div>
                     </div>
                     <div style="display:flex;gap:8px;align-items:center;margin-top:16px;">
@@ -594,12 +595,13 @@
                         <div class="adm-form-group full">
                             <label class="adm-label">Kullanılacak AI Modeli</label>
                             <div style="display:flex;gap:8px;">
-                                <select class="adm-select" id="aiImageModelSelect" style="flex:1;">
+                                <select class="adm-select" id="aiImageModelSelect" style="flex:1;" onchange="admUpdateModelGuide('aiImageModelSelect', 'aiImageGuideBox')">
                                     <option value="gemini-2.5-flash">gemini-2.5-flash (Varsayılan)</option>
                                     <option value="gemini-3.0-flash">gemini-3.0-flash</option>
                                 </select>
-                                <button class="adm-btn secondary" onclick="admFetchModels('aiImageModelSelect')" style="white-space:nowrap;">Modelleri Tarayıp Getir</button>
+                                <button class="adm-btn secondary" onclick="admFetchModels('aiImageModelSelect', 'image')" style="white-space:nowrap;">Modelleri Tarayıp Getir</button>
                             </div>
+                            <div id="aiImageGuideBox" style="display:none; margin-top:12px; padding:12px; background:rgba(85,239,196,0.05); border-left:3px solid #55efc4; border-radius:4px; font-size:13px; color:#ccc; line-height:1.5;"></div>
                         </div>
                     </div>
                     <div style="display:flex;gap:8px;align-items:center;margin-top:16px;">

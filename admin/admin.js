@@ -814,6 +814,10 @@ async function admFetchModels(selectId, mode = 'text') {
             selectEl.innerHTML = '<option value="gemini-2.5-flash">Model bulunamadı (Varsayılan eklendi)</option>';
         }
 
+        // Kılavuzu güncelle
+        let guideBoxId = mode === 'text' ? 'aiTextGuideBox' : 'aiImageGuideBox';
+        admUpdateModelGuide(selectId, guideBoxId);
+
     } catch (e) {
         console.warn(e);
         alert('Model listesi alınırken hata: ' + e.message);
@@ -821,6 +825,61 @@ async function admFetchModels(selectId, mode = 'text') {
     } finally {
         selectEl.disabled = false;
     }
+}
+
+function admUpdateModelGuide(selectId, guideBoxId) {
+    const selectEl = document.getElementById(selectId);
+    const guideBox = document.getElementById(guideBoxId);
+    if (!selectEl || !guideBox) return;
+
+    const modelName = selectEl.value || '';
+    if (!modelName) {
+        guideBox.style.display = 'none';
+        return;
+    }
+
+    let guideHtml = '';
+
+    if (modelName.includes('imagen')) {
+        guideHtml = `
+            <strong style="color:#fff;">Açıklama:</strong> Google'ın en güçlü görsel üretim (Diffusion) modelidir. Fotogerçekçi ve sanatsal görseller üretir.<br><br>
+            <strong style="color:#fff;">En İyi Sonuç İçin Prompt İpuçları (Resmi Kılavuz):</strong>
+            <ul style="margin:8px 0 0 20px; padding:0;">
+                <li><strong>Özne (Subject):</strong> Ana objeyi net belirtin (Örn: <em>Siyah bir kedi</em>).</li>
+                <li><strong>Ortam (Setting):</strong> Arka planı detaylandırın (Örn: <em>Neon ışıklı, yağmurlu bir sokak</em>).</li>
+                <li><strong>Işık & Stil (Style):</strong> Sanat tarzı ve ışık ekleyin (Örn: <em>Sinematik ışık, cyberpunk, 8k çözünürlük, fotogerçekçi</em>).</li>
+                <li><strong>İngilizce:</strong> Mümkünse komutları İngilizce verin.</li>
+            </ul>
+        `;
+    } else if (modelName.includes('flash')) {
+        guideHtml = `
+            <strong style="color:#fff;">Açıklama:</strong> Google'ın hız ve verimlilik odaklı en güncel modelidir. Günlük içerikler ve hızlı blog yazıları için mükemmeldir.<br><br>
+            <strong style="color:#fff;">En İyi Sonuç İçin Prompt İpuçları (Resmi Kılavuz):</strong>
+            <ul style="margin:8px 0 0 20px; padding:0;">
+                <li><strong>Rol Atayın:</strong> Cümleye <em>'Sen 10 yıllık uzman bir SEO yazarısın...'</em> diyerek başlayın.</li>
+                <li><strong>Hedef Kitle:</strong> Kime hitap ettiğini söyleyin (Örn: <em>Yeni başlayanlar için basit bir dil kullan</em>).</li>
+                <li><strong>Format:</strong> Çıktının şeklini belirtin (Örn: <em>3 madde halinde, markdown formatında yaz</em>).</li>
+            </ul>
+        `;
+    } else if (modelName.includes('pro')) {
+        guideHtml = `
+            <strong style="color:#fff;">Açıklama:</strong> Karmaşık akıl yürütme, kodlama ve detaylı analiz gerektiren zorlu görevler için tasarlanmış profesyonel modeldir.<br><br>
+            <strong style="color:#fff;">En İyi Sonuç İçin Prompt İpuçları (Resmi Kılavuz):</strong>
+            <ul style="margin:8px 0 0 20px; padding:0;">
+                <li><strong>Adım Adım:</strong> <em>'Düşünce sürecini adım adım açıkla'</em> diyerek matematik/analiz hatalarını sıfıra indirin.</li>
+                <li><strong>Kısıtlamalar:</strong> Ne yapmaması gerektiğini net belirtin (Örn: <em>Teknik terim kullanma, 100 kelimeyi aşma</em>).</li>
+                <li><strong>Örnekleme (Few-shot):</strong> İstediğiniz çıktıya benzer 1-2 örnek cümle eklerseniz kusursuz kopyalar.</li>
+            </ul>
+        `;
+    } else {
+        guideHtml = `
+            <strong style="color:#fff;">Açıklama:</strong> Bu Google AI modeli için özel bir kılavuz bulunmuyor.<br><br>
+            <strong style="color:#fff;">Genel Kural:</strong> Ne kadar spesifik, detaylı ve bağlamı net bir komut (prompt) girerseniz, o kadar iyi sonuç alırsınız. İstediğiniz formatı (madde madde, tablo vb.) belirtmeyi unutmayın.
+        `;
+    }
+
+    guideBox.innerHTML = guideHtml;
+    guideBox.style.display = 'block';
 }
 
 function admTranslateAiError(statusCode, originalMessage) {
