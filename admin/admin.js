@@ -1135,8 +1135,9 @@ async function initFFmpeg() {
     });
 
     try {
-        // Blob URL vb. hack'lere gerek kalmadı, dosyaları kendi sunucumuzdan çekiyoruz
-        const baseURL = '/admin/ffmpeg';
+        // Blob URL vb. hack'lere gerek kalmadı, dosyaları kendi sunucumuzdan çekiyoruz.
+        // DİKKAT: FFmpeg kütüphanesindeki bir bug nedeniyle (file:/// hatası), yolları mutlaka absolute (tam) URL yapmalıyız.
+        const baseURL = window.location.origin + '/admin/ffmpeg';
         
         await ffmpeg.load({
             coreURL: `${baseURL}/ffmpeg-core.js`,
