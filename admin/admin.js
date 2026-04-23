@@ -55,6 +55,9 @@ let _admAllMembers = []; // cache for client-side filtering
         admLoadProducts();
         admLoadSubmissions();
         admLoadSettings();
+        admLoadContent();
+        admLoadBlog();
+        admLoadGallery();
     });
 })();
 
@@ -430,9 +433,11 @@ async function admLoadSettings() {
         const trel = document.getElementById('settAnnounceTR');
         const enel = document.getElementById('settAnnounceEN');
         const act  = document.getElementById('settAnnounceActive');
+        const api  = document.getElementById('settApiKey');
         if (trel) trel.value = s.announcementTR || '';
         if (enel) enel.value = s.announcementEN || '';
         if (act)  act.checked = s.announcementActive || false;
+        if (api)  api.value = s.googleAiApiKey || '';
     } catch (e) {
         console.warn('[admin] Settings load:', e);
     }
@@ -726,6 +731,7 @@ async function admSaveSettings() {
         announcementTR:     document.getElementById('settAnnounceTR').value.trim(),
         announcementEN:     document.getElementById('settAnnounceEN').value.trim(),
         announcementActive: document.getElementById('settAnnounceActive').checked,
+        googleAiApiKey:     document.getElementById('settApiKey') ? document.getElementById('settApiKey').value.trim() : '',
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
     try {
