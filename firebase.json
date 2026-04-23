@@ -14,18 +14,7 @@
       "GUNCELLEMELER.md",
       "CNAME"
     ],
-    "rewrites": [],
-    "headers": [
-      {
-        "source": "**",
-        "headers": [
-          {
-            "key": "Cross-Origin-Opener-Policy",
-            "value": "same-origin-allow-popups"
-          }
-        ]
-      }
-    ]
+    "rewrites": []
   },
   "firestore": {
     "rules": "firestore.rules",

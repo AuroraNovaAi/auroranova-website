@@ -36,7 +36,7 @@ let _admAllMembers = []; // cache for client-side filtering
         }
         // Check admin role
         try {
-            const snap = await _admDb.collection('users').doc(user.uid).get();
+            const snap = await _admDb.collection('web_users').doc(user.uid).get();
             if (!snap.exists || !snap.data().roles || !snap.data().roles.includes('admin')) {
                 document.getElementById('adm-login-error').textContent =
                     'Erişim reddedildi. Bu hesabın yönetici yetkisi yok.';
@@ -109,14 +109,14 @@ function admShowPage(pageId, btn) {
 async function admLoadDashboard() {
     try {
         // Total members
-        const usersSnap = await _admDb.collection('users').get();
+        const usersSnap = await _admDb.collection('web_users').get();
         const totalMembers = usersSnap.size;
         document.getElementById('kpiTotalMembers').textContent = totalMembers;
 
         // New this week
         const oneWeekAgo = new Date();
         oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-        const newWeekSnap = await _admDb.collection('users')
+        const newWeekSnap = await _admDb.collection('web_users')
             .where('joinDate', '>=', oneWeekAgo)
             .get();
         document.getElementById('kpiNewWeek').textContent = newWeekSnap.size;
@@ -183,7 +183,7 @@ async function admLoadMembers() {
     const tbody = document.getElementById('membersTableBody');
     if (!tbody) return;
     try {
-        const snap = await _admDb.collection('users').orderBy('joinDate', 'desc').get();
+        const snap = await _admDb.collection('web_users').orderBy('joinDate', 'desc').get();
         _admAllMembers = [];
         snap.forEach(doc => _admAllMembers.push({ id: doc.id, ...doc.data() }));
         admRenderMembers(_admAllMembers);
@@ -232,7 +232,7 @@ function admFilterMembers() {
 async function admToggleAdmin(uid, currentlyAdmin) {
     if (!confirm(currentlyAdmin ? 'Admin yetkisini kaldırmak istediğinizden emin misiniz?' : 'Bu kullanıcıya admin yetkisi vermek istediğinizden emin misiniz?')) return;
     try {
-        const ref = _admDb.collection('users').doc(uid);
+        const ref = _admDb.collection('web_users').doc(uid);
         const snap = await ref.get();
         if (!snap.exists) return;
         let roles = [...(snap.data().roles || [])];

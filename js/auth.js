@@ -142,7 +142,7 @@ async function anSignOut() {
 async function _anEnsureUserDoc(user) {
     if (!_anDb) return;
     try {
-        const ref = _anDb.collection('users').doc(user.uid);
+        const ref = _anDb.collection('web_users').doc(user.uid);
         const snap = await ref.get();
         if (!snap.exists) {
             const lang = (typeof currentLang !== 'undefined') ? currentLang : 'tr';
