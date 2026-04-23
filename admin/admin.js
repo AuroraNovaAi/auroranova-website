@@ -1207,22 +1207,38 @@ window.admVideoAction = async function(action) {
         // Videoyu belleğe yaz
         await ff.writeFile(inputName, await fetchFile(currentVideoFile));
         
+        let baseArgs = [];
+        const startTime = document.getElementById('videoStartTime').value;
+        const endTime = document.getElementById('videoEndTime').value;
+        
+        if (startTime && parseFloat(startTime) > 0) {
+            baseArgs.push('-ss', startTime);
+        }
+        if (endTime && parseFloat(endTime) > 0) {
+            baseArgs.push('-to', endTime);
+        }
+        
+        baseArgs.push('-i', inputName);
+        
         let args = [];
-        if (action === 'boomerang') {
+        if (action === 'trim') {
+            // Sadece belirtilen aralığı kes (copy)
+            args = [...baseArgs, '-c', 'copy', outputName];
+        } else if (action === 'boomerang') {
             // İleri oynat, sonra geriye oynat (Kusursuz döngü). Hata olmaması için sesi siliyoruz.
-            args = ['-i', inputName, '-filter_complex', '[0:v]reverse[r];[0:v][r]concat=n=2:v=1[outv]', '-map', '[outv]', '-an', outputName];
+            args = [...baseArgs, '-filter_complex', '[0:v]reverse[r];[0:v][r]concat=n=2:v=1[outv]', '-map', '[outv]', '-an', outputName];
         } else if (action === 'reverse') {
             // Görüntüyü ve sesi terse çevir
-            args = ['-i', inputName, '-vf', 'reverse', '-af', 'areverse', outputName];
+            args = [...baseArgs, '-vf', 'reverse', '-af', 'areverse', outputName];
         } else if (action === 'clone2x') {
-            // Videoyu ard arda 2 kez oynat
-            args = ['-stream_loop', '1', '-i', inputName, '-c', 'copy', outputName];
+            // Videoyu ard arda 2 kez oynat (-stream_loop input'tan önce gelmeli)
+            args = ['-stream_loop', '1', ...baseArgs, '-c', 'copy', outputName];
         } else if (action === 'remove_audio') {
             // Sesi sil (sadece video kalsın)
-            args = ['-i', inputName, '-c', 'copy', '-an', outputName];
+            args = [...baseArgs, '-c', 'copy', '-an', outputName];
         } else if (action === 'gif') {
             // Düşük çözünürlüklü FPS=10 GIF yap (boyut büyümesin diye)
-            args = ['-i', inputName, '-vf', 'fps=10,scale=320:-1:flags=lanczos', '-c:v', 'gif', outputName];
+            args = [...baseArgs, '-vf', 'fps=10,scale=320:-1:flags=lanczos', '-c:v', 'gif', outputName];
         }
         
         // FFmpeg komutunu çalıştır

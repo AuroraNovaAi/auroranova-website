@@ -643,8 +643,17 @@
                     </div>
 
                     <div id="videoEditorControls" style="display:none; margin-top:20px;">
-                        <label class="adm-label">2. Uygulanacak İşlemi Seçin</label>
+                        
+                        <label class="adm-label">2. İsteğe Bağlı: Zaman Aralığı Belirleyin (Saniye Cinsinden)</label>
+                        <div style="display:flex; gap:10px; margin-bottom:16px;">
+                            <input type="number" id="videoStartTime" class="adm-input" placeholder="Başlangıç (sn)" min="0" style="width:130px;">
+                            <input type="number" id="videoEndTime" class="adm-input" placeholder="Bitiş (sn)" min="0" style="width:130px;">
+                            <div style="font-size:12px; color:#aaa; align-self:center;">(Boş bırakırsanız videonun tamamına uygulanır)</div>
+                        </div>
+
+                        <label class="adm-label">3. Uygulanacak İşlemi Seçin</label>
                         <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px;">
+                            <button class="adm-btn secondary" onclick="admVideoAction('trim')" id="btnVidTrim">Sadece Kes</button>
                             <button class="adm-btn secondary" onclick="admVideoAction('boomerang')" id="btnVidBoom">Boomerang (İleri + Geri)</button>
                             <button class="adm-btn secondary" onclick="admVideoAction('reverse')" id="btnVidRev">Terse Çevir (Geri Sar)</button>
                             <button class="adm-btn secondary" onclick="admVideoAction('clone2x')" id="btnVidClone">Klonla (Peşpeşe Ekle)</button>
