@@ -324,7 +324,7 @@
         }
 
         .service-star::before {
-            content: '✦';
+            content: '★';
             font-size: 42px;
             color: #FFD700;
             animation: starPulse 3s ease-in-out infinite;
