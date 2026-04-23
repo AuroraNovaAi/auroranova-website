@@ -1112,5 +1112,113 @@ function admDownloadImage() {
     link.download = `auroranova-ai-${Date.now()}.jpg`;
     document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
 }
+
+/* ----------------------------------------------------
+    VIDEO EDITOR KISMI (FFmpeg.wasm)
+---------------------------------------------------- */
+let ffmpegInstance = null;
+let currentVideoFile = null;
+
+async function initFFmpeg() {
+    if (ffmpegInstance) return ffmpegInstance;
+    
+    const { FFmpeg } = window.FFmpegWASM;
+    const ffmpeg = new FFmpeg();
+    
+    // İlerleme çubuğunu güncelle
+    ffmpeg.on('progress', ({ progress, time }) => {
+        const progEl = document.getElementById('videoEditorProgress');
+        if (progEl) {
+            progEl.textContent = Math.max(0, Math.min(100, Math.round(progress * 100)));
+        }
+    });
+
+    // Single-thread (ST) sürümü yüklüyoruz (COOP/COEP hatası almamak için)
+    await ffmpeg.load({
+        coreURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js',
+        wasmURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm'
+    });
+    
+    ffmpegInstance = ffmpeg;
+    return ffmpeg;
+}
+
+window.admHandleVideoSelect = function(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    currentVideoFile = file;
+    document.getElementById('videoEditorControls').style.display = 'block';
+    
+    // Orijinal videoyu önizlet
+    const url = URL.createObjectURL(file);
+    const resultBox = document.getElementById('videoEditorResult');
+    resultBox.innerHTML = `
+        <video src="${url}" controls style="max-width:100%; max-height:300px; border-radius:4px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);"></video>
+        <span style="color:#aaa; font-size:12px; margin-top:8px;">Orijinal Video</span>
+    `;
+};
+
+window.admVideoAction = async function(action) {
+    if (!currentVideoFile) return;
+    
+    const statusBox = document.getElementById('videoEditorStatus');
+    const resultBox = document.getElementById('videoEditorResult');
+    const progEl = document.getElementById('videoEditorProgress');
+    const buttons = document.querySelectorAll('#videoEditorControls button');
+    
+    buttons.forEach(b => b.disabled = true);
+    statusBox.style.display = 'block';
+    progEl.textContent = '0';
+    
+    try {
+        const ff = await initFFmpeg();
+        const { fetchFile } = window.FFmpegUtil;
+        
+        const inputName = 'input.mp4';
+        const outputName = action === 'gif' ? 'output.gif' : 'output.mp4';
+        
+        // Videoyu belleğe yaz
+        await ff.writeFile(inputName, await fetchFile(currentVideoFile));
+        
+        let args = [];
+        if (action === 'reverse') {
+            // Görüntüyü ve sesi terse çevir
+            args = ['-i', inputName, '-vf', 'reverse', '-af', 'areverse', outputName];
+        } else if (action === 'clone2x') {
+            // Videoyu ard arda 2 kez oynat
+            args = ['-stream_loop', '1', '-i', inputName, '-c', 'copy', outputName];
+        } else if (action === 'remove_audio') {
+            // Sesi sil (sadece video kalsın)
+            args = ['-i', inputName, '-c', 'copy', '-an', outputName];
+        } else if (action === 'gif') {
+            // Düşük çözünürlüklü FPS=10 GIF yap (boyut büyümesin diye)
+            args = ['-i', inputName, '-vf', 'fps=10,scale=320:-1:flags=lanczos', '-c:v', 'gif', outputName];
+        }
+        
+        // FFmpeg komutunu çalıştır
+        await ff.exec(args);
+        
+        // Çıktıyı bellekten oku
+        const data = await ff.readFile(outputName);
+        const type = action === 'gif' ? 'image/gif' : 'video/mp4';
+        const url = URL.createObjectURL(new Blob([data.buffer], { type }));
+        
+        let mediaTag = action === 'gif' 
+            ? `<img src="${url}" style="max-width:100%; max-height:400px; border-radius:4px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);" />` 
+            : `<video src="${url}" controls autoplay style="max-width:100%; max-height:400px; border-radius:4px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);"></video>`;
+            
+        resultBox.innerHTML = `
+            ${mediaTag}
+            <a href="${url}" download="${outputName}" class="adm-btn" style="margin-top:16px; text-decoration:none;">Bilgisayara İndir</a>
+        `;
+        
+    } catch (err) {
+        console.error(err);
+        alert('Video işlenirken hata oluştu: ' + err.message);
+    } finally {
+        buttons.forEach(b => b.disabled = false);
+        statusBox.style.display = 'none';
+    }
+};

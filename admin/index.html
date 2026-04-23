@@ -635,9 +635,31 @@
             <div class="adm-page" id="page-video-editor">
                 <h1 class="adm-page-title">Klasik Video Editör</h1>
                 <p class="adm-page-sub">Videoları kesin, terse çevirin, klonlayın ve birleştirin (Sınırsız & Ücretsiz).</p>
-                <div class="adm-empty">
-                    <span class="adm-empty-icon">&#x2702;&#xFE0F;</span>
-                    <p>FFmpeg.wasm tabanlı yerel editör yükleniyor...</p>
+                <div class="adm-form-panel open" style="max-width:800px;">
+                    <div class="adm-form-group full">
+                        <label class="adm-label">1. Video Dosyasını Seçin (.mp4, .webm)</label>
+                        <input type="file" id="videoEditorInput" accept="video/mp4,video/webm" style="color:#fff;" onchange="admHandleVideoSelect(event)" />
+                        <div style="font-size:12px; color:#aaa; margin-top:5px;">Not: İşlemler tarayıcınızın içinde yapılır. Dosyalarınız hiçbir sunucuya yüklenmez (%100 Gizlilik ve Sınırsız Kullanım). Tarayıcınızın çökmemesi için kısa videolar (max 30-60 sn) yüklemeniz önerilir.</div>
+                    </div>
+
+                    <div id="videoEditorControls" style="display:none; margin-top:20px;">
+                        <label class="adm-label">2. Uygulanacak İşlemi Seçin</label>
+                        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px;">
+                            <button class="adm-btn secondary" onclick="admVideoAction('reverse')" id="btnVidRev">Terse Çevir (Geri Sar)</button>
+                            <button class="adm-btn secondary" onclick="admVideoAction('clone2x')" id="btnVidClone">Klonla (Peşpeşe Ekle)</button>
+                            <button class="adm-btn secondary" onclick="admVideoAction('remove_audio')" id="btnVidMute">Sesi Sil (Sessiz Yap)</button>
+                            <button class="adm-btn secondary" onclick="admVideoAction('gif')" id="btnVidGif">Video -> GIF Çevir</button>
+                        </div>
+                        
+                        <div id="videoEditorStatus" style="font-size:13px; color:#55efc4; margin-bottom:16px; display:none; padding:10px; background:rgba(85,239,196,0.1); border-radius:4px; border-left:3px solid #55efc4;">
+                            İşlem yapılıyor, lütfen bekleyin... %<span id="videoEditorProgress">0</span> (Bu işlem bilgisayarınızın gücüne göre zaman alabilir)
+                        </div>
+                        
+                        <label class="adm-label">Sonuç (Önizleme & İndir)</label>
+                        <div id="videoEditorResult" style="min-height:200px; border:1px dashed rgba(255,255,255,0.2); border-radius:8px; display:flex; align-items:center; justify-content:center; flex-direction:column; background:rgba(0,0,0,0.2); padding:10px; text-align:center;">
+                            <span style="color: rgba(255,255,255,0.3); font-size: 13px;">Videoyu seçip bir işleme tıkladığınızda sonuç burada belirecek.</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -645,6 +667,10 @@
     </div>
 </div>
 
-<script src="admin.js"></script>
+    <!-- FFmpeg.wasm kütüphanesi -->
+    <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js"></script>
+    <script src="https://unpkg.com/@ffmpeg/util@0.12.1/dist/umd/index.js"></script>
+
+    <script src="admin.js"></script>
 </body>
 </html>
