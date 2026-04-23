@@ -548,11 +548,21 @@
                 <h1 class="adm-page-title">AI Metin Asistanı</h1>
                 <p class="adm-page-sub">Gemini ile saniyeler içinde blog yazıları ve içerikler üretin.</p>
                 
-                <div class="adm-form-panel open" style="max-width:800px;">
+                <div class="adm-form-panel open" style="max-width:100%; margin-top:20px;">
                     <div class="adm-form-grid">
                         <div class="adm-form-group full">
                             <label class="adm-label">Ne hakkında yazmak istersiniz?</label>
                             <textarea class="adm-textarea" id="aiTextPrompt" rows="3" style="width: 100%;" placeholder="Örnek: 2026 web tasarım trendleri hakkında 3 paragraflık SEO uyumlu, ikna edici bir blog yazısı yaz. Türkçe olsun."></textarea>
+                        </div>
+                        <div class="adm-form-group full">
+                            <label class="adm-label">Kullanılacak AI Modeli</label>
+                            <div style="display:flex;gap:8px;">
+                                <select class="adm-select" id="aiTextModelSelect" style="flex:1;">
+                                    <option value="gemini-2.5-flash">gemini-2.5-flash (Varsayılan)</option>
+                                    <option value="gemini-pro">gemini-pro</option>
+                                </select>
+                                <button class="adm-btn secondary" onclick="admFetchModels('aiTextModelSelect')" style="white-space:nowrap;">Modelleri Tarayıp Getir</button>
+                            </div>
                         </div>
                     </div>
                     <div style="display:flex;gap:8px;align-items:center;margin-top:16px;">
@@ -575,11 +585,21 @@
                 <h1 class="adm-page-title">AI Görsel Stüdyosu (Nano Banana)</h1>
                 <p class="adm-page-sub">Gemini Image modelleri ile web siteniz için yüksek kaliteli görseller üretin.</p>
                 
-                <div class="adm-form-panel open" style="max-width:800px;">
+                <div class="adm-form-panel open" style="max-width:100%; margin-top:20px;">
                     <div class="adm-form-grid">
                         <div class="adm-form-group full">
                             <label class="adm-label">Görseli İngilizce Tarif Edin (Prompt)</label>
                             <textarea class="adm-textarea" id="aiImagePrompt" rows="3" style="width: 100%;" placeholder="Example: A futuristic city skyline at sunset, cyberpunk style, hyperrealistic 4k"></textarea>
+                        </div>
+                        <div class="adm-form-group full">
+                            <label class="adm-label">Kullanılacak AI Modeli</label>
+                            <div style="display:flex;gap:8px;">
+                                <select class="adm-select" id="aiImageModelSelect" style="flex:1;">
+                                    <option value="gemini-2.5-flash">gemini-2.5-flash (Varsayılan)</option>
+                                    <option value="gemini-3.0-flash">gemini-3.0-flash</option>
+                                </select>
+                                <button class="adm-btn secondary" onclick="admFetchModels('aiImageModelSelect')" style="white-space:nowrap;">Modelleri Tarayıp Getir</button>
+                            </div>
                         </div>
                     </div>
                     <div style="display:flex;gap:8px;align-items:center;margin-top:16px;">

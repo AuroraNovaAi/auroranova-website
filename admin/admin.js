@@ -757,15 +757,67 @@ async function getAiApiKey() {
     return null;
 }
 
+async function admFetchModels(selectId) {
+    const selectEl = document.getElementById(selectId);
+    if (!selectEl) return;
+    
+    const originalText = selectEl.options[0]?.text || 'Yükleniyor...';
+    selectEl.innerHTML = '<option value="">Modeller Aranıyor...</option>';
+    selectEl.disabled = true;
+
+    try {
+        const apiKey = await getAiApiKey();
+        if (!apiKey) {
+            throw new Error('API Anahtarı bulunamadı.');
+        }
+
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+        if (!response.ok) throw new Error('Modeller getirilemedi.');
+        
+        const data = await response.json();
+        
+        selectEl.innerHTML = '';
+        if (data.models && data.models.length > 0) {
+            data.models.forEach(model => {
+                const modelName = model.name.replace('models/', '');
+                const opt = document.createElement('option');
+                opt.value = modelName;
+                opt.textContent = `${model.displayName || modelName} (${modelName})`;
+                // Select a default good model if found
+                if (modelName === 'gemini-2.5-flash' || modelName === 'gemini-3.0-flash') {
+                    opt.selected = true;
+                }
+                selectEl.appendChild(opt);
+            });
+        } else {
+            selectEl.innerHTML = '<option value="">Model bulunamadı</option>';
+        }
+
+    } catch (e) {
+        console.warn(e);
+        alert('Model listesi alınırken hata: ' + e.message);
+        selectEl.innerHTML = `<option value="gemini-2.5-flash">${originalText}</option>`;
+    } finally {
+        selectEl.disabled = false;
+    }
+}
+
 async function admGenerateText() {
     const promptEl = document.getElementById('aiTextPrompt');
     const resultEl = document.getElementById('aiTextResult');
     const msgEl = document.getElementById('aiTextMsg');
     const btn = document.getElementById('btnGenerateText');
+    const modelSelect = document.getElementById('aiTextModelSelect');
+    
     const prompt = promptEl.value.trim();
+    const selectedModel = modelSelect ? modelSelect.value : 'gemini-2.5-flash';
 
     if (!prompt) {
         msgEl.textContent = 'Lütfen bir konu veya komut yazın.';
+        return;
+    }
+    if (!selectedModel) {
+        msgEl.textContent = 'Lütfen bir model seçin.';
         return;
     }
 
@@ -780,32 +832,19 @@ async function admGenerateText() {
             throw new Error('API Anahtarı bulunamadı! Lütfen Ayarlar sekmesinden Google AI Studio API anahtarınızı kaydedin.');
         }
 
-        let data;
-        let response;
-        const modelsToTry = ['gemini-2.5-flash', 'gemini-3.0-flash', 'gemini-pro'];
-        let lastError = null;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`;
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+        });
 
-        for (const model of modelsToTry) {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-            response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-            });
-
-            if (response.ok) {
-                data = await response.json();
-                lastError = null;
-                break;
-            } else {
-                const errorData = await response.json();
-                lastError = new Error(errorData.error?.message || `Gemini API Hatası (${model})`);
-                // If it's a 404 (model not found), continue loop. Otherwise break.
-                if (response.status !== 404) break; 
-            }
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error?.message || `Gemini API Hatası (${selectedModel})`);
         }
 
-        if (lastError) throw lastError;
+        const data = await response.json();
         const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
         
         resultEl.value = textResponse;
@@ -842,11 +881,17 @@ async function admGenerateImage() {
     const btn = document.getElementById('btnGenerateImage');
     const resultBox = document.getElementById('aiImageResultBox');
     const actionsBox = document.getElementById('aiImageActions');
+    const modelSelect = document.getElementById('aiImageModelSelect');
     
     const prompt = promptEl.value.trim();
+    const selectedModel = modelSelect ? modelSelect.value : 'gemini-2.5-flash';
 
     if (!prompt) {
         msgEl.textContent = 'Lütfen İngilizce bir görsel tarifi (prompt) yazın.';
+        return;
+    }
+    if (!selectedModel) {
+        msgEl.textContent = 'Lütfen bir model seçin.';
         return;
     }
 
@@ -863,36 +908,24 @@ async function admGenerateImage() {
             throw new Error('API Anahtarı bulunamadı! Lütfen Ayarlar sekmesinden kaydedin.');
         }
 
-        let data;
-        let response;
-        const modelsToTry = ['gemini-2.5-flash', 'gemini-3.0-flash', 'gemini-pro'];
-        let lastError = null;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`;
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: {
+                    responseMimeType: "image/jpeg"
+                }
+            })
+        });
 
-        for (const model of modelsToTry) {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-            response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: prompt }] }],
-                    generationConfig: {
-                        responseMimeType: "image/jpeg"
-                    }
-                })
-            });
-
-            if (response.ok) {
-                data = await response.json();
-                lastError = null;
-                break;
-            } else {
-                const errorData = await response.json();
-                lastError = new Error(errorData.error?.message || `Gemini Image API Hatası (${model})`);
-                if (response.status !== 404) break; 
-            }
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error?.message || `Gemini Image API Hatası (${selectedModel})`);
         }
 
-        if (lastError) throw lastError;
+        const data = await response.json();
         
         let base64Image = null;
         if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts[0]) {
@@ -903,7 +936,7 @@ async function admGenerateImage() {
         }
         
         if (!base64Image) {
-            throw new Error('API yanıtından görsel verisi okunamadı. (Mevcut model görsel oluşturmayı desteklemiyor olabilir)');
+            throw new Error('API yanıtından görsel verisi okunamadı. (Seçtiğiniz model görsel oluşturmayı desteklemiyor olabilir)');
         }
 
         _lastGeneratedImageBase64 = base64Image;
