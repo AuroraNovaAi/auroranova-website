@@ -1140,9 +1140,9 @@ async function initFFmpeg() {
         const baseURL = window.location.origin + '/admin/ffmpeg';
         
         await ffmpeg.load({
-            coreURL: `${baseURL}/ffmpeg-core.js`,
+            coreURL: `${baseURL}/ffmpeg-core-esm.js?v=2`,
             wasmURL: `${baseURL}/ffmpeg-core.wasm`,
-            classWorkerURL: `${baseURL}/814.ffmpeg.js`
+            classWorkerURL: `${baseURL}/814.ffmpeg.js?v=2`
         });
         
         ffmpegInstance = ffmpeg;
