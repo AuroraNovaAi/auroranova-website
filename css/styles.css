@@ -80,16 +80,7 @@
         /* Language switcher inside nav-top */
         .nav-top-lang {
             display: flex;
-            gap: 4px;
             align-items: center;
-            background: var(--glass-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border);
-            border-radius: 25px;
-            padding: 0 6px;
-            height: 50px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
         }
 
         .nav-top-auth {
@@ -840,7 +831,7 @@
                 font-size: 0.85rem;
             }
 
-            .lang-btn {
+            .lang-toggle-btn {
                 font-size: 0.75rem;
                 padding: 4px 9px;
             }
@@ -958,7 +949,7 @@
                 min-height: 44px;
             }
 
-            .nav-top-lang .lang-btn {
+            .nav-top-lang .lang-toggle-btn {
                 font-size: 0.8rem;
                 padding: 6px 11px;
                 min-height: unset;
@@ -1347,10 +1338,11 @@
             border-left: none;
         }
 
-        .lang-btn {
-            background: transparent;
-            border: 1px solid var(--glass-border);
-            color: var(--text-muted);
+        .lang-toggle-btn {
+            background: linear-gradient(90deg, var(--primary-purple), var(--secondary-blue));
+            border: none;
+            color: white;
+            box-shadow: 0 0 10px rgba(123, 90, 153, 0.4);
             font-size: 0.8rem;
             font-weight: 600;
             padding: 5px 10px;
@@ -1361,12 +1353,12 @@
             letter-spacing: 0.05em;
         }
 
-        .lang-btn:hover {
+        .lang-toggle-btn:hover {
             color: var(--text-primary);
             border-color: var(--secondary-blue);
         }
 
-        .lang-btn--active {
+        .lang-toggle-btn--active {
             background: linear-gradient(90deg, var(--primary-purple), var(--secondary-blue));
             border: none;
             padding: 6px 11px;

@@ -89,15 +89,6 @@
     <!-- Navigation -->
     <nav class="nav">
         <div class="nav-top">
-            <button class="nav-hamburger" id="navHamburger" aria-label="Menu" aria-expanded="false" aria-controls="navLinks">
-                <span></span>
-                <span></span>
-                <span></span>
-            </button>
-            <div class="nav-top-lang">
-                <button class="lang-btn" data-lang="tr">TR</button>
-                <button class="lang-btn" data-lang="en">EN</button>
-            </div>
             <div class="nav-top-auth" id="navTopAuth">
                 <button class="nav-top-login" id="navTopLoginBtn" onclick="openAuthModal()">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -111,6 +102,14 @@
                     <span id="navTopUserName"></span>
                 </button>
             </div>
+            <div class="nav-top-lang">
+                <button class="lang-toggle-btn" id="langToggleBtn">EN</button>
+            </div>
+            <button class="nav-hamburger" id="navHamburger" aria-label="Menu" aria-expanded="false" aria-controls="navLinks">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
         </div>
         <div class="nav-links" id="navLinks">
             <a href="#home" data-i18n="home">Home</a>

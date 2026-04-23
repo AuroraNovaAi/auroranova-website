@@ -591,10 +591,13 @@
                 });
             }
 
-            // Language switcher buttons active state
-            document.querySelectorAll('.lang-btn').forEach(btn => {
-                btn.classList.toggle('lang-btn--active', btn.getAttribute('data-lang') === lang);
-            });
+            // Language toggle button text update
+            const langToggleBtn = document.getElementById('langToggleBtn');
+            if (langToggleBtn) {
+                // If current lang is TR, show TR to indicate current active language
+                // If current lang is EN, show EN.
+                langToggleBtn.textContent = lang === 'tr' ? 'TR' : 'EN';
+            }
 
             // Swap photo/blog content databases for modals
             if (lang === 'tr') {
@@ -671,10 +674,14 @@
             window.dispatchEvent(new CustomEvent('languageChanged', { detail: lang }));
         }
 
-        // Language button click handler
-        document.querySelectorAll('.lang-btn').forEach(btn => {
-            btn.addEventListener('click', () => setLanguage(btn.getAttribute('data-lang')));
-        });
+        // Language toggle button click handler
+        const langToggleBtn = document.getElementById('langToggleBtn');
+        if (langToggleBtn) {
+            langToggleBtn.addEventListener('click', () => {
+                const newLang = currentLang === 'tr' ? 'en' : 'tr';
+                setLanguage(newLang);
+            });
+        }
 
         // Services dropdown: mobile touch support
         const servicesDropdown = document.querySelector('.services-dropdown');
