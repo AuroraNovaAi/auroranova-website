@@ -744,3 +744,78 @@ async function admSaveSettings() {
         msgEl.textContent = 'Hata: ' + e.message;
     }
 }
+
+// =================================================================
+// AI TEXT ASSISTANT
+// =================================================================
+
+async function getAiApiKey() {
+    const snap = await _admDb.collection('siteSettings').doc('main').get();
+    if (snap.exists && snap.data().googleAiApiKey) {
+        return snap.data().googleAiApiKey;
+    }
+    return null;
+}
+
+async function admGenerateText() {
+    const promptEl = document.getElementById('aiTextPrompt');
+    const resultEl = document.getElementById('aiTextResult');
+    const msgEl = document.getElementById('aiTextMsg');
+    const btn = document.getElementById('btnGenerateText');
+    const prompt = promptEl.value.trim();
+
+    if (!prompt) {
+        msgEl.textContent = 'Lütfen bir konu veya komut yazın.';
+        return;
+    }
+
+    msgEl.style.color = '#55efc4';
+    msgEl.textContent = 'Üretiliyor, lütfen bekleyin... (Bu işlem birkaç saniye sürebilir)';
+    btn.disabled = true;
+    resultEl.value = '';
+
+    try {
+        const apiKey = await getAiApiKey();
+        if (!apiKey) {
+            throw new Error('API Anahtarı bulunamadı! Lütfen Ayarlar sekmesinden Google AI Studio API anahtarınızı kaydedin.');
+        }
+
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+        
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }]
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error?.message || 'Gemini API Hatası');
+        }
+
+        const data = await response.json();
+        const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        
+        resultEl.value = textResponse;
+        msgEl.textContent = 'Başarıyla üretildi!';
+        setTimeout(() => { msgEl.textContent = ''; }, 3000);
+
+    } catch (e) {
+        msgEl.style.color = '#ff7675';
+        msgEl.textContent = e.message;
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+function admCopyText(elementId) {
+    const el = document.getElementById(elementId);
+    if (!el || !el.value) return;
+    navigator.clipboard.writeText(el.value).then(() => {
+        alert('Metin kopyalandı!');
+    }).catch(err => {
+        console.error('Kopyalama hatası:', err);
+    });
+}

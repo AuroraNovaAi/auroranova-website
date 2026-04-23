@@ -546,10 +546,27 @@
             <!-- AI Text Page -->
             <div class="adm-page" id="page-ai-text">
                 <h1 class="adm-page-title">AI Metin Asistanı</h1>
-                <p class="adm-page-sub">Gemini (Nano Banana) ile blog ve içerik üretin.</p>
-                <div class="adm-empty">
-                    <span class="adm-empty-icon">&#x1F9E0;</span>
-                    <p>AI Modülü yükleniyor... (API Bağlantısı Bekleniyor)</p>
+                <p class="adm-page-sub">Gemini ile saniyeler içinde blog yazıları ve içerikler üretin.</p>
+                
+                <div class="adm-form-panel open" style="max-width:800px;">
+                    <div class="adm-form-grid">
+                        <div class="adm-form-group full">
+                            <label class="adm-label">Ne hakkında yazmak istersiniz?</label>
+                            <textarea class="adm-textarea" id="aiTextPrompt" rows="3" placeholder="Örnek: 2026 web tasarım trendleri hakkında 3 paragraflık SEO uyumlu, ikna edici bir blog yazısı yaz. Türkçe olsun."></textarea>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:8px;align-items:center;margin-top:16px;">
+                        <button class="adm-btn" id="btnGenerateText" onclick="admGenerateText()">Üret</button>
+                        <div id="aiTextMsg" style="font-size:12px;color:#ff7675;"></div>
+                    </div>
+                </div>
+
+                <div class="adm-form-panel open" style="max-width:800px; margin-top:20px;">
+                    <label class="adm-label">Üretilen İçerik:</label>
+                    <textarea class="adm-textarea" id="aiTextResult" rows="15" placeholder="Sonuç burada görünecek..."></textarea>
+                    <div style="margin-top:12px;display:flex;gap:8px;">
+                        <button class="adm-btn secondary" onclick="admCopyText('aiTextResult')">Kopyala</button>
+                    </div>
                 </div>
             </div>
 
