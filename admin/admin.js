@@ -1134,14 +1134,28 @@ async function initFFmpeg() {
         }
     });
 
-    // Single-thread (ST) sürümü yüklüyoruz (COOP/COEP hatası almamak için)
-    await ffmpeg.load({
-        coreURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js',
-        wasmURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm'
-    });
-    
-    ffmpegInstance = ffmpeg;
-    return ffmpeg;
+    try {
+        const { toBlobURL } = window.FFmpegUtil;
+        const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
+        
+        // Blob URL kullanarak CORS (Cross-Origin Worker) hatalarını aşıyoruz
+        const coreURL = await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript');
+        const wasmURL = await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm');
+        const classWorkerURL = await toBlobURL('https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/umd/814.ffmpeg.js', 'text/javascript');
+        
+        await ffmpeg.load({
+            coreURL: coreURL,
+            wasmURL: wasmURL,
+            classWorkerURL: classWorkerURL
+        });
+        
+        ffmpegInstance = ffmpeg;
+        return ffmpeg;
+    } catch (e) {
+        console.error("FFmpeg yükleme hatası:", e);
+        alert("Video editörü yüklenirken bir hata oluştu: " + e.message);
+        throw e;
+    }
 }
 
 window.admHandleVideoSelect = function(event) {
