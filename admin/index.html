@@ -572,11 +572,30 @@
 
             <!-- AI Image Page -->
             <div class="adm-page" id="page-ai-image">
-                <h1 class="adm-page-title">AI Görsel Stüdyosu</h1>
-                <p class="adm-page-sub">Nano Banana ile yüksek kaliteli görseller oluşturun.</p>
-                <div class="adm-empty">
-                    <span class="adm-empty-icon">&#x1F3A8;</span>
-                    <p>AI Modülü yükleniyor... (API Bağlantısı Bekleniyor)</p>
+                <h1 class="adm-page-title">AI Görsel Stüdyosu (Nano Banana)</h1>
+                <p class="adm-page-sub">Gemini Image modelleri ile web siteniz için yüksek kaliteli görseller üretin.</p>
+                
+                <div class="adm-form-panel open" style="max-width:800px;">
+                    <div class="adm-form-grid">
+                        <div class="adm-form-group full">
+                            <label class="adm-label">Görseli İngilizce Tarif Edin (Prompt)</label>
+                            <textarea class="adm-textarea" id="aiImagePrompt" rows="3" style="width: 100%;" placeholder="Example: A futuristic city skyline at sunset, cyberpunk style, hyperrealistic 4k"></textarea>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:8px;align-items:center;margin-top:16px;">
+                        <button class="adm-btn" id="btnGenerateImage" onclick="admGenerateImage()">Görsel Üret</button>
+                        <div id="aiImageMsg" style="font-size:12px;color:#ff7675;"></div>
+                    </div>
+                </div>
+
+                <div class="adm-form-panel open" style="max-width:800px; margin-top:20px;">
+                    <label class="adm-label">Üretilen Görsel:</label>
+                    <div id="aiImageResultBox" style="min-height: 200px; border: 1px dashed rgba(255,255,255,0.2); border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; overflow: hidden; background: rgba(0,0,0,0.2);">
+                        <span style="color: rgba(255,255,255,0.3); font-size: 13px;">Sonuç burada görünecek...</span>
+                    </div>
+                    <div style="display:flex;gap:8px; display: none;" id="aiImageActions">
+                        <button class="adm-btn secondary" onclick="admDownloadImage()">Bilgisayara İndir</button>
+                    </div>
                 </div>
             </div>
 

@@ -829,3 +829,100 @@ function admCopyText(elementId) {
         console.error('Kopyalama hatası:', err);
     });
 }
+
+// =================================================================
+// AI IMAGE STUDIO (Nano Banana / Imagen)
+// =================================================================
+
+let _lastGeneratedImageBase64 = null;
+
+async function admGenerateImage() {
+    const promptEl = document.getElementById('aiImagePrompt');
+    const msgEl = document.getElementById('aiImageMsg');
+    const btn = document.getElementById('btnGenerateImage');
+    const resultBox = document.getElementById('aiImageResultBox');
+    const actionsBox = document.getElementById('aiImageActions');
+    
+    const prompt = promptEl.value.trim();
+
+    if (!prompt) {
+        msgEl.textContent = 'Lütfen İngilizce bir görsel tarifi (prompt) yazın.';
+        return;
+    }
+
+    msgEl.style.color = '#55efc4';
+    msgEl.textContent = 'Görsel üretiliyor, lütfen bekleyin... (Bu işlem 10-20 saniye sürebilir)';
+    btn.disabled = true;
+    resultBox.innerHTML = '<div class="adm-loading">Üretiliyor...</div>';
+    actionsBox.style.display = 'none';
+    _lastGeneratedImageBase64 = null;
+
+    try {
+        const apiKey = await getAiApiKey();
+        if (!apiKey) {
+            throw new Error('API Anahtarı bulunamadı! Lütfen Ayarlar sekmesinden kaydedin.');
+        }
+
+        // Try the stable Imagen 3 API from Google AI Studio
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key=${apiKey}`;
+        
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                instances: [
+                    { prompt: prompt }
+                ],
+                parameters: {
+                    sampleCount: 1,
+                    aspectRatio: "1:1"
+                }
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error?.message || 'Gemini Image API Hatası');
+        }
+
+        const data = await response.json();
+        
+        let base64Image = null;
+        if (data.predictions && data.predictions[0]) {
+            if (data.predictions[0].bytesBase64Encoded) {
+                base64Image = data.predictions[0].bytesBase64Encoded;
+            } else if (data.predictions[0].image?.bytesBase64Encoded) {
+                base64Image = data.predictions[0].image.bytesBase64Encoded;
+            }
+        }
+        
+        if (!base64Image) {
+            throw new Error('API yanıtından görsel verisi okunamadı.');
+        }
+
+        _lastGeneratedImageBase64 = base64Image;
+        const imgSrc = `data:image/jpeg;base64,${base64Image}`;
+        
+        resultBox.innerHTML = `<img src="${imgSrc}" style="max-width:100%; max-height:400px; border-radius:4px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);">`;
+        actionsBox.style.display = 'flex';
+        msgEl.textContent = 'Görsel başarıyla üretildi!';
+        setTimeout(() => { msgEl.textContent = ''; }, 3000);
+
+    } catch (e) {
+        msgEl.style.color = '#ff7675';
+        msgEl.textContent = e.message;
+        resultBox.innerHTML = `<span style="color: rgba(255,255,255,0.3); font-size: 13px;">Üretim başarısız.</span>`;
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+function admDownloadImage() {
+    if (!_lastGeneratedImageBase64) return;
+    const link = document.createElement('a');
+    link.href = `data:image/jpeg;base64,${_lastGeneratedImageBase64}`;
+    link.download = `auroranova-ai-${Date.now()}.jpg`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
