@@ -780,22 +780,32 @@ async function admGenerateText() {
             throw new Error('API Anahtarı bulunamadı! Lütfen Ayarlar sekmesinden Google AI Studio API anahtarınızı kaydedin.');
         }
 
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-        
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }]
-            })
-        });
+        let data;
+        let response;
+        const modelsToTry = ['gemini-2.5-flash', 'gemini-3.0-flash', 'gemini-pro'];
+        let lastError = null;
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error?.message || 'Gemini API Hatası');
+        for (const model of modelsToTry) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+            response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+            });
+
+            if (response.ok) {
+                data = await response.json();
+                lastError = null;
+                break;
+            } else {
+                const errorData = await response.json();
+                lastError = new Error(errorData.error?.message || `Gemini API Hatası (${model})`);
+                // If it's a 404 (model not found), continue loop. Otherwise break.
+                if (response.status !== 404) break; 
+            }
         }
 
-        const data = await response.json();
+        if (lastError) throw lastError;
         const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
         
         resultEl.value = textResponse;
