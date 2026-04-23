@@ -784,14 +784,14 @@ async function admFetchModels(selectId, mode = 'text') {
                 const methods = model.supportedGenerationMethods || [];
                 
                 let isText = methods.includes('generateContent') && !modelName.includes('embedding') && !modelName.includes('aqa') && !modelName.includes('bison') && !modelName.includes('audio');
-                let isImage = methods.includes('predict') && (modelName.includes('imagen') || modelName.includes('vision'));
+                let isImage = methods.includes('predict') || modelName.includes('imagen') || modelName.includes('vision') || modelName.includes('image');
 
                 let include = false;
                 let emoji = '';
 
                 if (mode === 'text' && isText) { include = true; emoji = '📝 '; }
                 // Also allow some gemini models that might do images if they have specific keywords, or just rely on predict.
-                if (mode === 'image' && (isImage || modelName.includes('imagen'))) { include = true; emoji = '🎨 '; }
+                if (mode === 'image' && isImage) { include = true; emoji = '🎨 '; }
 
                 if (include) {
                     const opt = document.createElement('option');
