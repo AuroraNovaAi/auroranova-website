@@ -242,7 +242,8 @@
             width: 100%;
         }
 
-        .nav-links > a {
+        .nav-links > a,
+        .nav-links .services-btn {
             color: var(--text-primary);
             text-decoration: none;
             font-size: 0.95rem;
@@ -251,9 +252,15 @@
             border-radius: 12px;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             display: block;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            text-align: left;
+            font-family: inherit;
         }
 
-        .nav-links > a:hover {
+        .nav-links > a:hover,
+        .nav-links .services-btn:hover {
             background: rgba(255, 255, 255, 0.05);
             color: var(--secondary-blue);
             transform: translateX(5px);
@@ -1227,45 +1234,7 @@
             align-items: center;
         }
 
-        .services-btn {
-            color: var(--text-primary);
-            text-decoration: none;
-            font-size: 0.9rem;
-            font-weight: 500;
-            padding: 8px 16px;
-            border-radius: 25px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
-            background: transparent;
-            border: none;
-            cursor: pointer;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-        }
-
-        .services-btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, var(--primary-purple), var(--secondary-blue));
-            transition: left 0.3s ease;
-            z-index: -1;
-        }
-
-        .services-dropdown:hover .services-btn::before,
-        .services-btn:hover::before {
-            left: 0;
-        }
-
-        .services-dropdown:hover .services-btn,
-        .services-btn:hover {
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(123, 90, 153, 0.3);
-        }
+        /* .services-btn styles merged with .nav-links > a */
 
         .services-menu {
             display: none;
