@@ -27,7 +27,8 @@
             await Promise.all([
                 cmsLoadSiteContent(db, isTR),
                 cmsLoadBlogPosts(db),
-                cmsLoadGallery(db, isTR)
+                cmsLoadGallery(db, isTR),
+                cmsLoadProducts(db, isTR)
             ]);
             if (typeof setLanguage === 'function') setLanguage(lang);
         } catch (e) {
@@ -183,6 +184,56 @@
                 }
             });
         } catch (e) { console.warn('[CMS] gallery_items:', e); }
+    }
+
+    async function cmsLoadProducts(db, isTR) {
+        try {
+            const snap = await db.collection('products').where('active', '==', true).get();
+            const grid = document.getElementById('productsGrid');
+            if (!grid) return;
+
+            if (snap.empty) {
+                grid.innerHTML = '<div style="text-align:center; color:rgba(255,255,255,0.5); grid-column:1/-1;">Henüz ürün eklenmemiş. / No products found.</div>';
+                return;
+            }
+
+            const products = [];
+            snap.forEach(doc => {
+                products.push({ id: doc.id, ...doc.data() });
+            });
+
+            // Fiyata göre sırala (ucuzdan pahalıya)
+            products.sort((a, b) => (a.price || 0) - (b.price || 0));
+
+            const licenseLabelsTR = { monthly: 'Aylık', yearly: 'Yıllık', lifetime: 'Tek Seferlik' };
+            const licenseLabelsEN = { monthly: 'Monthly', yearly: 'Yearly', lifetime: 'One-time' };
+            const labels = isTR ? licenseLabelsTR : licenseLabelsEN;
+
+            grid.innerHTML = products.map(p => {
+                const name = isTR ? (p.nameTR || p.nameEN) : (p.nameEN || p.nameTR);
+                const desc = isTR ? (p.descriptionTR || p.descriptionEN) : (p.descriptionEN || p.descriptionTR);
+                const lic  = labels[p.licenseType] || p.licenseType;
+                const priceStr = (p.price || 0).toLocaleString('tr-TR');
+                const btnText = isTR ? 'Hemen Başlayalım' : 'Get Started';
+                
+                return `
+                    <div class="product-card">
+                        <h3>${name || 'Unnamed Product'}</h3>
+                        <div class="price">
+                            <span class="price-currency">₺</span>${priceStr}
+                        </div>
+                        <div class="license">${lic}</div>
+                        <p>${desc || ''}</p>
+                        <a href="#contact" class="btn">${btnText}</a>
+                    </div>
+                `;
+            }).join('');
+            
+        } catch (e) {
+            console.warn('[CMS] products:', e);
+            const grid = document.getElementById('productsGrid');
+            if (grid) grid.innerHTML = '<div style="text-align:center; color:#ff7675; grid-column:1/-1;">Failed to load products.</div>';
+        }
     }
 
     if (document.readyState === 'loading') {
