@@ -723,6 +723,59 @@ function admShowContentTab(tabId, btn) {
     if (btn) btn.classList.add('active');
 }
 
+async function admGenerateSeoSuggestions() {
+    const promptInput = document.getElementById('aiSeoPrompt');
+    const resultBox = document.getElementById('aiSeoResult');
+    const btn = document.getElementById('btnAiSeoGen');
+    
+    if (!promptInput.value.trim()) {
+        alert("Lütfen önce bir konu (prompt) girin.");
+        return;
+    }
+    
+    btn.disabled = true;
+    btn.textContent = "Üretiliyor...";
+    resultBox.style.display = 'block';
+    resultBox.innerHTML = '<div class="adm-loading">Yapay Zeka SEO etiketlerini düşünüyor... Lütfen bekleyin.</div>';
+    
+    try {
+        const apiKey = await getAiApiKey();
+        if (!apiKey) {
+            throw new Error('API Anahtarı bulunamadı! Lütfen Ayarlar sekmesinden Google AI Studio anahtarını kaydedin.');
+        }
+        
+        const sysPrompt = "Sen uzman bir SEO danışmanısın. Kullanıcının verdiği konu ve hedef kitleye göre, en yüksek arama motoru optimizasyonu sağlayacak şekilde Türkçe ve İngilizce dillerinde 'Title' (en fazla 60 karakter), 'Meta Description' (en fazla 155 karakter) ve 'Keywords' (en fazla 10 adet, virgülle ayrılmış) üretmelisin. Lütfen doğrudan kopyalanıp yapıştırılacak net bir metin ver, ekstra sohbet cümleleri kurma.\n\nTR Title: ...\nTR Description: ...\nTR Keywords: ...\n\nEN Title: ...\nEN Description: ...\nEN Keywords: ...\n";
+        const fullPrompt = `${sysPrompt}\n\nKonu/Sektör: ${promptInput.value.trim()}`;
+        
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: fullPrompt }] }]
+            })
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error("API Hatası: " + (errorData.error?.message || response.statusText));
+        }
+        
+        const data = await response.json();
+        if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts[0]) {
+            resultBox.textContent = data.candidates[0].content.parts[0].text;
+        } else {
+            throw new Error("Beklenmeyen API yanıtı.");
+        }
+        
+    } catch (e) {
+        resultBox.innerHTML = `<span style="color: #ff7675;">Hata: ${e.message}</span>`;
+    } finally {
+        btn.disabled = false;
+        btn.textContent = "Öneri Al";
+    }
+}
+
 // =================================================================
 // SETTINGS
 // =================================================================

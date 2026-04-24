@@ -434,17 +434,35 @@
 
                 <!-- SEO -->
                 <div class="adm-ctab-content" id="ctab-seo">
-                    <div class="adm-form-panel open" style="max-width:720px;">
-                        <div class="adm-form-grid">
-                            <div class="adm-form-group full"><label class="adm-label">Site Başlığı (TR)</label><input class="adm-input" type="text" id="seoTitleTR" placeholder="AuroraNova | Kurumsal Web Tasarım"></div>
-                            <div class="adm-form-group full"><label class="adm-label">Site Title (EN)</label><input class="adm-input" type="text" id="seoTitleEN" placeholder="AuroraNova | Digital Transformation"></div>
-                            <div class="adm-form-group full"><label class="adm-label">Meta Açıklama (TR)</label><textarea class="adm-textarea" id="seoDescTR" rows="2"></textarea></div>
-                            <div class="adm-form-group full"><label class="adm-label">Meta Description (EN)</label><textarea class="adm-textarea" id="seoDescEN" rows="2"></textarea></div>
-                            <div class="adm-form-group full"><label class="adm-label">Anahtar Kelimeler (TR)</label><input class="adm-input" type="text" id="seoKeywordsTR" placeholder="web tasarım, seo..."></div>
-                            <div class="adm-form-group full"><label class="adm-label">Keywords (EN)</label><input class="adm-input" type="text" id="seoKeywordsEN" placeholder="web design, seo..."></div>
+                    <div style="display:flex; gap:20px; flex-wrap:wrap; align-items:flex-start;">
+                        <!-- Sol: Form -->
+                        <div class="adm-form-panel open" style="flex:1; min-width:320px; max-width:720px; margin-bottom:0;">
+                            <div class="adm-form-grid">
+                                <div class="adm-form-group full"><label class="adm-label">Site Başlığı (TR)</label><input class="adm-input" type="text" id="seoTitleTR" placeholder="AuroraNova | Kurumsal Web Tasarım"></div>
+                                <div class="adm-form-group full"><label class="adm-label">Site Title (EN)</label><input class="adm-input" type="text" id="seoTitleEN" placeholder="AuroraNova | Digital Transformation"></div>
+                                <div class="adm-form-group full"><label class="adm-label">Meta Açıklama (TR)</label><textarea class="adm-textarea" id="seoDescTR" rows="2"></textarea></div>
+                                <div class="adm-form-group full"><label class="adm-label">Meta Description (EN)</label><textarea class="adm-textarea" id="seoDescEN" rows="2"></textarea></div>
+                                <div class="adm-form-group full"><label class="adm-label">Anahtar Kelimeler (TR)</label><input class="adm-input" type="text" id="seoKeywordsTR" placeholder="web tasarım, seo..."></div>
+                                <div class="adm-form-group full"><label class="adm-label">Keywords (EN)</label><input class="adm-input" type="text" id="seoKeywordsEN" placeholder="web design, seo..."></div>
+                            </div>
+                            <button class="adm-btn" onclick="admSaveContent('seo')">Kaydet</button>
+                            <div id="contentMsg-seo" class="adm-form-msg"></div>
                         </div>
-                        <button class="adm-btn" onclick="admSaveContent('seo')">Kaydet</button>
-                        <div id="contentMsg-seo" class="adm-form-msg"></div>
+
+                        <!-- Sağ: AI Asistanı -->
+                        <div class="adm-form-panel open" style="flex:1; min-width:320px; margin-bottom:0; background: rgba(108, 92, 231, 0.05); border: 1px solid rgba(108, 92, 231, 0.2);">
+                            <h3 style="margin-top:0; margin-bottom:15px; color:var(--primary-purple); display:flex; align-items:center; gap:8px;">
+                                <span style="font-size:1.2rem;">✨</span> AI SEO Asistanı
+                            </h3>
+                            <p style="font-size:13px; color:rgba(255,255,255,0.6); margin-bottom:15px;">Müşteriniz veya siteniz için bir konu (prompt) girin, yapay zeka kopyalayabileceğiniz en uygun SEO etiketlerini önersin.</p>
+                            
+                            <div class="adm-form-group full">
+                                <textarea class="adm-textarea" id="aiSeoPrompt" rows="3" placeholder="Örn: İzmir'de sağlık turizmi yapan bir diş kliniği için SEO çalışması hazırlıyoruz. Odak noktamız İngiltere'den gelen hastalar. Güven verici bir dil kullanılmalı..."></textarea>
+                            </div>
+                            <button class="adm-btn" id="btnAiSeoGen" onclick="admGenerateSeoSuggestions()">Öneri Al</button>
+                            
+                            <div id="aiSeoResult" style="margin-top:20px; font-size:13px; line-height:1.6; color:rgba(255,255,255,0.8); white-space:pre-wrap; background:rgba(0,0,0,0.2); padding:15px; border-radius:8px; display:none; max-height: 400px; overflow-y: auto;"></div>
+                        </div>
                     </div>
                 </div>
 
