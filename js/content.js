@@ -28,6 +28,11 @@ const translations = {
             tagline: "Aurora-inspired digital excellence transforming visions into digital reality through European design excellence and cutting-edge technology",
             scroll: "Scroll to explore"
         },
+        seo: {
+            title: "AuroraNova | Digital Transformation & Web Design",
+            description: "European design excellence meets innovative digital solutions. We build experiences that inspire.",
+            keywords: "web design, digital transformation, seo, marketing, software"
+        },
         services: {
             branding: {
                 title: "Creative & Branding",
@@ -212,6 +217,11 @@ const translations = {
             subtitle: "Yaratıcılık Yenilikle Buluşuyor",
             tagline: "Aurora ilhamlı dijital mükemmellik; Avrupa tasarım kalitesi ve ileri teknoloji ile vizyonları dijital gerçeğe dönüştürüyor",
             scroll: "Keşfetmek için kaydırın"
+        },
+        seo: {
+            title: "AuroraNova | Kurumsal Web Tasarım, Dijital Dönüşüm & AI Çözümleri",
+            description: "Avrupa tasarım mükemmelliği yenilikçi dijital çözümlerle buluşuyor. İlham veren deneyimler inşa ediyoruz.",
+            keywords: "web tasarım, dijital dönüşüm, seo, pazarlama, yazılım"
         },
         services: {
             branding: {

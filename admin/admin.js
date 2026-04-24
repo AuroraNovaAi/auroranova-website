@@ -673,6 +673,7 @@ let _admContentLoaded = false;
 
 const _CONTENT_FIELDS = {
     hero:         { subtitleTR:'heroSubtitleTR', subtitleEN:'heroSubtitleEN', taglineTR:'heroTaglineTR', taglineEN:'heroTaglineEN' },
+    seo:          { titleTR:'seoTitleTR', titleEN:'seoTitleEN', descTR:'seoDescTR', descEN:'seoDescEN', keywordsTR:'seoKeywordsTR', keywordsEN:'seoKeywordsEN' },
     story:        { headingTR:'storyHeadingTR', headingEN:'storyHeadingEN', descTR:'storyDescTR', descEN:'storyDescEN' },
     method:       { headingTR:'methodHeadingTR', headingEN:'methodHeadingEN', descTR:'methodDescTR', descEN:'methodDescEN' },
     work:         { headingTR:'workHeadingTR', headingEN:'workHeadingEN', descTR:'workDescTR', descEN:'workDescEN' },

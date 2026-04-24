@@ -537,6 +537,15 @@
             if (heroSubtitle) heroSubtitle.textContent = t.hero.subtitle;
             if (heroTagline) heroTagline.textContent = t.hero.tagline;
 
+            // SEO
+            if (t.seo) {
+                if (t.seo.title) document.title = t.seo.title;
+                const metaDesc = document.querySelector('meta[name="description"]');
+                const metaKeywords = document.querySelector('meta[name="keywords"]');
+                if (metaDesc && t.seo.description) metaDesc.content = t.seo.description;
+                if (metaKeywords && t.seo.keywords) metaKeywords.content = t.seo.keywords;
+            }
+
             // Service info popups
             const serviceMap = ['branding', 'web', 'seo', 'marketing', 'software'];
             serviceMap.forEach(key => {

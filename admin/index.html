@@ -408,6 +408,7 @@
                 <p class="adm-page-sub">Sayfa metinlerini, başlıkları ve linkleri düzenleyin</p>
                 <div class="adm-content-tabs">
                     <button class="adm-ctab active" onclick="admShowContentTab('hero', this)">Hero</button>
+                    <button class="adm-ctab" onclick="admShowContentTab('seo', this)">SEO</button>
                     <button class="adm-ctab" onclick="admShowContentTab('story', this)">Story</button>
                     <button class="adm-ctab" onclick="admShowContentTab('method', this)">Method</button>
                     <button class="adm-ctab" onclick="admShowContentTab('work', this)">Work</button>
@@ -428,6 +429,22 @@
                         </div>
                         <button class="adm-btn" onclick="admSaveContent('hero')">Kaydet</button>
                         <div id="contentMsg-hero" class="adm-form-msg"></div>
+                    </div>
+                </div>
+
+                <!-- SEO -->
+                <div class="adm-ctab-content" id="ctab-seo">
+                    <div class="adm-form-panel open" style="max-width:720px;">
+                        <div class="adm-form-grid">
+                            <div class="adm-form-group full"><label class="adm-label">Site Başlığı (TR)</label><input class="adm-input" type="text" id="seoTitleTR" placeholder="AuroraNova | Kurumsal Web Tasarım"></div>
+                            <div class="adm-form-group full"><label class="adm-label">Site Title (EN)</label><input class="adm-input" type="text" id="seoTitleEN" placeholder="AuroraNova | Digital Transformation"></div>
+                            <div class="adm-form-group full"><label class="adm-label">Meta Açıklama (TR)</label><textarea class="adm-textarea" id="seoDescTR" rows="2"></textarea></div>
+                            <div class="adm-form-group full"><label class="adm-label">Meta Description (EN)</label><textarea class="adm-textarea" id="seoDescEN" rows="2"></textarea></div>
+                            <div class="adm-form-group full"><label class="adm-label">Anahtar Kelimeler (TR)</label><input class="adm-input" type="text" id="seoKeywordsTR" placeholder="web tasarım, seo..."></div>
+                            <div class="adm-form-group full"><label class="adm-label">Keywords (EN)</label><input class="adm-input" type="text" id="seoKeywordsEN" placeholder="web design, seo..."></div>
+                        </div>
+                        <button class="adm-btn" onclick="admSaveContent('seo')">Kaydet</button>
+                        <div id="contentMsg-seo" class="adm-form-msg"></div>
                     </div>
                 </div>
 
