@@ -1221,11 +1221,11 @@ window.admVideoAction = async function(action) {
             // Sadece belirtilen aralığı kes (copy)
             args = [...baseArgs, '-c', 'copy', outputName];
         } else if (action === 'boomerang') {
-            // İleri oynat, sonra geriye oynat. scale pad'ini iki kere kullanamayız (çöker), bu yüzden split ile ikiye bölüyoruz.
-            args = [...baseArgs, '-filter_complex', '[0:v]scale=-2:720[scaled];[scaled]split=2[s1][s2];[s2]reverse[r];[s1][r]concat=n=2:v=1[outv]', '-map', '[outv]', '-an', '-preset', 'fast', '-crf', '24', outputName];
+            // İleri oynat, sonra geriye oynat.
+            args = [...baseArgs, '-filter_complex', '[0:v]split=2[s1][s2];[s2]reverse[r];[s1][r]concat=n=2:v=1[outv]', '-map', '[outv]', '-an', '-c:v', 'libx264', '-preset', 'superfast', '-crf', '14', '-pix_fmt', 'yuv420p', outputName];
         } else if (action === 'reverse') {
             // Görüntüyü terse çevir. 
-            args = [...baseArgs, '-vf', 'scale=-2:720,reverse', '-preset', 'fast', '-crf', '24', outputName];
+            args = [...baseArgs, '-vf', 'reverse', '-c:v', 'libx264', '-preset', 'superfast', '-crf', '14', '-pix_fmt', 'yuv420p', outputName];
         } else if (action === 'clone2x') {
             // Videoyu ard arda 2 kez oynat (-stream_loop input'tan önce gelmeli)
             args = ['-stream_loop', '1', ...baseArgs, '-c', 'copy', outputName];

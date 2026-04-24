@@ -277,6 +277,7 @@
         }
 
         .hero h1 {
+            font-family: 'Ubuntu', sans-serif;
             font-size: clamp(3rem, 8vw, 6rem);
             font-weight: 700;
             background: linear-gradient(135deg, var(--text-primary), var(--secondary-blue), var(--primary-purple));
@@ -290,6 +291,7 @@
         }
 
         .hero .subtitle {
+            font-family: 'Cinzel Decorative', serif;
             font-size: clamp(1.2rem, 3vw, 2rem);
             font-weight: 400;
             color: var(--text-secondary);
@@ -327,7 +329,8 @@
             opacity: 0;
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.6)) drop-shadow(0 0 30px rgba(255, 215, 0, 0.3));
-            background: transparent;
+            background: rgba(255, 229, 124, 0.5); /* #FFE57C with 50% transparency */
+            border-radius: 10px;
             display: flex;
             justify-content: center;
             align-items: center;
