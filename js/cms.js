@@ -37,7 +37,7 @@
     }
 
     async function cmsLoadSiteContent(db, isTR) {
-        const sections = ['hero', 'seo', 'story', 'method', 'work', 'blog_section', 'contact', 'footer', 'services'];
+        const sections = ['hero', 'seo', 'story', 'method', 'work', 'blog_section', 'contact', 'footer', 'services', 'products_section'];
         for (const section of sections) {
             try {
                 const snap = await db.collection('site_content').doc(section).get();
@@ -79,6 +79,14 @@
                     if (d.headingEN) en.work.heading = d.headingEN;
                     if (d.descTR) tr.work.desc = d.descTR;
                     if (d.descEN) en.work.desc = d.descEN;
+                }
+                if (section === 'products_section') {
+                    if (!tr.products) tr.products = {};
+                    if (!en.products) en.products = {};
+                    if (d.headingTR) tr.products.heading = d.headingTR;
+                    if (d.headingEN) en.products.heading = d.headingEN;
+                    if (d.descTR) tr.products.desc = d.descTR;
+                    if (d.descEN) en.products.desc = d.descEN;
                 }
                 if (section === 'blog_section') {
                     if (d.headingTR) tr.blog.heading = d.headingTR;

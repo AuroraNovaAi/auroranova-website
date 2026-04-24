@@ -195,6 +195,13 @@
                             </select>
                         </div>
                         <div class="adm-form-group">
+                            <label class="adm-label">Tip</label>
+                            <select class="adm-select" id="pType">
+                                <option value="product">Ürün</option>
+                                <option value="service">Hizmet</option>
+                            </select>
+                        </div>
+                        <div class="adm-form-group">
                             <label class="adm-label">Durum</label>
                             <label class="adm-toggle-wrap">
                                 <input class="adm-toggle" type="checkbox" id="pActive" checked>
@@ -416,6 +423,7 @@
                     <button class="adm-ctab" onclick="admShowContentTab('contact', this)">İletişim</button>
                     <button class="adm-ctab" onclick="admShowContentTab('footer', this)">Footer</button>
                     <button class="adm-ctab" onclick="admShowContentTab('services', this)">Servisler</button>
+                    <button class="adm-ctab" onclick="admShowContentTab('products_section', this)">Paketler</button>
                 </div>
 
                 <!-- Hero -->
@@ -429,6 +437,20 @@
                         </div>
                         <button class="adm-btn" onclick="admSaveContent('hero')">Kaydet</button>
                         <div id="contentMsg-hero" class="adm-form-msg"></div>
+                    </div>
+                </div>
+
+                <!-- Products Section Content -->
+                <div class="adm-ctab-content" id="ctab-products_section">
+                    <div class="adm-form-panel open" style="max-width:720px;">
+                        <div class="adm-form-grid">
+                            <div class="adm-form-group full"><label class="adm-label">Başlık (TR)</label><input class="adm-input" type="text" id="prodSecHeadingTR"></div>
+                            <div class="adm-form-group full"><label class="adm-label">Heading (EN)</label><input class="adm-input" type="text" id="prodSecHeadingEN"></div>
+                            <div class="adm-form-group full"><label class="adm-label">Açıklama (TR)</label><textarea class="adm-textarea" id="prodSecDescTR" rows="2"></textarea></div>
+                            <div class="adm-form-group full"><label class="adm-label">Description (EN)</label><textarea class="adm-textarea" id="prodSecDescEN" rows="2"></textarea></div>
+                        </div>
+                        <button class="adm-btn" onclick="admSaveContent('products_section')">Kaydet</button>
+                        <div id="contentMsg-products_section" class="adm-form-msg"></div>
                     </div>
                 </div>
 

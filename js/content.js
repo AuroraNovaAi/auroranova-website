@@ -85,6 +85,10 @@ const translations = {
             photo3_title: "Software & SaaS",
             photo3_desc: "Scalable software products built for growth"
         },
+        products: {
+            heading: "Services & Packages",
+            desc: "Transparent pricing and comprehensive service packages tailored for your digital transformation"
+        },
         blog: {
             heading: "Insights & Innovation",
             desc: "Explore our latest thoughts on design, technology, and digital transformation",
@@ -274,6 +278,10 @@ const translations = {
             photo2_desc: "Sizi farklı kılan özgün markalama",
             photo3_title: "Yazılım & SaaS",
             photo3_desc: "Büyüme için inşa edilmiş ölçeklenebilir yazılım ürünleri"
+        },
+        products: {
+            heading: "Hizmetler ve Paketler",
+            desc: "Dijital dönüşümünüz için şeffaf fiyatlandırma ve kapsamlı hizmet paketleri"
         },
         blog: {
             heading: "Makaleler & İnovasyon",

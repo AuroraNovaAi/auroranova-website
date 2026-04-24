@@ -295,6 +295,7 @@ function admToggleProductForm(clear = true) {
         });
         document.getElementById('pActive').checked = true;
         document.getElementById('pLicense').value = 'monthly';
+        document.getElementById('pType').value = 'product';
         document.getElementById('productFormMsg').textContent = '';
     }
 }
@@ -311,6 +312,7 @@ async function admEditProduct(productId) {
         document.getElementById('pDescEN').value   = p.descriptionEN || '';
         document.getElementById('pPrice').value    = p.price || 0;
         document.getElementById('pLicense').value  = p.licenseType || 'monthly';
+        document.getElementById('pType').value     = p.type || 'product';
         document.getElementById('pActive').checked = p.active !== false;
         document.getElementById('productFormPanel').classList.add('open');
         document.getElementById('productFormPanel').scrollIntoView({ behavior: 'smooth' });
@@ -328,6 +330,7 @@ async function admSaveProduct() {
         descriptionEN: document.getElementById('pDescEN').value.trim(),
         price:         parseFloat(document.getElementById('pPrice').value) || 0,
         licenseType:   document.getElementById('pLicense').value,
+        type:          document.getElementById('pType').value,
         active:        document.getElementById('pActive').checked
     };
     if (!data.nameTR && !data.nameEN) { msgEl.style.color = '#ff7675'; msgEl.textContent = 'Ürün adı boş olamaz.'; return; }
@@ -680,7 +683,8 @@ const _CONTENT_FIELDS = {
     blog_section: { headingTR:'blogSecHeadingTR', headingEN:'blogSecHeadingEN', descTR:'blogSecDescTR', descEN:'blogSecDescEN' },
     contact:      { headingTR:'contactHeadingTR', headingEN:'contactHeadingEN', email:'contactEmail', meetingLink:'contactMeetingLink', locationTR:'contactLocationTR', locationEN:'contactLocationEN' },
     footer:       { taglineTR:'footerTaglineTR', taglineEN:'footerTaglineEN', copyright:'footerCopyright', privacyLink:'footerPrivacyLink' },
-    services:     { brandingTitleTR:'svcBrandingTitleTR', brandingTitleEN:'svcBrandingTitleEN', brandingDescTR:'svcBrandingDescTR', brandingDescEN:'svcBrandingDescEN', webTitleTR:'svcWebTitleTR', webTitleEN:'svcWebTitleEN', webDescTR:'svcWebDescTR', webDescEN:'svcWebDescEN', seoTitleTR:'svcSeoTitleTR', seoTitleEN:'svcSeoTitleEN', marketingTitleTR:'svcMarketingTitleTR', marketingTitleEN:'svcMarketingTitleEN', softwareTitleTR:'svcSoftwareTitleTR', softwareTitleEN:'svcSoftwareTitleEN' }
+    services:     { brandingTitleTR:'svcBrandingTitleTR', brandingTitleEN:'svcBrandingTitleEN', brandingDescTR:'svcBrandingDescTR', brandingDescEN:'svcBrandingDescEN', webTitleTR:'svcWebTitleTR', webTitleEN:'svcWebTitleEN', webDescTR:'svcWebDescTR', webDescEN:'svcWebDescEN', seoTitleTR:'svcSeoTitleTR', seoTitleEN:'svcSeoTitleEN', marketingTitleTR:'svcMarketingTitleTR', marketingTitleEN:'svcMarketingTitleEN', softwareTitleTR:'svcSoftwareTitleTR', softwareTitleEN:'svcSoftwareTitleEN' },
+    products_section: { headingTR:'prodSecHeadingTR', headingEN:'prodSecHeadingEN', descTR:'prodSecDescTR', descEN:'prodSecDescEN' }
 };
 
 async function admLoadContent() {

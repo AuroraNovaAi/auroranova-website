@@ -557,7 +557,7 @@
             });
 
             // Sections: heading + description + photo overlays
-            const sections = ['story', 'method', 'work', 'contact'];
+            const sections = ['story', 'method', 'work', 'contact', 'products'];
             sections.forEach(sec => {
                 const el = document.getElementById(sec);
                 if (!el || !t[sec]) return;
