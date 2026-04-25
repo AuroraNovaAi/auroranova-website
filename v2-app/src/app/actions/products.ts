@@ -30,7 +30,7 @@ export async function getProducts(): Promise<Product[]> {
     return products;
   } catch (error) {
     console.error('[Server Action Error] Failed to fetch products:', error);
-    throw new Error('Failed to fetch products');
+    return [];
   }
 }
 

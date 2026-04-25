@@ -21,7 +21,7 @@ export async function getBlogPosts(): Promise<BlogPost[]> {
     return posts;
   } catch (error) {
     console.error('[Server Action Error] Failed to fetch blog posts:', error);
-    throw new Error('Failed to fetch blog posts');
+    return [];
   }
 }
 

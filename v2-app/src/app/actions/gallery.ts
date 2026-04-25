@@ -21,7 +21,7 @@ export async function getGalleryItems(): Promise<GalleryItem[]> {
     return items;
   } catch (error) {
     console.error('[Server Action Error] Failed to fetch gallery items:', error);
-    throw new Error('Failed to fetch gallery items');
+    return [];
   }
 }
 
