@@ -15,11 +15,19 @@ if (!admin.apps.length) {
     } else {
       admin.initializeApp({
         credential: admin.credential.applicationDefault(),
+        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'auroranova-website',
         storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
       });
     }
   } catch (error: any) {
-    console.error('Firebase admin initialization error', error.stack);
+    console.warn('Falling back to default initialization without credentials');
+    // If applicationDefault() fails during build, initialize with just projectId
+    if (!admin.apps.length) {
+      admin.initializeApp({
+        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'auroranova-website',
+        storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+      });
+    }
   }
 }
 
